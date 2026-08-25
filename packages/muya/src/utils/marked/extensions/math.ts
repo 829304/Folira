@@ -36,6 +36,18 @@ export interface IMathToken {
 interface IOptions {
     throwOnError?: boolean;
     useKatexRender?: boolean;
+    /**
+     * Register the inline `$…$` rule. Default true.
+     *
+     * Registering a rule is not free: marked consults every extension's
+     * `start()` on the whole remaining source at each token boundary, so a rule
+     * that cannot possibly match still costs a scan per boundary. Callers that
+     * can prove a rule is impossible for a given document should switch it off
+     * — see `lexBlock`.
+     */
+    inline?: boolean;
+    /** Register the block `$$\n…\n$$` rule. Default true. */
+    block?: boolean;
 }
 
 // Kept in lockstep with the editor's `inline_math` rule
@@ -75,18 +87,21 @@ const doubleDisplayRule = /^(\\\\\[)((?:(?!\\\\\])[\s\S])+)\\\\\]/;
 const DEFAULT_OPTIONS = {
     throwOnError: false,
     useKatexRender: false,
+    inline: true,
+    block: true,
 };
 
 export default function (options: IOptions = {}) {
     const opts = Object.assign({}, DEFAULT_OPTIONS, options);
 
-    return {
-        extensions: [
-            inlineKatex(createRenderer(opts, false)),
-            blockKatex(createRenderer(opts, true)),
-        ],
-        walkTokens: markDisplayMath,
-    };
+    const extensions = [];
+
+    if (opts.inline)
+        extensions.push(inlineKatex(createRenderer(opts, false)));
+    if (opts.block)
+        extensions.push(blockKatex(createRenderer(opts, true)));
+
+    return { extensions, walkTokens: markDisplayMath };
 }
 
 // Registered separately, and after the dollar extension: `Marked.use` unshifts,
