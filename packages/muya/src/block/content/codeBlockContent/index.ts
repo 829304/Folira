@@ -11,7 +11,7 @@ import type HTMLPreview from '../../commonMark/html/htmlPreview';
 import { CLASS_NAMES, HTML_TAGS, VOID_HTML_TAGS } from '../../../config';
 import { ChangeSource } from '../../../types';
 import { adjustOffset, escapeHTML, firstGraphemeLength, firstWordOfInfo, lastGraphemeLength, lineBounds } from '../../../utils';
-import { computeLineCount, repositionLineNumberSpans, syncLineNumbersSpans } from '../../../utils/codeBlockLineNumbers';
+import { cancelLineNumberReposition, computeLineCount, scheduleLineNumberReposition, syncLineNumbersSpans } from '../../../utils/codeBlockLineNumbers';
 import { getHighlightHtml, MARKER_HASH } from '../../../utils/highlightHTML';
 import prism, { loadedLanguages, transformAliasToOrigin, walkTokens } from '../../../utils/prism/index';
 import { tabText } from '../../../utils/tab';
@@ -219,10 +219,16 @@ class CodeBlockContent extends Content {
             return;
         const codeEl = this.domNode!;
         this._lineNumberResizeObserver = new ResizeObserver(() => {
-            if (codeEl.isConnected && wrapper.isConnected)
-                repositionLineNumberSpans(wrapper, codeEl);
-            else
+            if (codeEl.isConnected && wrapper.isConnected) {
+                // Queued rather than done here: opening a document resizes every
+                // code block at once, and each repositioning reads a rect, which
+                // lays out the whole document. Batched, the whole set costs one.
+                scheduleLineNumberReposition(wrapper, codeEl);
+            }
+            else {
+                cancelLineNumberReposition(wrapper);
                 this._lineNumberResizeObserver?.disconnect();
+            }
         });
         this._lineNumberResizeObserver.observe(codeEl);
     }
