@@ -6,6 +6,7 @@ import { ScrollPage } from '../../block/scrollPage';
 import { SelectionType } from '../../selection/types';
 import { firstWordOfInfo, parseFenceLine } from '../../utils';
 import { createDiagramState, diagramTypeOfLang } from '../../utils/diagram/fence';
+import logger from '../../utils/logger';
 import { search } from '../../utils/prism';
 
 import { h, patch } from '../../utils/snabbdom';
@@ -22,6 +23,8 @@ import './index.css';
  * not landed, and draws again when it has. `loadFileIcons` is a no-op once the
  * module is in hand, so the redraw cannot recurse.
  */
+const debug = logger('codeBlockLanguageSelector:');
+
 type FileIcons = Awaited<typeof import('../utils/fileIcons')>['default'];
 let fileIcons: FileIcons | null = null;
 let loadingFileIcons: Promise<void> | null = null;
@@ -35,9 +38,12 @@ function loadFileIcons(onReady: () => void): void {
             fileIcons = module.default;
             onReady();
         })
-        .catch(() => {
-            // Without icons the list is still usable; do not take the popup
-            // down over decoration.
+        .catch((err) => {
+            // The list is still usable without icons, so this does not take the
+            // popup down — but it says so. A silent catch here would leave the
+            // icons permanently missing with nothing to explain why, which is
+            // exactly how the emoji table's failure mode hid itself.
+            debug.error(`cannot load the icon set: ${String(err)}`);
             loadingFileIcons = null;
         });
 }
