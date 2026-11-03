@@ -650,7 +650,7 @@ const commands: CommandDescriptor[] = [
   },
 
   // --------------------------------------------------------------------------
-  // MarkText
+  // Folira
 
   {
     id: 'file.preferences',
@@ -668,7 +668,7 @@ const commands: CommandDescriptor[] = [
     id: 'docs.user-guide',
     execute: async() => {
       window.electron.shell.openExternal(
-        'https://marktext.me/docs/basics'
+        'https://github.com/829304/Folira/blob/develop/packages/website/content/docs/end-user/BASICS.md'
       )
     }
   },
@@ -676,7 +676,7 @@ const commands: CommandDescriptor[] = [
     id: 'docs.markdown-syntax',
     execute: async() => {
       window.electron.shell.openExternal(
-        'https://marktext.me/docs/markdown-syntax'
+        'https://github.com/829304/Folira/blob/develop/packages/website/content/docs/end-user/MARKDOWN_SYNTAX.md'
       )
     }
   },
@@ -687,44 +687,32 @@ const commands: CommandDescriptor[] = [
   {
     id: 'help.changelog',
     execute: async() => {
-      window.electron.shell.openExternal('https://github.com/marktext/marktext/releases')
-    }
-  },
-  {
-    id: 'help.follow-us',
-    execute: async() => {
-      window.electron.shell.openExternal('https://twitter.com/marktextapp')
-    }
-  },
-  {
-    id: 'help.support',
-    execute: async() => {
-      window.electron.shell.openExternal('https://github.com/sponsors/marktext')
+      window.electron.shell.openExternal('https://github.com/829304/Folira/releases')
     }
   },
   {
     id: 'help.ask-question',
     execute: async() => {
-      window.electron.shell.openExternal('https://github.com/marktext/marktext/discussions')
+      window.electron.shell.openExternal('https://github.com/829304/Folira/discussions')
     }
   },
   {
     id: 'help.report-bug',
     execute: async() => {
-      window.electron.shell.openExternal('https://github.com/marktext/marktext/issues')
+      window.electron.shell.openExternal('https://github.com/829304/Folira/issues')
     }
   },
   {
     id: 'help.view-source',
     execute: async() => {
-      window.electron.shell.openExternal('https://github.com/marktext/marktext')
+      window.electron.shell.openExternal('https://github.com/829304/Folira')
     }
   },
   {
     id: 'help.license',
     execute: async() => {
       window.electron.shell.openExternal(
-        'https://github.com/marktext/marktext/blob/develop/LICENSE'
+        'https://github.com/829304/Folira/blob/develop/LICENSE'
       )
     }
   },

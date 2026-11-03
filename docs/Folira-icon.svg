@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Folira — F.</title>
+  <desc id="desc">Minimal monochrome F dot brand mark on a white rounded square, inset to the macOS icon grid.</desc>
+  <!-- 824×824 body centred on a 1024 canvas. The 100px margin is the space
+       Apple's icon grid leaves empty for every system icon; a full-bleed square
+       reads as oversized next to them in the Dock. Same inset on the other
+       platforms costs nothing and keeps one master file. -->
+  <rect x="100" y="100" width="824" height="824" rx="184" fill="#FFFFFF"/>
+  <!-- Outlined geometric sans mark; no fonts or external assets required.
+       Scaled 1.2× about the body centre so the mark fills 64% of the tile,
+       which is where it still reads at 32px in a taskbar. -->
+  <g transform="translate(512 512) scale(1.2) translate(-515.5 -529)">
+    <path fill="#000000" d="M338 308H654Q661 308 661 315V387Q661 394 654 394H435V489H617Q624 489 624 496V568Q624 575 617 575H435V743Q435 750 428 750H338Q331 750 331 743V315Q331 308 338 308Z"/>
+    <!-- Period at stroke weight: 100 diameter against the 104 stem, sitting on
+         the same baseline. Thinner than this and it disappears at 16px. -->
+    <circle cx="650" cy="700" r="50" fill="#000000"/>
+  </g>
+</svg>

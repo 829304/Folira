@@ -639,7 +639,7 @@ Which renders to:
 
 :heart: :zap: :cow: :dollar: :star: :tada:
 
-**NOTE:** MarkText provides an emoji picker with search functionality.
+**NOTE:** Folira provides an emoji picker with search functionality.
 
 <br>
 
@@ -728,7 +728,7 @@ $$
 
 ## Diagrams
 
-MarkText support class, flow chart, gantt and sequence diagrams powered by flowchart.js, mermaid and Vega-Lite. [Code](#code) blocks with special language identifiers are used for diagrams.
+Folira support class, flow chart, gantt and sequence diagrams powered by flowchart.js, mermaid and Vega-Lite. [Code](#code) blocks with special language identifiers are used for diagrams.
 
 For example, this:
 

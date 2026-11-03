@@ -1,9 +1,9 @@
 {
-  "name": "marktext-monorepo",
-  "version": "1.0.2",
-  "description": "MarkText monorepo root",
+  "name": "folira-monorepo",
+  "version": "0.1.0",
+  "description": "Folira monorepo root",
   "private": true,
-  "homepage": "https://github.com/marktext/marktext",
+  "homepage": "https://github.com/829304/Folira",
   "packageManager": "pnpm@10.33.4",
   "engines": {
     "node": ">=20.19.0",
@@ -14,10 +14,10 @@
     "lint": "eslint --cache .",
     "minify-locales": "tsx scripts/minify-locales.ts",
     "bundle-size": "tsx scripts/bundle-size.ts",
-    "test": "pnpm --filter marktext test",
-    "test:unit": "pnpm --filter marktext test:unit",
-    "typecheck": "pnpm --filter marktext typecheck",
-    "typecheck:watch": "pnpm --filter marktext typecheck:watch",
+    "test": "pnpm --filter folira test",
+    "test:unit": "pnpm --filter folira test:unit",
+    "typecheck": "pnpm --filter folira typecheck",
+    "typecheck:watch": "pnpm --filter folira typecheck:watch",
     "check": "pnpm lint && pnpm typecheck",
     "gen-third-party": "tsx scripts/generateThirdPartyLicense.ts",
     "validate-licenses": "tsx scripts/validateLicenses.ts"

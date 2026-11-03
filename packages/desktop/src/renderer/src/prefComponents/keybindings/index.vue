@@ -202,7 +202,7 @@ onUnmounted(() => {
 
 const openKeybindingDocs = (): void => {
   window.electron.shell.openExternal(
-    'https://marktext.me/docs/key-bindings'
+    'https://github.com/829304/Folira/tree/develop/packages/website/content/docs/end-user'
   )
 }
 

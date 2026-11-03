@@ -1,10 +1,10 @@
 // Standalone Vite config that builds ONLY the renderer for the Tauri shell.
 //
-// electron-vite bundles main + preload + renderer together and targets the
-// Electron runtime; Tauri needs just the renderer as a plain web app served
-// from a static dir (or a dev server). This config mirrors the renderer half
-// of electron.vite.config.ts (aliases, plugins, postcss) but emits to
-// out-tauri/renderer with relative asset URLs so the tauri:// scheme resolves.
+// Tauri needs the renderer as a plain web app served from a static dir (or a
+// dev server); the Rust shell has no bundler of its own, so nothing else is
+// compiled here. Aliases and the `path` → `pathe` shim mirror tsconfig.base.json
+// and vitest.config.ts; output goes to out-tauri/renderer with relative asset
+// URLs so the tauri:// scheme can resolve them.
 
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'

@@ -1,6 +1,6 @@
-# MarkText Contributing Guide
+# Folira Contributing Guide
 
-We are really excited that you are interested in contributing to MarkText :tada:. Before submitting your contribution, please make sure to take a moment and read through the following guidelines.
+We are really excited that you are interested in contributing to Folira :tada:. Before submitting your contribution, please make sure to take a moment and read through the following guidelines.
 
 - [Code of Conduct](../packages/website/content/docs/dev/CODE_OF_CONDUCT.md)
 - [Philosophy](#philosophy)
@@ -16,7 +16,7 @@ We are really excited that you are interested in contributing to MarkText :tada:
 ## Philosophy
 
 🔑 Our philosophy is to keep things clean, simple and minimal. 
-MarkText is constantly changing and we want these improvements to align with our philosophy. For example, look at the side bar and tabs; these two panels provide awesome functionality *and* aren't distracting to the user. We'll continue adding more features (like plugins) that can be activated via 'settings' to improve MarkText. This will allow everyone to customize MarkText for their needs and provide a minimal default interface.
+MarkText is constantly changing and we want these improvements to align with our philosophy. For example, look at the side bar and tabs; these two panels provide awesome functionality *and* aren't distracting to the user. We'll continue adding more features (like plugins) that can be activated via 'settings' to improve Folira. This will allow everyone to customize Folira for their needs and provide a minimal default interface.
 
 ## Issue Reporting Guidelines
 
@@ -48,7 +48,7 @@ If you fix a bug:
 
 ### Where should I start?
 
-A good way to start is to find an [issue](https://github.com/marktext/marktext/issues) labeled as `bug`, `help wanted` or `feature request`. The `good first issue` issues are good for newcomers. Please discuss the solution for larger issues first and after the final solution is approved by the MarkText members, you can submit/work on the PR. For small changes you can directly open a PR.
+A good way to start is to find an [issue](https://github.com/829304/Folira/issues) labeled as `bug`, `help wanted` or `feature request`. The `good first issue` issues are good for newcomers. Please discuss the solution for larger issues first and after the final solution is approved by the maintainers, you can submit/work on the PR. For small changes you can directly open a PR.
 
 Other ways to help:
 
@@ -56,13 +56,13 @@ Other ways to help:
 - Translation (currently unavailable)
 - Design icons and logos
 - Improve the UI
-- Write tests for MarkText
-- Share your thoughts! We want to hear about features you think are missing, any bugs you find, and why you :heart: MarkText.
+- Write tests for Folira
+- Share your thoughts! We want to hear about features you think are missing, any bugs you find, and why you :heart: Folira.
 
 ## Quick start
 
 1. Fork the repository.
-2. Clone your fork: `git clone git@github.com:<username>/marktext.git`
+2. Clone your fork: `git clone git@github.com:<username>/Folira.git`
 3. Create a feature branch: `git checkout -b feature`
 4. Make your changes and push your branch.
 5. Create a PR against `develop` and describe your changes.
@@ -77,7 +77,7 @@ If there are conflicts or you want to update your local branch, please do the fo
 
 ### Build Instructions
 
-🔗 [Build Instructions](https://marktext.me/docs/dev/build)
+🔗 [Build Instructions](https://github.com/829304/Folira/blob/develop/packages/website/content/docs/dev/BUILD.md)
 
 ### Style Guide
 
@@ -94,4 +94,4 @@ When writing comments, please follow our [Commenting Guidelines](./COMMENTING-GU
 
 ## Developer Documentation
 
-Please [click here](https://marktext.me/docs/dev/overview) for more details.
+Please [click here](https://github.com/829304/Folira/tree/develop/packages/website/content/docs/dev) for more details.

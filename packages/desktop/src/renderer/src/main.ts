@@ -170,4 +170,4 @@ async function start(): Promise<void> {
   markStartup('mounted')
 }
 
-start().catch((err) => console.error('[marktext] renderer init failed', err))
+start().catch((err) => console.error('[folira] renderer init failed', err))

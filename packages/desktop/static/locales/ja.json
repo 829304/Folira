@@ -91,22 +91,20 @@
       "askQuestion": "質問する",
       "reportBug": "バグを報告",
       "viewSource": "ソースコードを表示",
-      "followUs": "フォローする",
-      "support": "MarkTextを支援",
       "license": "ライセンス",
       "about": "について",
       "checkUpdates": "アップデートを確認"
     },
     "marktext": {
-      "title": "MarkText",
-      "about": "MarkTextについて",
+      "title": "Folira",
+      "about": "Foliraについて",
       "checkUpdates": "アップデートを確認...",
       "preferences": "環境設定",
       "services": "サービス",
-      "hide": "MarkTextを隠す",
+      "hide": "Foliraを隠す",
       "hideOthers": "他を隠す",
       "showAll": "すべて表示",
-      "quit": "MarkTextを終了"
+      "quit": "Foliraを終了"
     },
     "view": {
       "view": "表示",
@@ -352,7 +350,7 @@
   },
   "import": {
     "title": "インポートまたは開く",
-    "description": "ここにドラッグしてMarkTextにコンテンツをインポート"
+    "description": "ここにドラッグしてFoliraにコンテンツをインポート"
   },
   "preferences": {
     "title": "環境設定",
@@ -381,10 +379,10 @@
         "hideScrollbar": "スクロールバーを非表示にするかどうか",
         "wordWrapInToc": "目次で自動改行を有効にするかどうか",
         "fileSortBy": "開いたフォルダ内のファイルを作成時刻、変更時刻、タイトルで並べ替え",
-        "startUpAction": "MarkText起動後のアクション、最後に編集したコンテンツを開く、指定されたフォルダを開く、または空白ページ",
+        "startUpAction": "Folira起動後のアクション、最後に編集したコンテンツを開く、指定されたフォルダを開く、または空白ページ",
         "restoreLayoutState": "起動時に前回のエディター状態を復元",
         "defaultDirectoryToOpen": "startUp=folderの場合に起動時に開かれるデフォルトディレクトリ",
-        "language": "MarkTextが使用する言語",
+        "language": "Foliraが使用する言語",
         "editorFontFamily": "エディターのフォントファミリー",
         "fontSize": "フォントサイズ（ピクセル）",
         "lineHeight": "行の高さ",
@@ -408,7 +406,7 @@
         "preferLooseListItem": "優先されるリストタイプ",
         "bulletListMarker": "箇条書きリストで使用されるマーカー",
         "orderListDelimiter": "順序付きリストで使用される区切り文字",
-        "preferHeadingStyle": "MarkTextで優先される見出しスタイル",
+        "preferHeadingStyle": "Foliraで優先される見出しスタイル",
         "tabSize": "タブをx個のスペースに置き換える",
         "listIndentation": "リストのインデントを選択",
         "frontmatterType": "フロントマターのタイプ",
@@ -418,7 +416,7 @@
         "isGitlabCompatibilityEnabled": "GitLab互換モードを有効にする",
         "sequenceTheme": "シーケンス図のテーマ",
         "plantumlServer": "PlantUMLサーバーのURL",
-        "theme": "MarkTextで使用するテーマを選択",
+        "theme": "Foliraで使用するテーマを選択",
         "followSystemTheme": "システムのテーマに従う",
         "lightModeTheme": "システムがライトモードの時に使用するテーマ",
         "darkModeTheme": "システムがダークモードの時に使用するテーマ",
@@ -625,7 +623,7 @@
         "neverDetected": "検出されたことがない",
         "neverSuccessful": "成功したことがない"
       },
-      "defaultBehavior": "MarkTextに画像を貼り付けまたはドラッグした後のデフォルト動作"
+      "defaultBehavior": "Foliraに画像を貼り付けまたはドラッグした後のデフォルト動作"
     },
     "markdown": {
       "title": "Markdown",
@@ -738,12 +736,12 @@
     }
   },
   "about": {
-    "copyright": "著作権",
-    "copyrightContributors": "著作権貢献者"
+    "copyright": "Folira — MIT License",
+    "copyrightContributors": "Based on MarkText by Luo Ran and contributors"
   },
   "commands": {
     "mt": {
-      "hide": "MarkTextを隠す",
+      "hide": "Foliraを隠す",
       "hideOthers": "他を隠す"
     },
     "file": {
@@ -911,7 +909,7 @@
     "configSchemaViolation": "設定スキーマ違反",
     "copyError": "コピーエラー",
     "initializationFailed": "初期化に失敗",
-    "otherInstanceDetected": "MarkTextの別のインスタンスが既に実行中です",
+    "otherInstanceDetected": "Foliraの別のインスタンスが既に実行中です",
     "report": "報告",
     "startupError": "起動エラー",
     "terminatedDueToError": "エラーにより終了",

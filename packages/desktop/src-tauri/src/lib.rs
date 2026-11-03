@@ -140,5 +140,5 @@ pub fn run() {
             menu::dispatch_menu,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running MarkText");
+        .expect("error while running Folira");
 }

@@ -7,7 +7,7 @@
 // Menu-item ids encode their dispatch target as `<group>:<type>` (see
 // `dispatch`). Native roles (cut/copy/paste/quit/…) use Tauri's
 // PredefinedMenuItem and are localized by the OS; custom items and submenu
-// titles are localized from MarkText's bundled locale JSON via `i18n`.
+// titles are localized from Folira's bundled locale JSON via `i18n`.
 //
 // Not yet ported: keybinding-driven accelerators (defaults here), dynamic
 // recent-files/theme submenus, and per-selection checkmark state.
@@ -190,8 +190,6 @@ fn view_submenu<R: Runtime>(app: &AppHandle<R>, tr: &Translations) -> tauri::Res
         .item(&item(app, "images:reload", &tr.t("menu.view.reloadImages"), None)?)
         .item(&item(app, "palette:show", &tr.t("menu.view.commandPalette"), Some("CmdOrCtrl+Shift+P"))?)
         .item(&PredefinedMenuItem::separator(app)?)
-        .item(&item(app, "cmd:view.command-palette", &tr.t("menu.view.commandPalette"), Some("CmdOrCtrl+Shift+P"))?)
-        .item(&PredefinedMenuItem::separator(app)?)
         .item(&PredefinedMenuItem::fullscreen(app, None)?)
         .build()
 }
@@ -230,8 +228,6 @@ fn help_submenu<R: Runtime>(app: &AppHandle<R>, tr: &Translations) -> tauri::Res
         .item(&item(app, "cmd:docs.markdown-syntax", &tr.t("menu.help.markdownReference"), None)?)
         .item(&PredefinedMenuItem::separator(app)?)
         .item(&item(app, "cmd:help.changelog", &tr.t("menu.help.changelog"), None)?)
-        .item(&item(app, "cmd:help.follow-us", &tr.t("menu.help.followUs"), None)?)
-        .item(&item(app, "cmd:help.support", &tr.t("menu.help.support"), None)?)
         .item(&PredefinedMenuItem::separator(app)?)
         .item(&item(app, "cmd:help.ask-question", &tr.t("menu.help.askQuestion"), None)?)
         .item(&item(app, "cmd:help.report-bug", &tr.t("menu.help.reportBug"), None)?)

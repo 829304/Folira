@@ -1,237 +1,132 @@
-<p align="center"><img src="docs/assets/logo-small.png" alt="marktext-light" width="100" height="100"></p>
+<p align="center">
+  <img src="docs/assets/logo-small.png" width="96" height="96" alt="Folira">
+</p>
 
-<h1 align="center">marktext-light</h1>
+<h1 align="center">Folira</h1>
 
-<div align="center">
-  <strong>:high_brightness: MarkText, rebuilt on Tauri :crescent_moon:</strong><br>
-  The same WYSIWYG markdown editor in a shell that ships in megabytes, not hundreds of them.<br>
-  <sub>Available for Linux, macOS and Windows.</sub>
-</div>
+<p align="center"><strong>轻量、克制的跨平台 Markdown 编辑器</strong><br>
+所见即所得，让注意力留在文字上。</p>
 
-<br>
+<p align="center">
+  <strong>简体中文</strong> · <a href="README.en.md">English</a>
+</p>
 
-<div align="center">
-  <a href="https://github.com/SugarFatFree/marktext-light/releases/latest">
-    <img src="https://img.shields.io/github/v/release/SugarFatFree/marktext-light?label=release&style=for-the-badge" alt="latest release">
-  </a>
-  <a href="https://github.com/SugarFatFree/marktext-light/releases">
-    <img src="https://img.shields.io/github/downloads/SugarFatFree/marktext-light/total.svg?style=for-the-badge" alt="total downloads">
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/SugarFatFree/marktext-light.svg?style=for-the-badge" alt="LICENSE">
-  </a>
-</div>
+<p align="center">
+  <a href="https://github.com/829304/Folira/releases/latest"><img src="https://img.shields.io/github/v/release/829304/Folira?label=release&style=for-the-badge" alt="release"></a>
+  <a href="https://github.com/829304/Folira/releases"><img src="https://img.shields.io/github/downloads/829304/Folira/total.svg?style=for-the-badge" alt="downloads"></a>
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="MIT">
+  <img src="https://img.shields.io/static/v1.svg?label=Platform&message=Windows%20%7C%20macOS%20%7C%20Linux&style=for-the-badge" alt="platform">
+</p>
 
-<br>
+## 简介
 
-> **This is a fork.** [MarkText](https://github.com/marktext/marktext) is the original,
-> by [Jocs](https://github.com/Jocs) and its contributors, and everything good about
-> the editing experience is theirs. marktext-light replaces the Electron shell with
-> [Tauri 2](https://tauri.app) and keeps the Vue 3 renderer, so what changes is what
-> the app costs to start and to install — not how it edits. Upstream is the place to
-> go for the project itself, its docs and its sponsors.
+Folira 是一个开源的桌面 Markdown 编辑器：一边写，看到的就已经是最终排版——没有预览窗口，也没有来回切换。
 
-<div align="center">
-  <sub>Translations (of the upstream MarkText README):</sub>
-  <a href="docs/i18n/README-zh_cn.md#readme">
-    <span>:cn:</span>
-  </a>
-  <a href="docs/i18n/README-zh_tw.md#readme">
-    <span>:taiwan:</span>
-  </a>
-  <a href="docs/i18n/README-jp.md#readme">
-    <span>:jp:</span>
-  </a>
-  <a href="docs/i18n/README-fr.md#readme">
-    <span>:fr:</span>
-  </a>
-  <a href="docs/i18n/README-de.md#readme">
-    <span>:de:</span>
-  </a>
-  <a href="docs/i18n/README-ar.md#readme">
-    <span>:saudi_arabia:</span>
-  </a>
-  <a href="docs/i18n/README-tr.md#readme">
-    <span>:tr:</span>
-  </a>
-  <a href="docs/i18n/README-es.md#readme">
-    <span>:es:</span>
-  </a>
-  <a href="docs/i18n/README-pt.md#readme">
-    <span>:portugal:</span>
-  </a>
-  <a href="docs/i18n/README-kr.md#readme">
-    <span>:kr:</span>
-  </a>
-  <a href="docs/i18n/README-bn.md#readme">
-    <span>:bangladesh:</span>
-  </a>
-</div>
+它由 **Tauri 2 + Rust + Vue 3** 构建，编辑器内核继承自 MarkText 的 Muya 引擎，外壳使用系统自带的 WebView 而不是打包一整份浏览器内核，因此安装包只有几 MB，启动更快，内存占用也更低。
 
-<div align="center">
-  <sub>This Markdown editor that could. Built with ❤︎ by
-    <a href="https://github.com/Jocs">Jocs</a> and
-    <a href="https://github.com/marktext/marktext/graphs/contributors">
-      contributors
-    </a>
-    .
-  </sub>
-</div>
+## 截图
 
-<br />
+> 界面截图会在品牌与主题改造完成后补上。
 
-## Screenshot
+## 功能
 
-![](docs/assets/marktext.png?raw=true)
+- **所见即所得**：编辑区就是成品，标题、列表、表格、公式在光标处实时成形
+- **标准完整**：支持 [CommonMark](https://spec.commonmark.org) 与 [GitHub Flavored Markdown](https://github.github.com/gfm/)，并选择性支持 [Pandoc Markdown](https://pandoc.org/MANUAL.html#pandocs-markdown)
+- **扩展语法**：数学公式（KaTeX）、Mermaid 图、PlantUML 时序图与流程图、表格、任务列表、前置元数据（front matter）、emoji
+- **三种写作模式**：源代码模式、打字机模式、专注模式
+- **导出**：HTML 与 PDF
+- **粘贴即插图**：从剪贴板粘贴或直接拖拽图片插入
+- **文件管理**：多标签、侧栏文件树、目录（TOC）面板、全文搜索
+- **主题**：内置 30 余套主题，深浅色跟随系统
+- **十种界面语言**：de、en、es、fr、ja、ko、pt、tr、zh-CN、zh-TW
 
-## Features
+## 主题
 
-- Realtime preview (WYSIWYG) and a clean and simple interface to get a distraction-free writing experience.
-- Support [CommonMark Spec](https://spec.commonmark.org), [GitHub Flavored Markdown Spec](https://github.github.com/gfm/) and selective support [Pandoc markdown](https://pandoc.org/MANUAL.html#pandocs-markdown).
-- Markdown extensions such as math expressions (KaTeX), front matter and emojis.
-- Support paragraphs and inline style shortcuts to improve your writing efficiency.
-- Output **HTML** and **PDF** files.
-- Various [themes](https://marktext.me/docs/themes): **Cadmium Light**, **Material Dark** etc.
-- Various editing modes: **Source Code mode**, **Typewriter mode**, **Focus mode**.
-- Paste images directly from clipboard.
+主题系统正在重做，目标是把两条轴拆开、任意组合：
 
-## What the fork changes
+- **应用界面主题**：标题栏、侧栏、标签页、菜单、设置页的观感
+- **Markdown 排版主题**：字体、行距、标题层级、引用、代码块、表格、链接的排版
 
-Everything below is measured on this repository's own builds, not estimated.
+首批计划提供 Folira Default、GitHub、Typora GitBook、Claude、Bear、Notion、iA Writer、Linear、Paper（羊皮纸）、OLED Black 共 10 套排版主题；界面主题与代码高亮主题各自独立选择，也可以跟随系统自动切换深色与浅色。
 
-- **A ~6.7 MB Windows installer**, because a Tauri app links the system WebView
-  instead of bundling a browser. Linux, macOS and Windows installers are built by
-  CI on every release — see the [releases](https://github.com/SugarFatFree/marktext-light/releases).
-- **Something on screen in the document's first frame.** A Tauri window is a WebView
-  and nothing else, so there is no native surface to draw a loading screen on while
-  the WebView starts. The loading screen is therefore written into the document
-  itself — no script, no stylesheet, no image — and paints as early as anything can.
-- **Startup you can read.** Every phase from process start to the first document on
-  screen is timed and written to `startup.log` in the app's log directory, shell and
-  renderer halves in one file. Optimisation work here is held to that trace.
-- **Large documents.** Two quadratics in the parser and the event table, plus layout
-  thrashing in code-block line numbers, are gone: a 68 KB code-heavy document went
-  from 3007 ms to 675 ms to open.
-- **One window, many tabs.** Opening a second file — from the CLI, a file association,
-  or the dock — focuses the running window and adds a tab instead of starting another
-  process.
-- **Ten UI languages** (de, en, es, fr, ja, ko, pt, tr, zh-CN, zh-TW), with a test that
-  fails the build on an untranslated string or a missing key.
-- **Dark mode** follows the OS by default and remembers an explicit choice across
-  restarts, including the frame before any stylesheet has loaded.
+## 下载安装
 
-## How it compares
-
-Two tables, because the three projects are not knowable to the same depth.
-Everything in the first column of both tables was measured in this repository.
-The MarkText column comes from reading its source, which is the same codebase
-this was forked from. The Typora column comes from typora.io and store.typora.io,
-checked on 2026-09-01 — Typora is a commercial product with no public source, so
-nothing about its internals is claimed here.
-
-| | marktext-light | MarkText | Typora |
-|---|---|---|---|
-| Licence | MIT | MIT | Proprietary, no public source |
-| Price | Free | Free | US$14.99 without tax, 15-day trial, up to 3 devices |
-| Shell | Tauri 2 — links the system WebView | Electron 42 — ships its own Chromium | Not stated by the vendor |
-| Windows installer | **6 MB** | Not measured here | Not published |
-| Other installers | deb/rpm 8 MB, dmg 7 MB, AppImage 82 MB | Not measured here | Not published |
-| Builds published for | Linux x64, Windows x64, macOS x64 + arm64 | The same, plus Windows arm64 | macOS, Windows 64-bit/32-bit/ARM, Linux |
-| Interface languages | 10 | 10 | Not stated by the vendor |
-
-The AppImage is the outlier for a reason: it carries the GTK and WebKit
-libraries the other Linux packages take from the distribution. Size is the one
-axis where linking the system WebView shows up plainly, and it is not a claim
-about speed — see the note under **What the fork changes**.
-
-### Against the MarkText it was forked from
-
-Both directions. The features below are absent from this build because the
-Electron main process implemented them and nothing here has replaced it yet;
-they are tracked, not forgotten.
-
-| | marktext-light | MarkText |
-|---|---|---|
-| Opening several files | Tabs in one window, always | Tabs by default; a preference can open new windows instead |
-| Tabs restored on relaunch | No — deliberate; the recent-files drawer is what survives | Yes |
-| Saving | Atomic: written to a temp file, flushed, then renamed | Atomic (`write-file-atomic`) |
-| Legacy encodings | GBK, Big5, EUC-KR, Shift_JIS, UTF-16, and a byte-order mark stripped on read | The same, via `ced` + `iconv-lite` |
-| Window size and position | Remembered, and only restored onto a display that still exists | The same, via `electron-window-state` |
-| **Auto-update** | **No** — and absent from every menu rather than present and dead | Yes |
-| **Custom keybindings** | **No** — the list is shown, the editing controls are disabled and say why | Yes |
-| **Uploading images to a host** | **No** — the attempt fails with a message and the image is saved beside the document | Yes, through the PicGo CLI or a script of your own |
-| **Spell-check dictionaries** | **No** — spelling is the system WebView's, with no dictionary list and no custom words | Chromium's spell checker, with a dictionary list and a custom word list |
-
-## Version
-
-| Version | Date | Notes |
-|---|---|---|
-| [1.0.2](https://github.com/SugarFatFree/marktext-light/releases/tag/v1.0.2) | 2026-09-02 | A markdown link to a script or installer is refused rather than handed to the OS. Links open again at all — an external URL in the browser, a markdown file as another tab. Open File keeps a document's encoding and line ending. Files named on the command line all open, and no longer hold up the first frame. Find Next and Find Previous work. |
-| [1.0.1](https://github.com/SugarFatFree/marktext-light/releases/tag/v1.0.1) | 2026-09-01 | Documents no longer lose a heading to a byte-order mark, or fail to open because they are GBK. Saves are atomic. A preference changed in the settings window reaches the editor. The window remembers where it was. |
-| [1.0.0](https://github.com/SugarFatFree/marktext-light/releases/tag/v1.0.0) | 2026-08-31 | First tagged release of the Tauri shell. Loading screen on first paint; startup, large-document and memory work from the migration. |
-
-## Download and Installation
-
-![platform](https://img.shields.io/static/v1.svg?label=Platform&message=Linux%20x64%20|%20macOS%20x64%2Farm64%20|%20Windows%20x64&style=for-the-badge)
-
-Grab an installer from the [latest release](https://github.com/SugarFatFree/marktext-light/releases/latest).
-Release assets are the bare installer files — GitHub does not wrap them in a zip the
-way it does workflow artifacts.
-
-Each platform links the system WebView rather than bundling one, which is where
-most of the size saving comes from — and it is also the one thing to have on the
-machine before installing.
+安装包见 [最新版本](https://github.com/829304/Folira/releases/latest)。每个平台都链接系统 WebView，而不是把浏览器内核打进去——这是体积小的主要原因，也是安装前唯一需要留意的依赖。
 
 #### Windows
 
-An NSIS installer (`.exe`) for x64. It needs the Microsoft Edge **WebView2** runtime,
-which ships with Windows 11 and is installed by the setup wizard on Windows 10 if it
-is missing. No arm64 build is published yet.
+x64 的 NSIS 安装包（`.exe`）。需要 Microsoft Edge **WebView2** 运行时：Windows 11 自带，Windows 10 缺失时安装程序会引导安装。
 
 #### macOS
 
-A `.dmg` each for **arm64** and **x64** — no universal build, so pick the one matching
-your machine. The WebView (WKWebView) is part of the OS; nothing else to install.
+arm64 与 x64 各一个 `.dmg`，没有通用包，请按机型选择。WebView（WKWebView）属于系统，无需另装。
 
-The app is **not code-signed or notarised**, so Gatekeeper will refuse it on first
-open: right-click the app and choose *Open*, or clear the quarantine attribute with
-`xattr -dr com.apple.quarantine /Applications/marktext-light.app`.
+应用目前**未做代码签名与公证**，首次打开会被 Gatekeeper 拦下：右键点击应用 → 选择“打开”，或执行
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Folira.app
+```
 
 #### Linux
 
-An `.AppImage`, a `.deb` and an `.rpm` for x64. All three need **webkit2gtk 4.1** and
-GTK 3 from your distribution — the same stack CI installs to build them:
+提供 `.AppImage`、`.deb` 与 `.rpm`（x64）。三者都需要发行版提供 **webkit2gtk 4.1** 与 GTK 3：
 
 ```bash
 # Debian / Ubuntu
 sudo apt install libwebkit2gtk-4.1-0 libgtk-3-0 libayatana-appindicator3-1
 ```
 
-#### Other
+## 与上游的关系
 
-If a build for your platform is missing or fails to start, please open an
-[issue](https://github.com/SugarFatFree/marktext-light/issues) on this repository —
-not on upstream MarkText, which does not ship these builds.
+Folira 不是从零写起的编辑器，它站在 MarkText 的肩膀上：
 
-## Development
+```
+MarkText（Electron，原作者 Jocs 与贡献者）
+   └── marktext-light（Tauri 重制外壳）
+          └── Folira（品牌、界面与主题）
+```
 
-If you wish to build marktext-light yourself, start from [CLAUDE.md](CLAUDE.md) for the repository layout and commands, and the upstream [build instructions](https://marktext.me/docs/dev/build) for the platform prerequisites. Note that release installers are built by CI, not locally.
+- 编辑器内核 [Muya](https://github.com/marktext/muya) 与大部分界面代码来自 [MarkText](https://github.com/marktext/marktext)，遵循 MIT 协议
+- 外壳来自 [marktext-light](https://github.com/SugarFatFree/marktext-light)
+- Folira 在此基础上做的是：品牌与图标、界面视觉、主题系统，以及后续的图片上传与自动更新
 
-- [User documentation](https://marktext.me/docs/introduction)
-- [Developer documentation](https://marktext.me/docs/dev/overview)
+编辑器本身的能力——语法解析、排版、导入导出——以上游为准，Folira 不做重复实现；上游的改进会有选择地同步。
 
-Questions and bugs about **this fork** belong in [its issue tracker](https://github.com/SugarFatFree/marktext-light/issues); questions about the editor itself are better asked [upstream](https://github.com/marktext/marktext/issues). PRs are welcome either way.
+## 开发
 
-## Contribution
+前置环境：
 
-Please read the [Contributing Guide](.github/CONTRIBUTING.md) before opening a pull request. Day-to-day work lands on `develop`; `main` carries the released versions and is where tags are cut from.
+- Node.js **>= 20.19**（CI 使用 Node 22）
+- pnpm **10.33.4**（由根 `package.json` 的 `packageManager` 固定，可用 `corepack` 启用）
+- Rust **stable**，以及平台的 C 工具链：Windows 用 MSVC，macOS 用 Xcode Command Line Tools，Linux 用发行版的 GTK/WebKitGTK 依赖
+- Windows 另需 WebView2 运行时
 
-## Contributors
+```bash
+pnpm install                        # 安装依赖
+pnpm --filter folira tauri:dev      # 开发模式：前端热更新 + Rust 增量编译
+pnpm --filter folira tauri:build    # 打包当前平台
+pnpm --filter folira test:unit      # 单元测试
+pnpm --filter folira typecheck      # 类型检查
+pnpm lint                           # ESLint
+```
 
-This fork stands on the work of everyone who has contributed to [MarkText](https://github.com/marktext/marktext/graphs/contributors).
+仓库结构、模块边界与更细的开发约定见 [CLAUDE.md](CLAUDE.md)；需求与设计记录见 [docs/](docs)。
 
-<a href="https://github.com/marktext/marktext/graphs/contributors"><img src="https://opencollective.com/marktext/contributors.svg?width=890" /></a>
+## 路线图
 
-## License
+- [x] 移除 Electron 主进程与构建工具链，只保留 Tauri 外壳
+- [x] 修复迁移遗留的构建、类型与单元测试问题
+- [ ] 品牌改造：名称、图标、窗口标题、安装包标识
+- [ ] 主题系统：界面主题与 Markdown 排版主题双轴解耦
+- [ ] 10 套 Markdown 排版主题
+- [ ] 图片上传（PicGo / 自定义脚本）
+- [ ] 自动更新
+- [ ] Windows、macOS、Linux 三平台发布流水线
 
-[**MIT**](LICENSE), the same as upstream MarkText.
+## 贡献
+
+提交 PR 前请先读 [贡献指南](.github/CONTRIBUTING.md)。日常开发在 `develop` 分支，发版时才合并到 `main`。
+
+## 许可
+
+[MIT](LICENSE)。原始版权归 Luo Ran（Jocs）与 MarkText Contributors 所有；Tauri 外壳部分归 marktext-light 作者所有。

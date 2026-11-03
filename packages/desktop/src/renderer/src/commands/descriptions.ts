@@ -173,7 +173,6 @@ const COMMAND_KEY_MAP: Record<string, string> = {
   'view.focus-mode': 'commands.view.focusMode',
 
   // View features
-  'view.command-palette': 'commands.view.commandPalette',
   'view.actual-size': 'commands.view.actualSize',
   'view.text-direction': 'commands.view.textDirection',
 
@@ -217,8 +216,6 @@ const COMMAND_KEY_MAP: Record<string, string> = {
   // the palette wants — inventing a parallel set would mean ten translations
   // per entry that say the same thing and can drift apart.
   'help.changelog': 'menu.help.changelog',
-  'help.follow-us': 'menu.help.followUs',
-  'help.support': 'menu.help.support',
   'help.ask-question': 'menu.help.askQuestion',
   'help.report-bug': 'menu.help.reportBug',
   'help.view-source': 'menu.help.viewSource',

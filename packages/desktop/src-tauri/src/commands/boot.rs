@@ -38,7 +38,7 @@ pub struct BootInfo {
 }
 
 /// Scan the process arguments for a readable file to open on launch (CLI use:
-/// `marktext-light path/to/file.md`, and Windows/Linux file associations, which
+/// `folira path/to/file.md`, and Windows/Linux file associations, which
 /// also pass the path as an argument).
 fn initial_paths_from_args() -> Vec<String> {
     paths_from_args(std::env::args().skip(1))
@@ -158,7 +158,7 @@ mod tests {
 
     fn temp_path(label: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
-            "marktext-light-boot-{label}-{}",
+            "folira-boot-{label}-{}",
             std::process::id()
         ))
     }

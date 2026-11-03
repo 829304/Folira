@@ -47,7 +47,7 @@ export const openSettingsWindow = async(
 
   const settings = new WebviewWindow(SETTINGS_LABEL, {
     url: `index.html?${params.toString()}`,
-    title: 'MarkText',
+    title: 'Folira',
     width: 950,
     height: 650,
     minWidth: 800,

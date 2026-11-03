@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "marktext-light",
-  "version": "1.0.2",
-  "identifier": "me.marktext.desktop",
+  "productName": "Folira",
+  "version": "0.1.0",
+  "identifier": "com.folira.app",
   "build": {
     "beforeDevCommand": "pnpm run tauri:dev-renderer",
     "devUrl": "http://localhost:5174",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "marktext-light",
+        "title": "Folira",
         "width": 1200,
         "height": 800,
         "minWidth": 550,
@@ -41,8 +41,8 @@
       "icons/icon.ico"
     ],
     "category": "Productivity",
-    "shortDescription": "Next generation markdown editor",
-    "longDescription": "A simple and elegant open-source markdown editor that focuses on speed and usability.",
+    "shortDescription": "A lightweight, cross-platform WYSIWYG Markdown editor",
+    "longDescription": "Folira is a minimal, elegant Markdown editor built on Tauri 2 with the Muya engine. It keeps MarkText's WYSIWYG editing and focuses on a small install, fast startup and careful typography.",
     "fileAssociations": [
       {
         "ext": ["md", "markdown", "mdown", "mkd", "mkdn", "mdwn", "mdtxt", "mdtext", "text", "txt"],

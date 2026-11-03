@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="484" height="572" viewBox="270 226 484 572" role="img" aria-labelledby="title">
+  <title id="title">Folira F. mark</title>
+  <!-- Same geometry as Folira-icon.svg, cropped to the mark and drawn in
+       currentColor so it follows the text colour it sits next to — on a light
+       title bar and a dark one alike. -->
+  <g transform="translate(512 512) scale(1.2) translate(-515.5 -529)">
+    <path fill="currentColor" d="M338 308H654Q661 308 661 315V387Q661 394 654 394H435V489H617Q624 489 624 496V568Q624 575 617 575H435V743Q435 750 428 750H338Q331 750 331 743V315Q331 308 338 308Z"/>
+    <circle cx="650" cy="700" r="50" fill="currentColor"/>
+  </g>
+</svg>

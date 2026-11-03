@@ -1,4 +1,4 @@
-// Menu localization. Loads MarkText's bundled locale JSON (static/locales,
+// Menu localization. Loads Folira's bundled locale JSON (static/locales,
 // shipped as a Tauri resource under `locales/`) for the OS UI language and looks
 // up dotted keys like `menu.edit.undo`, mirroring the renderer's `t()` helper.
 //

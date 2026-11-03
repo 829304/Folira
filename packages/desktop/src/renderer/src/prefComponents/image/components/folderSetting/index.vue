@@ -28,7 +28,7 @@
       <template #head>
         <bool
           :description="t('preferences.image.folderSetting.preferRelative')"
-          more="https://marktext.me/docs/images"
+          more="https://github.com/829304/Folira/blob/develop/packages/website/content/docs/end-user/IMAGES.md"
           :bool="imagePreferRelativeDirectory"
           :on-change="(value) => onSelectChange('imagePreferRelativeDirectory', value)"
         />

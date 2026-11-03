@@ -10,7 +10,7 @@ export const useMainStore = defineStore('main', () => {
   const appVersion = ref<string>(window.electron.process.env.MARKTEXT_VERSION_STRING ?? '')
   // Whether current window is active or focused
   const windowActive = ref(true)
-  // Whether MarkText is initialized
+  // Whether the app is initialized
   const init = ref(false)
 
   function SET_WIN_STATUS(status: boolean): void {

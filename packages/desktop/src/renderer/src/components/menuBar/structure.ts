@@ -118,8 +118,7 @@ export const MENU_STRUCTURE: MenuBarSection[] = [
       { id: 'viewlayout:showTabBar', labelKey: 'menu.view.toggleTabbar' },
       { id: 'viewlayout:toc', labelKey: 'menu.view.toggleTableOfContents' },
       { id: 'images:reload', labelKey: 'menu.view.reloadImages' },
-      { id: 'palette:show', labelKey: 'menu.view.commandPalette', accel: `${mod}+Shift+P` },
-      { id: 'cmd:view.command-palette', labelKey: 'menu.view.commandPalette', accel: `${mod}+Shift+P`, divided: true }
+      { id: 'palette:show', labelKey: 'menu.view.commandPalette', accel: `${mod}+Shift+P`, divided: true }
     ]
   },
   {
@@ -151,8 +150,6 @@ export const MENU_STRUCTURE: MenuBarSection[] = [
     items: [
       { id: 'cmd:docs.markdown-syntax', labelKey: 'menu.help.markdownReference' },
       { id: 'cmd:help.changelog', labelKey: 'menu.help.changelog', divided: true },
-      { id: 'cmd:help.follow-us', labelKey: 'menu.help.followUs' },
-      { id: 'cmd:help.support', labelKey: 'menu.help.support' },
       { id: 'cmd:help.ask-question', labelKey: 'menu.help.askQuestion', divided: true },
       { id: 'cmd:help.report-bug', labelKey: 'menu.help.reportBug' },
       { id: 'cmd:help.view-source', labelKey: 'menu.help.viewSource' },

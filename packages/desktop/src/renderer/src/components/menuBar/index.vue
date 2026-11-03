@@ -249,7 +249,7 @@ onMounted(() => {
 </style>
 
 <!-- Dropdown menus teleport to <body>; their styles must be global and pull
-     from the MarkText theme variables (defined on :root) so they follow the
+     from the Folira theme variables (defined on :root) so they follow the
      active theme instead of Element Plus's default white. -->
 <style>
 .tauri-menu-dropdown.el-popper,

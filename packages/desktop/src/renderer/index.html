@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>MarkText</title>
+    <title>Folira</title>
     <!--
       The page is on screen for half a second before the app's stylesheet
       arrives — long enough to see. Without this it is painted white, which in
@@ -73,13 +73,14 @@
         carries the sense of motion.
       */
       #splash svg {
-        width: 104px;
+        /* The mark is 484:572, so 84px wide paints about 99px tall. */
+        width: 84px;
         height: auto;
         color: rgba(0, 0, 0, 0.24);
       }
       #splash .splash-bar {
         position: relative;
-        width: 104px;
+        width: 84px;
         height: 2px;
         overflow: hidden;
         border-radius: 2px;
@@ -138,23 +139,18 @@
   <body>
     <div id="app"></div>
     <div id="splash">
-      <!-- The markdown mark, inline: a file reference here would be one more
-           round trip in front of the frame this exists to bring forward. -->
-      <svg viewBox="0 0 208 128" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect
-          x="5"
-          y="5"
-          width="198"
-          height="118"
-          rx="10"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="10"
-        />
-        <path
-          fill="currentColor"
-          d="M30 98V30h20l20 25 20-25h20v68H90V59L70 84 50 59v39zm125 0l-30-33h20V30h20v35h20z"
-        />
+      <!-- The brand mark, inline: a file reference here would be one more
+           round trip in front of the frame this exists to bring forward.
+           Same geometry as docs/Folira-mark.svg, drawn in currentColor so the
+           dark-mode rule above can lift it off the dark canvas. -->
+      <svg viewBox="270 226 484 572" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g transform="translate(512 512) scale(1.2) translate(-515.5 -529)">
+          <path
+            fill="currentColor"
+            d="M338 308H654Q661 308 661 315V387Q661 394 654 394H435V489H617Q624 489 624 496V568Q624 575 617 575H435V743Q435 750 428 750H338Q331 750 331 743V315Q331 308 338 308Z"
+          />
+          <circle cx="650" cy="700" r="50" fill="currentColor" />
+        </g>
       </svg>
       <div class="splash-bar"><i></i></div>
     </div>
