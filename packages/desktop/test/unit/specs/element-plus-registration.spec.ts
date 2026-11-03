@@ -15,7 +15,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'fs'
-import { join, resolve, relative } from 'path'
+import { join, resolve, relative, sep } from 'path'
 
 const RENDERER = resolve(__dirname, '../../../src/renderer/src')
 
@@ -39,8 +39,16 @@ const toPascal = (tag: string): string =>
 const tagsIn = (source: string): Set<string> =>
   new Set([...source.matchAll(/<(el-[a-z0-9-]+)/g)].map((m) => m[1] as string))
 
-const isSettingsTree = (path: string): boolean =>
-  path.includes('/prefComponents/') || path.endsWith('/pages/preference.vue')
+/** Paths come out of `join` with the host separator; the checks below are
+ *  written with `/` so they read the same on every platform. */
+const toPosix = (path: string): string => path.split(sep).join('/')
+
+const isSettingsTree = (path: string): boolean => {
+  const normalized = toPosix(path)
+  return (
+    normalized.includes('/prefComponents/') || normalized.endsWith('/pages/preference.vue')
+  )
+}
 
 const registeredIn = (file: string, listName: string): Set<string> => {
   const source = readFileSync(resolve(RENDERER, file), 'utf-8')

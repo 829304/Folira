@@ -22,7 +22,12 @@ const markupOnly = html.replace(/<!--[\s\S]*?-->/g, '')
 const splashMarkup = (): string => {
   const start = html.indexOf('<div id="splash">')
   expect(start, 'the splash element is gone from index.html').toBeGreaterThan(-1)
-  const end = html.indexOf('</div>\n    <script', start)
+  // Anchored on the document's own script rather than on a line break: the
+  // checkout's line endings differ per platform, and a hardcoded `\n` made this
+  // pass on Linux and fail on Windows.
+  const scriptAt = html.indexOf('<script', start)
+  expect(scriptAt, 'the document script is gone from index.html').toBeGreaterThan(start)
+  const end = html.lastIndexOf('</div>', scriptAt)
   expect(end, 'could not find the end of the splash element').toBeGreaterThan(start)
   return html.slice(start, end)
 }

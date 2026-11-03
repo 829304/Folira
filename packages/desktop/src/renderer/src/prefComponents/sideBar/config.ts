@@ -8,7 +8,7 @@ import {
   Operation as KeyBindingIcon
 } from '@element-plus/icons-vue'
 
-import preferences from '../../../../main/preferences/schema.json'
+import preferences from '@shared/preferences-schema.json'
 import { t } from '../../i18n'
 
 interface PrefCategory {

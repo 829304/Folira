@@ -17,7 +17,7 @@
  *   3. Wire the caller via the typed preload bridge in src/preload/index.ts.
  */
 
-import type { IKeyboardLayoutInfo, IKeyboardMapping } from 'native-keymap'
+import type { IKeyboardLayoutInfo, IKeyboardMapping } from './keyboard'
 import type {
   MarkdownDocument,
   TabOptions,
@@ -296,8 +296,8 @@ export interface IpcMainEventChannels {
 
 /**
  * Snapshot of the active OS keyboard layout, returned by
- * `mt::keybinding-get-keyboard-info`. Mirrors the runtime shape produced
- * by `native-keymap` (see `src/main/keyboard/index.ts#getKeyboardInfo`).
+ * `mt::keybinding-get-keyboard-info`. The shapes live in `./keyboard` — they
+ * outlived the `native-keymap` dependency that originally published them.
  */
 export interface KeyboardInfo {
   layout: IKeyboardLayoutInfo

@@ -27,13 +27,16 @@ beforeEach(() => {
 })
 
 describe('moveImageToFolder relative-directory persistence', () => {
-  const docPath = '/tmp/notes/a.md'
-  const assetsDir = '/tmp/notes/assets'
+  // Absolute on every host: `path.resolve` turns these into `E:\tmp\…` on
+  // Windows, which is what lets the implementation's `resolve`/`join` produce
+  // the same paths the assertions below expect.
+  const docPath = path.resolve('/tmp/notes/a.md')
+  const assetsDir = path.resolve('/tmp/notes/assets')
 
   it('returns a relative path for a binary File when isRelative is set', async() => {
     const file = new File([new Uint8Array([1, 2, 3])], 'pic.png', { type: 'image/png' })
     const result = await moveImageToFolder(docPath, file, assetsDir, true, docPath)
-    expect(result.startsWith('assets/')).toBe(true)
+    expect(result.startsWith(`assets${path.sep}`)).toBe(true)
     expect(path.isAbsolute(result)).toBe(false)
   })
 
@@ -45,7 +48,7 @@ describe('moveImageToFolder relative-directory persistence', () => {
     expect(copy.mock.calls[0][1].startsWith(assetsDir)).toBe(true)
     // ...and the inserted reference must be the portable relative path.
     expect(path.isAbsolute(result)).toBe(false)
-    expect(result.startsWith('assets/')).toBe(true)
+    expect(result.startsWith(`assets${path.sep}`)).toBe(true)
   })
 
   it('returns the absolute hashed path for a local path string when isRelative is false', async() => {
@@ -76,7 +79,7 @@ describe('moveImageToFolder relative-directory persistence', () => {
     const result = await moveImageToFolder(docPath, inPlace, assetsDir, true, docPath)
     expect(copy).not.toHaveBeenCalled()
     expect(path.isAbsolute(result)).toBe(false)
-    expect(result.startsWith('assets/')).toBe(true)
+    expect(result.startsWith(`assets${path.sep}`)).toBe(true)
   })
 
   // Item 114: editor.vue imageInsertAction='path'. The string-path branch
@@ -103,7 +106,7 @@ describe('moveImageToFolder relative-directory persistence', () => {
     expect(((writeFile.mock.calls[0] as unknown[])[0] as string).startsWith(assetsDir)).toBe(true)
     // ...and the inserted reference is the portable relative path.
     expect(path.isAbsolute(result)).toBe(false)
-    expect(result.startsWith('assets/')).toBe(true)
+    expect(result.startsWith(`assets${path.sep}`)).toBe(true)
     expect(result.endsWith('pasted.png')).toBe(true)
   })
 

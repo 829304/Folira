@@ -11,7 +11,7 @@
 // bundles a second editor into the app, with nothing to object.
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync, statSync } from 'fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs'
 import { join, resolve, relative } from 'path'
 
 const DESKTOP = resolve(__dirname, '../../..')
@@ -41,17 +41,21 @@ describe('the retired muya engine', () => {
   })
 
   it('has no alias left to reach it through', () => {
-    for (const config of [
-      'electron.vite.config.ts',
-      'vite.tauri.config.ts',
-      'vitest.config.ts',
-      'tsconfig.base.json'
-    ]) {
+    for (const config of ['vite.tauri.config.ts', 'vitest.config.ts', 'tsconfig.base.json']) {
       const source = readFileSync(join(DESKTOP, config), 'utf-8')
 
       // `../muyajs` is the retired package's path. Matching bare "muyajs"
       // would also hit `@muyajs/core`, which is the engine in use.
       expect(source, `${config} still aliases the retired engine`).not.toMatch(/\.\.\/muyajs/)
+    }
+  })
+
+  it('has no Electron build config to reach it through', () => {
+    // The alias used to live in `electron.vite.config.ts`. It is deleted along
+    // with the rest of the Electron tooling; if either file reappears, the
+    // retired engine has a build path back into the bundle again.
+    for (const removed of ['electron.vite.config.ts', 'electron-builder.yml']) {
+      expect(existsSync(join(DESKTOP, removed)), `${removed} is back`).toBe(false)
     }
   })
 

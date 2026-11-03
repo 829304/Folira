@@ -15,8 +15,7 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src/renderer/src'),
       common: resolve(__dirname, 'src/common'),
-      '@shared': resolve(__dirname, 'src/shared'),
-      main_renderer: resolve(__dirname, 'src/main')
+      '@shared': resolve(__dirname, 'src/shared')
     },
     extensions: ['.mjs', '.ts', '.js', '.json']
   }

@@ -12,11 +12,8 @@
     "src/types/**/*.d.ts",
     "src/shared/**/*.ts",
     "src/common/**/*.ts",
-    "src/main/**/*.ts",
-    "src/preload/**/*.ts",
     "src/renderer/**/*.ts",
     "test/**/*.ts",
-    "electron.vite.config.ts",
     "vitest.config.ts"
   ],
   "exclude": [

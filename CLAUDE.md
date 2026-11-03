@@ -195,7 +195,6 @@ All platform build scripts automatically run `minify-locales` and `electron-rebu
 ```bash
 pnpm run test          # All unit tests (Vitest)
 pnpm run test:unit     # Unit tests only
-pnpm run test:e2e      # End-to-end tests (Playwright)
 pnpm run lint          # ESLint (run before committing; CI enforces)
 pnpm run typecheck     # vue-tsc --noEmit (CI enforces)
 
@@ -203,11 +202,11 @@ pnpm run typecheck     # vue-tsc --noEmit (CI enforces)
 # pnpm resolves the spec path inside the desktop package's vitest config.
 pnpm -C packages/desktop exec vitest run test/unit/specs/markdown-basic.spec.ts
 pnpm -C packages/desktop exec vitest run -t 'partial test name'
-
-# Single Playwright spec (playwright.config.ts lives in test/e2e/)
-pnpm -C packages/desktop exec playwright test test/e2e/launch.spec.ts
-pnpm -C packages/desktop exec playwright test -g 'partial test name'
 ```
+
+The Electron Playwright suite (`test/e2e/`) was removed with the Electron main
+process; it drove `electron.launch()` and cannot run under the Tauri shell. A
+Tauri-side end-to-end suite has not been added yet.
 
 ## Code Style
 

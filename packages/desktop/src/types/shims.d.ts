@@ -17,7 +17,6 @@ declare module 'underscore' {
   ): T & { cancel: () => void }
 }
 declare module 'ced'
-declare module 'font-list'
 declare module 'command-exists'
 declare module 'pako'
 declare module 'snabbdom-to-html'
@@ -28,8 +27,6 @@ declare module 'codemirror/keymap/*'
 declare module 'codemirror/lib/*'
 declare module 'codemirror/mode/*'
 declare module 'codemirror/addon/*'
-declare module 'electron-window-state'
-declare module 'plist'
 declare module 'webfontloader'
 declare module 'minimatch' {
   export function minimatch(target: string, pattern: string, options?: unknown): boolean
