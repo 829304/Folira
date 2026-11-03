@@ -4,10 +4,10 @@
 //       Our current key manager will forbid the usage of these key combinations too.
 
 const keybindings: Map<string, string> = new Map([
-  // MarkText menu
+  // Folira menu
   ['mt.hide', 'Command+H'],
   ['mt.hide-others', 'Command+Option+H'],
-  ['file.preferences', 'Command+,'], // located under MarkText menu in macOS only
+  ['file.preferences', 'Command+,'], // located under Folira menu in macOS only
 
   // File menu
   ['file.new-window', 'Command+N'],
@@ -90,7 +90,6 @@ const keybindings: Map<string, string> = new Map([
   ['window.toggle-full-screen', 'Ctrl+Command+F'],
 
   // View menu
-  ['view.command-palette', 'Command+Shift+P'],
   ['view.source-code-mode', 'Command+Option+S'],
   ['view.typewriter-mode', 'Command+Option+T'],
   ['view.focus-mode', 'Command+Shift+J'],

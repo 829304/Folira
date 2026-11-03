@@ -90,7 +90,6 @@ const COMMANDS = Object.freeze({
   TABS_SWITCH_TO_TENTH: 'tabs.switchToTenth',
   TABS_SWITCH_TO_THIRD: 'tabs.switchToThird',
 
-  VIEW_COMMAND_PALETTE: 'view.command-palette',
   VIEW_DEV_RELOAD: 'view.dev-reload',
   VIEW_FOCUS_MODE: 'view.focus-mode',
   VIEW_FORCE_RELOAD_IMAGES: 'view.reload-images',

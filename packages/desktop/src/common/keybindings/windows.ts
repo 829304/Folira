@@ -5,7 +5,7 @@
 //       We'll should try bind no keys to `Alt` "modifiers" because there are only a few key bindings available.
 
 const keybindings: Map<string, string> = new Map([
-  // MarkText menu on macOS only
+  // Folira menu on macOS only
   ['mt.hide', ''],
   ['mt.hide-others', ''],
 
@@ -93,7 +93,6 @@ const keybindings: Map<string, string> = new Map([
   ['window.toggle-full-screen', 'F11'],
 
   // View menu
-  ['view.command-palette', 'Ctrl+Shift+P'],
   ['view.source-code-mode', 'Ctrl+E'],
   ['view.typewriter-mode', 'Ctrl+Shift+G'],
   ['view.focus-mode', 'Ctrl+Shift+J'],
