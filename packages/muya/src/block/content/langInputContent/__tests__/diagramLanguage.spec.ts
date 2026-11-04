@@ -3,14 +3,24 @@
 import type Content from '../../../base/content';
 import type Parent from '../../../base/parent';
 import type LangInputContent from '../index';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Muya } from '../../../../muya';
 
 // #5060: leaving a code block's language input commits the language. A diagram
 // language turns the block into a diagram block — what loading its ```lang
 // fence produces — instead of leaving a code block with no preview.
+//
+// A diagram block mounts a preview that immediately renders its chart for real
+// (dynamic mermaid/vega imports, layout, `<svg>` hand-off). None of that is
+// under test here — the conversion happens a microtask earlier — so the
+// renderer is stubbed. Waiting on it would make these cases race chart work
+// from earlier cases, and would tie them to how fast the machine renders.
+vi.mock('../../../../utils/diagram/render', () => ({
+    renderDiagram: vi.fn(() => Promise.resolve()),
+    finalizeRenderedDiagram: vi.fn(() => () => {}),
+}));
 
-const bootedHosts: HTMLElement[] = [];
+const instances: Muya[] = [];
 let originalVersion: string | undefined;
 let hadVersion = false;
 
@@ -21,10 +31,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-    while (bootedHosts.length) {
-        const host = bootedHosts.pop()!;
-        host.remove();
-    }
+    // Destroying the editor cancels its observers and preview subscriptions;
+    // removing the host alone left that work running past the end of the case.
+    instances.splice(0).forEach(muya => muya.destroy());
     document.getSelection()?.removeAllRanges();
     if (hadVersion)
         window.MUYA_VERSION = originalVersion as string;
@@ -37,7 +46,7 @@ function bootMuya(markdown: string): Muya {
     document.body.appendChild(host);
     const muya = new Muya(host, { markdown } as ConstructorParameters<typeof Muya>[1]);
     muya.init();
-    bootedHosts.push(muya.domNode);
+    instances.push(muya);
     return muya;
 }
 
@@ -52,9 +61,12 @@ function typeLanguage(muya: Muya, lang: string): LangInputContent {
     return langInput;
 }
 
-async function settle(): Promise<void> {
+// `blurHandler` defers the conversion by one microtask, so one await reaches it;
+// the flush then applies the replacement synchronously. The old frame wait was a
+// generic "let the browser settle" hook, which could also wait on chart work.
+async function settle(muya: Muya): Promise<void> {
     await Promise.resolve();
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    muya.flush();
 }
 
 describe('leaving the language input with a diagram language', () => {
@@ -63,7 +75,7 @@ describe('leaving the language input with a diagram language', () => {
         typeLanguage(muya, 'mermaid');
 
         block(muya, 0).lastContentInDescendant()!.setCursor(0, 0, true);
-        await settle();
+        await settle(muya);
 
         expect(muya.getState()).toEqual([
             { name: 'diagram', text: 'graph TD', meta: { type: 'mermaid', lang: 'yaml' } },
@@ -75,7 +87,7 @@ describe('leaving the language input with a diagram language', () => {
         typeLanguage(muya, 'vega-lite');
 
         block(muya, 0).lastContentInDescendant()!.setCursor(0, 0, true);
-        await settle();
+        await settle(muya);
 
         expect(muya.getState()[0]).toMatchObject({ name: 'diagram', meta: { type: 'vega-lite', lang: 'json' } });
     });
@@ -85,7 +97,7 @@ describe('leaving the language input with a diagram language', () => {
         typeLanguage(muya, 'mermaid title=x');
 
         block(muya, 0).lastContentInDescendant()!.setCursor(0, 0, true);
-        await settle();
+        await settle(muya);
 
         expect(muya.getState()[0]).toMatchObject({ name: 'diagram', meta: { type: 'mermaid' } });
     });
@@ -95,7 +107,7 @@ describe('leaving the language input with a diagram language', () => {
         typeLanguage(muya, 'mermaid');
 
         block(muya, 0).lastContentInDescendant()!.setCursor(0, 0, true);
-        await settle();
+        await settle(muya);
 
         expect(muya.editor.activeContentBlock?.outMostBlock?.blockName).toBe('diagram');
     });
@@ -106,7 +118,7 @@ describe('leaving the language input with a diagram language', () => {
         const after = block(muya, 1).firstContentInDescendant() as Content;
 
         after.setCursor(0, 0, true);
-        await settle();
+        await settle(muya);
 
         expect(muya.getState()[0].name).toBe('diagram');
         expect(muya.editor.activeContentBlock).toBe(after);
@@ -119,7 +131,7 @@ describe('the language input does not convert', () => {
         typeLanguage(muya, 'python');
 
         block(muya, 0).lastContentInDescendant()!.setCursor(0, 0, true);
-        await settle();
+        await settle(muya);
 
         expect(muya.getState()).toEqual([
             { name: 'code-block', text: 'code', meta: { type: 'fenced', lang: 'python', fenceChar: '`' } },
@@ -130,7 +142,7 @@ describe('the language input does not convert', () => {
         const muya = bootMuya('```\ngraph TD\n```\n');
         typeLanguage(muya, 'mermaid');
 
-        await settle();
+        await settle(muya);
 
         expect(muya.getState()[0].name).toBe('code-block');
     });
@@ -141,7 +153,7 @@ describe('the language input does not convert', () => {
 
         block(muya, 0).lastContentInDescendant()!.setCursor(0, 0, true);
         muya.setContent('replaced\n');
-        await settle();
+        await settle(muya);
 
         expect(muya.getState()).toEqual([{ name: 'paragraph', text: 'replaced' }]);
     });
