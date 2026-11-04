@@ -24,6 +24,16 @@ export class EmojiSelector extends BaseScrollFloat {
     private _renderObj: Record<string, EmojiType[]> | null = null;
     private _oldVNode: VNode | null = null;
     private _emoji: Emoji = new Emoji();
+    /**
+     * Bumped for every look-up, and whenever the picker is hidden from the
+     * outside; a look-up that finishes loading after either one is dropped.
+     */
+    private _searchToken = 0;
+    /**
+     * True while `searchAndShow` runs, so its own `hide()` — the empty result
+     * before the table lands — does not count as the user closing the picker.
+     */
+    private _searching = false;
     public override renderArray: EmojiType[] = [];
     public override activeItem: EmojiType | null = null;
 
@@ -54,6 +64,13 @@ export class EmojiSelector extends BaseScrollFloat {
         }
     }
 
+    override hide() {
+        if (!this._searching)
+            this._searchToken++;
+
+        super.hide();
+    }
+
     override listen() {
         super.listen();
         const { eventCenter } = this.muya;
@@ -62,18 +79,25 @@ export class EmojiSelector extends BaseScrollFloat {
                 return this.hide();
             const text = emojiText.trim();
             if (text) {
+                const token = ++this._searchToken;
                 const cb: (item: EmojiType) => void = (item) => {
                     if (block && block.setEmoji)
                         block.setEmoji(item.aliases[0]);
                 };
                 const searchAndShow = (): void => {
-                    this.renderObj = this._emoji.search(text);
-                    if (this.renderArray.length) {
-                        this.show(reference, cb);
-                        this.render();
+                    this._searching = true;
+                    try {
+                        this.renderObj = this._emoji.search(text);
+                        if (this.renderArray.length) {
+                            this.show(reference, cb);
+                            this.render();
+                        }
+                        else {
+                            this.hide();
+                        }
                     }
-                    else {
-                        this.hide();
+                    finally {
+                        this._searching = false;
                     }
                 };
 
@@ -81,8 +105,13 @@ export class EmojiSelector extends BaseScrollFloat {
                 // The emoji table loads on demand, so the first `:` typed in a
                 // session searches an empty one. Search again once it lands —
                 // `whenReady` is already resolved on every later keystroke, so
-                // this costs a microtask and nothing else.
-                void this._emoji.whenReady().then(searchAndShow);
+                // this costs a microtask and nothing else. Skipped when another
+                // look-up started, or the picker was closed, in the meantime:
+                // otherwise the table landing re-opens a picker the user shut.
+                void this._emoji.whenReady().then(() => {
+                    if (token === this._searchToken)
+                        searchAndShow();
+                });
             }
         });
     }

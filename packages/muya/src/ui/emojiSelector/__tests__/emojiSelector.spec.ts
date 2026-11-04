@@ -219,3 +219,31 @@ describe('emojiSelector — localized category titles', () => {
         expect(titles).toContain(translated);
     });
 });
+
+// The table is 179 KB and loads on demand. A look-up issued before it lands
+// finds nothing, hides the picker, and then re-runs once the table arrives.
+// That re-run must not resurrect a picker the user already closed.
+describe('emojiSelector — the table arriving late', () => {
+    it('does not reopen a picker that was closed while the table was loading', async () => {
+        const { muya, eventCenter } = makeFakeMuya();
+        const selector = new EmojiSelector(muya);
+        selectors.push(selector);
+
+        let release: () => void = () => {};
+        const pending = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        vi.spyOn(Emoji.prototype, 'whenReady').mockReturnValue(pending);
+        const show = vi.spyOn(selector, 'show');
+
+        const reference = stubReference();
+        eventCenter.emit('muya-emoji-picker', { reference, emojiText: 'smile', block: { setEmoji: vi.fn() } });
+        selector.hide();
+        release();
+        await pending;
+        await Promise.resolve();
+
+        expect(show).toHaveBeenCalledTimes(1);
+        expect(selector.status).toBe(false);
+    });
+});

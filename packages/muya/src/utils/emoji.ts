@@ -11,9 +11,13 @@ import emojiByAlias from '../config/emojiAliases';
  * uses.
  */
 export function validEmoji(text: string): { emoji: string } | undefined {
-    const emoji = emojiByAlias[text];
+    // Plain property access would also resolve inherited names: `:constructor:`
+    // and `:__proto__:` come back as functions or objects from the prototype,
+    // pass an `=== undefined` test, and render as `[object Object]`.
+    if (!Object.hasOwn(emojiByAlias, text))
+        return undefined;
 
-    return emoji === undefined ? undefined : { emoji };
+    return { emoji: emojiByAlias[text] };
 }
 
 export function checkEditEmoji(node: HTMLElement) {

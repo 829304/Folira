@@ -16,6 +16,10 @@ import { expect, test } from '../fixtures/muya';
  * duration, so a slow runner moves both measurements together.
  */
 test.describe('code blocks against document size', () => {
+    // The garbage collection between runs comes from a CDP session, which only
+    // Chromium implements; on the other engines the heap is never collected
+    // between samples, and the later ones measure a growing heap.
+    test.skip(({ browserName }) => browserName !== 'chromium', 'collects the heap through CDP');
     test.setTimeout(180_000);
 
     const SMALL = 220;
