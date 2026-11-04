@@ -26,7 +26,8 @@
     "paths": {
       "@/*": ["./src/renderer/src/*"],
       "common/*": ["./src/common/*"],
-      "@muyajs/core": ["./src/types/muya-core.d.ts"],
+      "@muyajs/core": ["../muya/lib/types/index.d.ts"],
+      "@muyajs/core/*": ["../muya/lib/types/*"],
       "@shared/*": ["./src/shared/*"]
     }
   }

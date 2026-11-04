@@ -674,7 +674,7 @@ watch(isHtmlEnabled, (value, oldValue) => {
 
 watch(isGitlabCompatibilityEnabled, (value, oldValue) => {
   if (value !== oldValue && editor.value) {
-    editor.value.setOptions({ isGitlabCompatibilityEnabled: value }, true)
+    editor.value.setOptions({ texMathGfm: value }, true)
   }
 })
 
@@ -1769,7 +1769,9 @@ onMounted(() => {
     superSubScript: superSubScript.value,
     footnote: footnote.value,
     disableHtml: !isHtmlEnabled.value,
-    isGitlabCompatibilityEnabled: isGitlabCompatibilityEnabled.value,
+    // The old engine had one GitLab-compatibility switch that only gated GFM
+    // `$`...`$` math; the synced engine expresses that as `texMathGfm`.
+    texMathGfm: isGitlabCompatibilityEnabled.value,
     hideQuickInsertHint: hideQuickInsertHint.value,
     hideLinkPopup: hideLinkPopup.value,
     autoCheck: autoCheck.value,
@@ -1835,7 +1837,10 @@ onMounted(() => {
   dismissSplash()
   // The first document's content is set via constructor options, so no
   // `file-loaded` / `setMarkdownToEditor` runs for it — seed its TOC here.
-  editorStore.UPDATE_TOC(muya.getTOC())
+  // The engine's ITocItem is a closed interface, while the store's tree
+  // builder works on ListItem, which carries an index signature. Spreading
+  // into fresh object literals satisfies both without widening either side.
+  editorStore.UPDATE_TOC(muya.getTOC().map(item => ({ ...item })))
 
   // Seed the save-tracking baseline for the mount-loaded document (from the
   // engine's OWN serialization, same reason as setMarkdownToEditor). Without

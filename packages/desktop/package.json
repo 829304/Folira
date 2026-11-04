@@ -38,8 +38,8 @@
     "tauri:build-renderer": "vite build --config vite.tauri.config.ts",
     "test": "vitest run",
     "test:unit": "vitest run test/unit",
-    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
-    "typecheck:watch": "vue-tsc --noEmit -p tsconfig.json --watch"
+    "typecheck": "pnpm --filter @muyajs/core build:types && vue-tsc --noEmit -p tsconfig.json",
+    "typecheck:watch": "pnpm --filter @muyajs/core build:types && vue-tsc --noEmit -p tsconfig.json --watch"
   },
   "dependencies": {
     "@intlify/core-base": "^11.4.6",
