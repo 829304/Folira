@@ -11,14 +11,24 @@ export const editor = {
     // Editor root carries this class while focus mode is enabled (toggled by
     // `Muya#setFocusMode` / applied at construction for `focusMode: true`).
     focusModeRoot: '.mu-editor.mu-focus-mode',
+    content: 'span.mu-content',
     paragraph: '.mu-paragraph',
+    // The editable leaf inside a paragraph. Carries the quick-insert hints as
+    // `::after` content, gated on the `placeholder` / `empty-hint` attributes.
+    paragraphContent: '.mu-paragraph-content',
+    listItem: '.mu-list-item',
     atxHeading: '.mu-atx-heading',
+    foldToggle: '.mu-fold-toggle',
+    headingCopyLink: '.mu-copy-header-link',
+    foldedContent: '.mu-folded-content',
     setextHeading: '.mu-setext-heading',
     // A Shift+Enter soft line break inside a Format leaf renders as a
     // `<span.mu-soft-line-break>` wrapping a literal `\n`. Source of truth:
-    // packages/muya/src/inlineRenderer/renderer/softLineBreak.ts +
+    // packages/muya/src/inline/renderer/softLineBreak.ts +
     // CLASS_NAMES.MU_SOFT_LINE_BREAK in packages/muya/src/config/index.ts.
     softLineBreak: '.mu-soft-line-break',
+    hardLineBreak: '.mu-hard-line-break',
+    hardLineBreakSpace: '.mu-hard-line-break-space',
     blockQuote: '.mu-block-quote',
     bulletList: '.mu-bullet-list',
     orderList: '.mu-order-list',
@@ -26,12 +36,19 @@ export const editor = {
     taskListItem: '.mu-task-list-item',
     thematicBreak: '.mu-thematic-break',
     codeBlock: '.mu-code-block',
+    inlineCode: 'code.mu-inline-rule',
+    hiddenSyntax: '.mu-hide',
+    inlineDiffAddition: 'ins.mu-inline-diff-addition',
+    inlineDiffDeletion: 'del.mu-inline-diff-deletion',
     fenceCode: '.mu-fence-code',
     // The leaf node that holds the actual code text inside a code block.
     // Prism highlight `<span class="token …">` runs are appended here.
     // Source of truth: packages/muya/src/block/content/codeBlockContent/index.ts
     // (classList pushes 'mu-codeblock-content').
     codeContent: '.mu-codeblock-content',
+    // One absolutely positioned span per code line when `codeBlockLineNumbers`
+    // is on; the number is its `::before` counter.
+    lineNumber: '.mu-line-numbers-rows > span',
     languageInput: '.mu-language-input',
     table: 'table',
     tableCell: '.mu-table-cell',
@@ -47,6 +64,7 @@ export const editor = {
     // `$...$` token (KaTeX preview shown, source collapsed); the class drops
     // when the caret is inside, revealing the editable `.mu-math-text` source.
     inlineMath: '.mu-math',
+    displayMath: '.mu-math.mu-display-math',
     inlineMathText: '.mu-math > .mu-math-text',
     katex: '.katex',
     diagramBlock: '.mu-diagram-block',
@@ -59,7 +77,7 @@ export const editor = {
     image: '.mu-inline-image',
     // Inline image placeholder rendered when the image has no resolvable src
     // (e.g. `![]()` / `![alt]()`). Source of truth:
-    // packages/muya/src/inlineRenderer/renderer/image.ts (the `else` branch
+    // packages/muya/src/inline/renderer/image.ts (the `else` branch
     // appends CLASS_NAMES.MU_EMPTY_IMAGE → `mu-empty-image`). Clicking it emits
     // `muya-image-selector` (selection/ImageSelection.ts) which opens the
     // ImageEditTool float.
@@ -74,12 +92,20 @@ export const editor = {
     // Inline html tags wrap their children with `.mu-raw-html`. The tag itself
     // is the actual `<u>`, `<mark>`, `<sup>`, `<sub>` or `<ruby>` element.
     rawHtml: '.mu-raw-html',
+    htmlTagMarker: 'span.mu-html-tag',
+    htmlEscape: '.mu-html-escape',
 } as const;
 
 // Float root class names confirmed against the `const name = 'mu-...'` lines
 // inside each plugin's index.ts.
 export const floats = {
     inlineFormatToolbar: '.mu-format-picker',
+    colorPicker: '.mu-color-panel',
+    colorButton: '.mu-format-picker li.item.color i.icon',
+    colorToggle: '.mu-format-picker li.item.color i.caret',
+    colorSwatchText: '.mu-color-swatch.text',
+    colorSwatchBg: '.mu-color-swatch.bg',
+    colorReset: '.mu-color-reset',
     quickInsert: '.mu-quick-insert',
     paragraphFrontButton: '.mu-front-button-wrapper',
     paragraphFrontButtonInner: '.mu-front-button',
@@ -108,6 +134,11 @@ export const floats = {
 /** Slash-menu item locator: `[data-label="atx-heading 1"]` etc. */
 export function quickInsertItem(label: string): string {
     return `${floats.quickInsert} [data-label="${label}"]`;
+}
+
+/** Preview toolbar action locator: `edit` / `delete` / `view`. */
+export function previewToolBarItem(type: string): string {
+    return `${floats.previewToolBar} li.item.${type}`;
 }
 
 /**

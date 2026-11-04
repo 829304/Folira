@@ -27,7 +27,6 @@ on:
       - 'packages/desktop/src/common/**'
       - 'packages/desktop/src/shared/**'
       - 'packages/muya/**'
-      - 'packages/muyajs/**'
       - 'packages/desktop/package.json'
       - 'scripts/**'
       - 'package.json'

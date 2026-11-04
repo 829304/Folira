@@ -34,11 +34,6 @@ function undoDepth(muya: Muya): number {
     return muya.editor.history._stack.undo.length;
 }
 
-function ignoreChange(muya: Muya): boolean {
-    // @ts-expect-error — reach into the private flag for test assertions.
-    return muya.editor.history._ignoreChange;
-}
-
 async function editText(muya: Muya, text: string): Promise<void> {
     const content = firstContent(muya) as unknown as { text: string; checkInlineUpdate: () => void };
     content.text = text;
@@ -49,40 +44,38 @@ async function editText(muya: Muya, text: string): Promise<void> {
 }
 
 describe('history recorder recovery after an undo/redo exception', () => {
-    it('resets _ignoreChange and keeps recording when updateContents throws', async () => {
+    it('keeps recording when replayContents throws', async () => {
         const muya = bootMuya('seed\n');
 
         await editText(muya, 'seedX');
         await vi.waitFor(() => expect(undoDepth(muya)).toBe(1));
 
         const spy = vi
-            .spyOn(muya.editor, 'updateContents')
+            .spyOn(muya.editor, 'replayContents')
             .mockImplementationOnce(() => {
                 throw new Error('simulated replay failure');
             });
 
         expect(() => muya.undo()).toThrow('simulated replay failure');
 
-        // The recorder must not be wedged: the in-flight guard has to be
-        // released even though the apply threw.
-        expect(ignoreChange(muya)).toBe(false);
-
         spy.mockRestore();
 
-        // A subsequent edit must still reach the undo stack.
         await editText(muya, 'seedXY');
         await vi.waitFor(() => expect(undoDepth(muya)).toBeGreaterThan(0));
     });
 
-    it('clear() resets a stuck _ignoreChange guard', () => {
+    it('records new edits started by a listener during history replay', async () => {
         const muya = bootMuya('seed\n');
-
-        // Simulate a guard left stuck on by a prior exception.
-        // @ts-expect-error — force the private flag for the test.
-        muya.editor.history._ignoreChange = true;
-
-        muya.editor.history.clear();
-
-        expect(ignoreChange(muya)).toBe(false);
+        await editText(muya, 'seedX');
+        muya.once('json-change', () => {
+            firstContent(muya).text = 'listener edit';
+            muya.flush();
+        });
+        muya.undo();
+        expect(muya.getMarkdown()).toBe('listener edit\n');
+        expect(muya.getHistory().stack.undo).toHaveLength(1);
+        expect(muya.getHistory().stack.redo).toHaveLength(0);
+        muya.undo();
+        expect(muya.getMarkdown()).toBe('seed\n');
     });
 });

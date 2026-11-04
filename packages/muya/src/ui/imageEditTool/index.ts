@@ -1,7 +1,8 @@
 import type { VNode } from 'snabbdom';
 import type Format from '../../block/base/format';
 import type { Muya } from '../../index';
-import type { ImageToken } from '../../inlineRenderer/types';
+import type { ImageToken } from '../../inline/model/types';
+import type { TSelectableImageToken } from '../../utils/image';
 import type { IImagePathSuggestion } from '../imagePicker';
 import type { IBaseOptions } from '../types';
 import { EVENT_KEYS, isWin, URL_REG } from '../../config';
@@ -13,6 +14,13 @@ import { h, patch } from '../../utils/snabbdom';
 import BaseFloat from '../baseFloat';
 import { ImagePathPicker } from '../imagePicker';
 import './index.css';
+
+function editableImageAttributes(token: TSelectableImageToken): Record<string, string | null> {
+    return {
+        ...token.attrs,
+        alt: token.type === 'image' ? token.alt + token.backlash.first : token.attrs.alt,
+    };
+}
 
 /**
  * Image state interface containing source, alt text and title
@@ -105,7 +113,7 @@ export class ImageEditTool extends BaseFloat {
      * @param muya - Muya editor instance
      * @param options - Tool options including image picker and upload handler
      */
-    constructor(muya: Muya, options: Options = { ...defaultOptions }) {
+    constructor(muya: Muya, options: Partial<Options> = {}) {
         const name = 'mu-image-selector';
         super(muya, name, Object.assign({}, defaultOptions, options));
         this.options = Object.assign({}, defaultOptions, options);
@@ -128,7 +136,7 @@ export class ImageEditTool extends BaseFloat {
             }
 
             this._block = block;
-            Object.assign(this._state, imageInfo.token.attrs);
+            Object.assign(this._state, editableImageAttributes(imageInfo.token));
 
             // Remove file protocol prefix for local file paths to enable autocomplete
             this._normalizeFileProtocol();
@@ -378,7 +386,7 @@ export class ImageEditTool extends BaseFloat {
      * Only replaces if values have changed
      */
     private _replaceImageDirect(alt: string, src: string, title: string) {
-        const { alt: oldAlt, src: oldSrc, title: oldTitle } = this._imageInfo!.token.attrs;
+        const { alt: oldAlt, src: oldSrc, title: oldTitle } = editableImageAttributes(this._imageInfo!.token);
 
         // Only update if something changed
         if (alt !== oldAlt || src !== oldSrc || title !== oldTitle) {
@@ -393,6 +401,9 @@ export class ImageEditTool extends BaseFloat {
      * Shows loading state, uploads the image, then replaces with uploaded URL
      */
     private async _replaceImageWithUpload(alt: string, src: string, title: string) {
+        const targetBlock = this._block;
+        if (!targetBlock || this.muya.isReadOnly || !this.muya.isBlockInDocument(targetBlock))
+            return;
         // Create unique ID for loading state
         const loadingId = `loading-${getUniqueId()}`;
 
@@ -406,22 +417,24 @@ export class ImageEditTool extends BaseFloat {
 
         // Upload image and get new URL
         const uploadedSrc = await this.options.imageAction!({ src, title, alt });
+        if (this.muya.isReadOnly || !this.muya.isBlockInDocument(targetBlock))
+            return;
 
         // Store local path mapping if available
         const { src: localPath } = getImageSrc(src);
         if (localPath) {
-            this.muya.editor.inlineRenderer.renderer.urlMap.set(uploadedSrc, localPath);
+            this.muya.editor.inlineEngine.setImagePreview(uploadedSrc, localPath);
         }
 
         // Find and update the image element
         const imageWrapper = query<HTMLElement>(
             `span[data-id=${loadingId}]`,
-            this.muya.domNode,
+            targetBlock.domNode!,
         );
 
         if (imageWrapper) {
             const imageInfo = getImageInfo(imageWrapper);
-            this._block!.replaceImage(imageInfo, {
+            targetBlock.replaceImage(imageInfo, {
                 alt,
                 src: uploadedSrc,
                 title,
@@ -451,7 +464,10 @@ export class ImageEditTool extends BaseFloat {
             return;
         }
 
+        const targetBlock = this._block;
         const path = await this.options.imagePathPicker();
+        if (!targetBlock || this.muya.isReadOnly || !this.muya.isBlockInDocument(targetBlock) || targetBlock !== this._block)
+            return;
         const { alt, title } = this._state;
         return this._replaceImageAsync({ alt, title, src: path });
     }

@@ -8,10 +8,16 @@ export interface ISearchOption {
     highlightIndex?: number;
 }
 
+export interface IReplaceOption extends ISearchOption {
+    isSingle?: boolean;
+    /** Editor commands select the next result before replacing an unrelated selection. */
+    fromSelection?: boolean;
+}
+
 export interface IMatch {
     start: number;
     end: number;
     block: Content;
     match: string;
-    subMatches: string[];
+    subMatches: (string | undefined)[];
 }

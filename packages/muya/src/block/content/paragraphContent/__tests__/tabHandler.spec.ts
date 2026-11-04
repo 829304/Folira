@@ -25,6 +25,7 @@ function makeKeyEvent(shiftKey: boolean) {
 }
 
 interface IFakeParagraph {
+    text: string;
     getCursor: ReturnType<typeof vi.fn>;
     isCollapsed: boolean;
     _getUnindentType: ReturnType<typeof vi.fn>;
@@ -38,6 +39,7 @@ interface IFakeParagraph {
 
 function makeFakeParagraph(overrides: Partial<IFakeParagraph> = {}): IFakeParagraph {
     return {
+        text: 'body',
         getCursor: vi.fn(() => ({ start: { offset: 0 }, end: { offset: 0 } })),
         isCollapsed: true,
         _getUnindentType: vi.fn(() => null),
@@ -61,22 +63,21 @@ function callTabHandler(fakeThis: IFakeParagraph, event: Event) {
 describe('paragraphContent.tabHandler — Shift+Tab unindent must not fall through to insertTab', () => {
     it('unindents and returns early on Shift+Tab in a list item (no insertTab)', () => {
         const fakeThis = makeFakeParagraph({
-            // unindentable list item
             _getUnindentType: vi.fn(() => 'INDENT' as never),
         });
 
         expect(() => callTabHandler(fakeThis, makeKeyEvent(true))).not.toThrow();
 
         expect(fakeThis._unindentListItem).toHaveBeenCalledTimes(1);
-        // Must NOT fall through after unindent.
         expect(fakeThis.insertTab).not.toHaveBeenCalled();
         expect(fakeThis._canIndentListItem).not.toHaveBeenCalled();
         expect(fakeThis._checkCursorAtEndFormat).not.toHaveBeenCalled();
     });
 
-    it('no-ops on Shift+Tab when the paragraph is not an unindentable list item', () => {
+    it('no-ops on Shift+Tab when the caret is beyond the leading indentation', () => {
         const fakeThis = makeFakeParagraph({
             _getUnindentType: vi.fn(() => null),
+            getCursor: vi.fn(() => ({ start: { offset: 2 }, end: { offset: 2 } })),
         });
 
         expect(() => callTabHandler(fakeThis, makeKeyEvent(true))).not.toThrow();

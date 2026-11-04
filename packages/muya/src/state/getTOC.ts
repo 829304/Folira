@@ -1,12 +1,14 @@
 import type Content from '../block/base/content';
 import type Parent from '../block/base/parent';
 import type { Muya } from '../muya';
-import { tokenizer, tokensToPlainText } from '../inlineRenderer/lexer';
+import { parseInline } from '../inline/parser/lexer';
+import { tokensToInlineHtml, tokensToPlainText } from '../inline/projection';
 import { getUniqueId } from '../utils';
 import { generateGithubSlug } from '../utils/slug';
 
 export interface ITocItem {
     content: string;
+    contentHtml: string;
     lvl: number;
     slug: string;
     githubSlug: string;
@@ -32,6 +34,11 @@ export function getTOC(muya: Muya): ITocItem[] {
     if (!scrollPage)
         return [];
 
+    // Headings are tokenized outside a rendered block, so the reference
+    // definitions a heading may link to (`[text][ref]`) have to be collected
+    // here instead of from the block's own inline renderer.
+    const labels = muya.editor.inlineEngine.collectReferenceDefinitions();
+
     const items: ITocItem[] = [];
 
     for (const node of scrollPage.children.iterator()) {
@@ -43,25 +50,22 @@ export function getTOC(muya: Muya): ITocItem[] {
         const head = block.children.head as Content | null;
         const text = head?.text ?? '';
 
-        const source = blockName === 'setext-heading'
-            ? text.trim()
-            : text.replace(/^\s*#{1,6}\s+/, '').trim();
+        // One token pass feeds both serializations so the outline's shown text
+        // and its slug stay in step; `githubSlug` has to match the anchor id the
+        // HTML export injects from `heading.textContent`.
+        const { superSubScript, footnote, texMathDollars, texMathGfm, texMathSingleBackslash, texMathDoubleBackslash, highlightSyntax, inlineDiff } = muya.options;
+        const tokens = parseInline(text, {
+            profile: blockName === 'atx-heading' ? 'atx-heading' : 'setext-heading',
+            labels,
+            options: { superSubScript, footnote, texMathDollars, texMathGfm, texMathSingleBackslash, texMathDoubleBackslash, highlightSyntax, inlineDiff },
+        });
 
-        // Show and slug the heading by its rendered text — inline markdown
-        // (`**bold**`, `[label](url)`, images) stripped to what a reader sees —
-        // instead of the raw source (#4811). Slugging the same plain text keeps
-        // `githubSlug` in step with the anchor id the HTML export injects from
-        // `heading.textContent` (state/markdownToHtml.ts).
-        const { superSubScript, footnote } = muya.options;
-        const content = tokensToPlainText(
-            tokenizer(source, {
-                hasBeginRules: false,
-                options: { superSubScript, footnote },
-            }),
-        ).trim();
+        const content = tokensToPlainText(tokens).trim();
+        const contentHtml = tokensToInlineHtml(tokens).trim();
 
         items.push({
             content,
+            contentHtml,
             lvl: block.meta.level,
             slug: stableSlug(block),
             githubSlug: generateGithubSlug(content),

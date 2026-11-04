@@ -101,7 +101,7 @@ const emptyStates: IEmptyStates = {
         name: 'math-block',
         text: '',
         meta: {
-            mathStyle: '', // '' for `$$` and 'gitlab' for ```math
+            mathStyle: '', // '' for `$$` and 'gfm' for ```math
         },
     },
     'html-block': {
@@ -113,6 +113,7 @@ const emptyStates: IEmptyStates = {
         meta: {
             type: 'fenced', // indented or fenced
             lang: '', // lang will be enpty string if block is indented block. set language will auto change into fenced code block.
+            fenceChar: '`',
         },
         text: '',
     },
@@ -131,7 +132,7 @@ const emptyStates: IEmptyStates = {
         meta: {
             start: 1, // 0 ~ 999999999
             loose: true, // true or false, true is loose list and false is tight.
-            delimiter: '.', // . or )
+            delimiter: '.', // . or ) or ()
         },
         children: [
             // List Item

@@ -1,4 +1,5 @@
 import type { Muya } from '../muya';
+import type { IMuyaOptions } from '../types';
 import githubMarkdownCss from 'github-markdown-css/github-markdown-light.css?inline';
 import katexCss from 'katex/dist/katex.css?inline';
 import prismCss from 'prismjs/themes/prism.css?inline';
@@ -8,24 +9,46 @@ import { isHTMLElement, sanitize, unescapeHTML } from '../utils';
 import loadRenderer from '../utils/diagram';
 
 import { getHighlightHtml } from '../utils/marked';
+import { sanitizeExportHtml } from '../utils/sanitizeExportHtml';
 import { generateGithubSlug } from '../utils/slug';
 import { transformFootnotes } from './transformFootnotes';
 
-// The core stylesheets (github-markdown-css, katex, prism) are inlined into the
-// exported document so the output is fully self-contained and renders offline /
-// behind CSP / air-gapped — see `generate`. Linking them from a CDN left a
-// saved `.html` file unstyled with no network access, a regression for an
-// offline desktop editor. Callers that explicitly want the lighter CDN-linked
-// shell can opt in via `generate({ inlineStyles: false })`.
+// Inline core styles so exported documents render offline.
 
-// CDN `<link>` tags used when `inlineStyles` is disabled. Kept verbatim from
-// the previous default so the opt-out path is byte-identical to the old output.
 const CDN_STYLESHEET_LINKS = `  <!-- https://cdnjs.com/libraries/github-markdown-css -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.css" integrity="sha512-n5zPz6LZB0QV1eraRj4OOxRbsV7a12eAGfFcrJ4bBFxxAwwYDp542z5M0w24tKPEhKk2QzjjIpR5hpOjJtGGoA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <!-- https://katex.org/docs/browser -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" crossorigin="anonymous">
   <!-- https://cdnjs.com/libraries/prism -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/themes/prism.min.css" integrity="sha512-/mZ1FHPkg6EKcxo0fKXF51ak6Cr2ocgDi5ytaTBjsQZIH/RNs6GF6+oId/vPe3eJB836T36nXwVh/WBl/cWT4w==" crossorigin="anonymous" referrerpolicy="no-referrer" />`;
+
+// Place after exportStyle to override paragraph and tight-list soft-break whitespace.
+const SOFT_NEWLINE_AS_SPACE_OVERRIDE = `
+.markdown-body p,
+.markdown-body li:not(:has(> p)) {
+    white-space: normal;
+}
+`;
+
+export interface IExportHeading {
+    lvl: number;
+    content: string;
+    contentHtml: string;
+    slug: string;
+}
+
+export interface IHtmlExport {
+    html: string;
+    /** Headings in document order, with the IDs assigned in `html`. */
+    headings: IExportHeading[];
+}
+
+export interface IHtmlExportOptions {
+    title?: string;
+    extraCSS?: string;
+    inlineStyles?: boolean;
+    dir?: string;
+}
 
 export class MarkdownToHtml {
     private _exportContainer: HTMLDivElement | null = null;
@@ -54,16 +77,13 @@ export class MarkdownToHtml {
             return;
 
         const mermaid = await loadRenderer('mermaid');
-        // We only export light theme, so set mermaid theme to `default`, in the future, we can choose which theme to export.
+        // Export uses the light theme.
         mermaid.initialize({
             startOnLoad: false,
             securityLevel: 'strict',
             theme: 'default',
         });
-        // Render each diagram in isolation: `mermaid.run` rejects the whole
-        // batch on the first parse error, so one invalid diagram used to abort
-        // the entire export (#4812). Contain the failure to that diagram and
-        // fall back to the same placeholder the other diagram renderers use.
+        // Isolate renders so one invalid Mermaid diagram cannot abort the entire export (#4812).
         for (const node of nodes) {
             try {
                 await mermaid.run({ nodes: [node] });
@@ -146,13 +166,7 @@ export class MarkdownToHtml {
         }
     }
 
-    // Assign a github-compatible slug `id` to every `<h1>..<h6>` in the
-    // export container. Headings that already carry an explicit id (none today,
-    // but defensive) are left as-is and reserve that id. Duplicates are
-    // deduplicated by incrementing a `-N` suffix until the *full* candidate id
-    // is unused — so a later heading whose text already looks like an earlier
-    // `-N` slug (e.g. `heading`, `heading`, `heading-1`) still resolves to a
-    // unique anchor, matching github.
+    // Generate unique GitHub-style heading IDs without replacing or colliding with explicit IDs.
     private _injectHeadingIds(container: HTMLElement) {
         const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
         const seen = new Set<string>();
@@ -177,27 +191,41 @@ export class MarkdownToHtml {
             seen.add(slug);
             heading.id = slug;
         }
+
+        return [...headings].map(heading => ({
+            lvl: Number(heading.tagName.slice(1)),
+            content: heading.textContent ?? '',
+            contentHtml: heading.innerHTML,
+            slug: heading.id,
+        }));
     }
 
-    // render pure html by marked
-    async renderHtml() {
-        const footnote = this._muya?.options?.footnote ?? false;
+    async renderHtml(): Promise<string> {
+        return (await this.renderHtmlWithHeadings()).html;
+    }
+
+    async renderHtmlWithHeadings(): Promise<IHtmlExport> {
+        const options: Partial<IMuyaOptions> = this._muya?.options ?? {};
+        const footnote = options.footnote ?? false;
         let html = getHighlightHtml(this.markdown, {
-            superSubScript: this._muya?.options?.superSubScript ?? true,
+            superSubScript: options.superSubScript ?? true,
             footnote,
-            isGitlabCompatibilityEnabled:
-        this._muya?.options?.isGitlabCompatibilityEnabled ?? true,
-            math: this._muya?.options?.math ?? true,
+            texMathGfm: options.texMathGfm ?? false,
+            texMathSingleBackslash: options.texMathSingleBackslash ?? false,
+            texMathDoubleBackslash: options.texMathDoubleBackslash ?? false,
+            texMathDollars: options.texMathDollars ?? true,
+            highlightSyntax: options.highlightSyntax ?? false,
+            inlineDiff: options.inlineDiff ?? false,
+            multilineBlockquote: options.multilineBlockquote ?? false,
+            githubAlerts: options.githubAlerts ?? false,
+            fancyLists: options.fancyLists ?? false,
         });
 
-        // Post-process footnotes into the standard GFM / pandoc shape (inline
-        // numbered <sup> refs + bottom <section class="footnotes"> with
-        // backrefs). Must run before DOMPurify strips the `data-identifier`
-        // marker the marked footnote extension emits.
+        // Transform footnotes before DOMPurify strips their data-identifier markers.
         if (footnote)
             html = transformFootnotes(html);
 
-        html = sanitize(html, EXPORT_DOMPURIFY_CONFIG, false) as string;
+        html = sanitizeExportHtml(html);
 
         const exportContainer = (this._exportContainer
             = document.createElement('div'));
@@ -205,21 +233,23 @@ export class MarkdownToHtml {
         exportContainer.innerHTML = html;
         document.body.appendChild(exportContainer);
 
-        // render only render the light theme of mermaid and diagram...
-        await this._renderMermaid();
-        await this._renderDiagram();
+        let result: string;
+        let headings: IExportHeading[];
+        try {
+            await this._renderMermaid();
+            await this._renderDiagram();
 
-        // Inject github-compatible slug ids onto exported headings so the
-        // exported document's [TOC] / `getHtmlToc` `href="#slug"` anchors
-        // resolve. Scoped to this export DOM path — the conformance
-        // renderer (`renderToStaticHTML`) is deliberately left untouched.
-        this._injectHeadingIds(exportContainer);
+            // Exported TOC links require matching heading IDs; spec conformance rendering omits this pass.
+            headings = this._injectHeadingIds(exportContainer);
 
-        let result = exportContainer.innerHTML;
-        exportContainer.remove();
+            result = exportContainer.innerHTML;
+        }
+        finally {
+            exportContainer.remove();
+            this._exportContainer = null;
+        }
 
-        // hack to add arrow marker to output html
-        // TODO: JOCS, are these codes still needed?
+        // Include Raphael arrow markers in exported diagrams.
         const paths = document.querySelectorAll('path[id^=raphael-marker-]');
         const def = '<defs style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">';
         result = result.replace(def, () => {
@@ -230,9 +260,7 @@ export class MarkdownToHtml {
             return `${def}${str}`;
         });
 
-        this._exportContainer = null;
-
-        return `<article class="markdown-body">${result}</article>`;
+        return { html: `<article class="markdown-body">${result}</article>`, headings };
     }
 
     /**
@@ -247,31 +275,33 @@ export class MarkdownToHtml {
      * @param options.dir Text direction set on the root `<html>` (`rtl` / `auto`);
      * `ltr` is the HTML default and stays implicit.
      */
-    async generate(
-        options: {
-            title?: string;
-            extraCSS?: string;
-            inlineStyles?: boolean;
-            dir?: string;
-        } = {},
-    ) {
-        const html = await this.renderHtml();
+    async generate(options: IHtmlExportOptions = {}): Promise<string> {
+        return (await this.generateWithHeadings(options)).html;
+    }
 
-        // `extraCSS` may changed in the mean time.
+    /** Return the document and heading metadata from the same render pass. */
+    async generateWithHeadings(options: IHtmlExportOptions = {}): Promise<IHtmlExport> {
+        const { html, headings } = await this.renderHtmlWithHeadings();
+        const { embedExportFonts } = await import('../utils/embedExportFonts');
+
         const { title = '', extraCSS = '', inlineStyles = true, dir } = options;
 
-        // Mirror the editor's text direction onto the exported document so RTL
-        // documents export right-to-left (#4553). LTR is the HTML default, so it
-        // stays implicit to keep existing exports byte-identical.
+        const exportStyleFinal = this._muya?.options.softNewlineAsSpace
+            ? exportStyle + SOFT_NEWLINE_AS_SPACE_OVERRIDE
+            : exportStyle;
+
+        // Export outside the editor root, where its custom properties no longer inherit.
+        const codeFontFamily = this._muya?.options.codeFontFamily || '';
+        const codeFontCSS = codeFontFamily
+            ? `.markdown-body{--mu-code-font-family:${codeFontFamily};}`
+            : '';
+
+        // Preserve RTL direction in exports; leave default LTR implicit (#4553).
         const dirAttr = dir === 'rtl' || dir === 'auto' ? ` dir="${dir}"` : '';
 
         let baseStyles: string;
         if (inlineStyles) {
-            // Embed the KaTeX fonts as data URIs so math renders offline. The
-            // font data (~300KB base64) is dynamically imported here so it only
-            // loads on export, never in the editor bundle.
-            const { embedKatexFonts } = await import('../utils/embedKatexFonts');
-            baseStyles = [githubMarkdownCss, embedKatexFonts(katexCss), prismCss]
+            baseStyles = [githubMarkdownCss, embedExportFonts(katexCss), prismCss]
                 .map(css => `  <style>${css}</style>`)
                 .join('\n');
         }
@@ -279,19 +309,20 @@ export class MarkdownToHtml {
             baseStyles = CDN_STYLESHEET_LINKS;
         }
 
-        return `<!DOCTYPE html>
+        const documentHtml = `<!DOCTYPE html>
 <html lang="en"${dirAttr}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${sanitize(title, EXPORT_DOMPURIFY_CONFIG, true)}</title>
 ${baseStyles}
-  <style>${exportStyle}</style>
+  <style>${embedExportFonts(exportStyleFinal)}${codeFontCSS}</style>
   <style>${extraCSS}</style>
 </head>
 <body>
   ${html}
 </body>
 </html>`;
+        return { html: documentHtml, headings };
     }
 }

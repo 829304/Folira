@@ -3,21 +3,8 @@ import { getMarkdown } from '../helpers/api';
 import { editor, floats } from '../helpers/selectors';
 
 /**
- * TableDragBar end-to-end coverage.
- *
- * The bar is NOT a column-resize tool — it's a column / row REORDER tool
- * (see `packages/core/src/ui/tableDragBar/index.ts::switchTableData`).
- * On mousedown + a 300 ms hold, `startDrag` arms; mousemove past the
- * 5 px threshold flips `_isDragTableBar` true; mouseup commits the
- * reorder by splicing `tableState.children` and replacing the table
- * node. So the contract we assert: after a horizontal drag of the
- * leftmost column past the next column's midpoint, `getMarkdown()`
- * returns the columns in swapped order.
- *
- * Phase 2 BACKLOG note "assert column meta width changed" was based on
- * a misreading of the source — table cells have `meta.align`, never a
- * width. Reordering is the only state mutation this UI produces, so
- * that's what we cover here.
+ * A drag must change serialized column order; visual movement alone does not
+ * establish that the underlying table state was reordered.
  */
 
 async function makeTwoColumnTable(page: import('@playwright/test').Page) {
@@ -74,7 +61,7 @@ test.describe('TableDragBar column reorder', () => {
         // The bar is a baseFloat — its wrapper (`.mu-float-wrapper`) is
         // parked at opacity:0 + left/top:-9999px until shown. `toBeVisible()`
         // reads "hidden" because the wrapper has display:flex but opacity:0;
-        // poll the wrapper's opacity instead (CLAUDE.md convention).
+        // poll the wrapper's opacity instead (AGENTS.md convention).
         const dragBar = page.locator(floats.tableDragBar);
         await expect.poll(async () => dragBar.evaluate((el) => {
             const wrapper = el.closest('.mu-float-wrapper') as HTMLElement | null;

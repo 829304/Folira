@@ -10,14 +10,13 @@ import { describe, expect, it } from 'vitest';
 import { MarkdownToState } from '../markdownToState';
 import ExportMarkdown from '../stateToMarkdown';
 
-// Round-trip helper: parse markdown to state, then serialise back.
-// Lets us verify that `listIndentation` produces stable output the same
-// way marktext's old `markdown-list-indentation.spec.js` did.
 function roundTrip(md: string, listIndentation: number | string = 1): string {
     const states = new MarkdownToState({
         footnote: false,
-        math: false,
-        isGitlabCompatibilityEnabled: false,
+        texMathDollars: false,
+        texMathGfm: false,
+        texMathSingleBackslash: false,
+        texMathDoubleBackslash: false,
         trimUnnecessaryCodeBlockEmptyLines: false,
         frontMatter: false,
     }).generate(md);
@@ -61,8 +60,10 @@ describe('stateToMarkdown — empty list item serialization', () => {
 function parseMarkdown(md: string): TState[] {
     return new MarkdownToState({
         footnote: false,
-        math: false,
-        isGitlabCompatibilityEnabled: false,
+        texMathDollars: false,
+        texMathGfm: false,
+        texMathSingleBackslash: false,
+        texMathDoubleBackslash: false,
         trimUnnecessaryCodeBlockEmptyLines: false,
         frontMatter: false,
     }).generate(md);
@@ -327,17 +328,7 @@ sep
         expect(roundTrip(md, 1)).toBe(md);
     });
 
-    // Beyond the marktext fixtures: lock in a few subsequent-paragraph and
-    // mixed-content scenarios that exercise the same indent / listIndent
-    // split the marktext 02841ffd fix introduced.
-    //
-    // These also surface a separate latent bug in `insertLineBreak`: blank
-    // lines inside a list item were carrying the item's indent as trailing
-    // whitespace (`"  \n"` instead of `"\n"`). Marktext shipped the same
-    // bug, but it's serialization-correctness — fix it as part of the
-    // stateToMarkdown baseline.
     it('round-trips a loose list with a subsequent paragraph', () => {
-        // Canonical loose-list form: blank line between every item.
         const md = `- foo
 
   Second paragraph in the same item.
@@ -361,8 +352,6 @@ sep
     });
 
     it('does not emit trailing whitespace on blank lines inside a list item', () => {
-        // Direct assertion of the bug: every line of the output must either
-        // be non-blank or be exactly "\n".
         const md = `- foo
 
   bar
@@ -453,52 +442,8 @@ sep
         expect(roundTrip(md, 'dfm')).toBe(md);
     });
 
-    // Characterization test, NOT a spec for desired behavior.
-    //
-    // The desktop preferences UI offers a `'tab'` option for list indentation
-    // (prefComponents/markdown/config.ts), but neither this engine nor the
-    // legacy muyajs engine ever implemented it. stateToMarkdown's constructor
-    // only branches on `'dfm'` and `typeof === 'number'`; any other value
-    // (including `'tab'`) falls through to the `else` and yields a 1-space
-    // indent (_listIndentationCount = 1). The TODO in stateToMarkdown.ts
-    // (mirrored verbatim from muyajs/lib/utils/exportMarkdown.js) records why:
-    // the serializer builds every indent out of spaces, and the author left
-    // mixing real tabs with those space-based indents (blockquote prefixes,
-    // subsequent-paragraph alignment) as "work for another day".
-    //
-    // This test pins that degraded-to-1-space behavior so it can't change
-    // silently. If `'tab'` ever gets a real implementation, this assertion
-    // SHOULD fail — replace it with the proper tab-indent fixture then.
-    it('treats the unimplemented \'tab\' option as a 1-space indent', () => {
-        const md = `start
-
-- foo
-- foo
-  - foo
-  - foo
-    - foo
-    - foo
-      - foo
-  - foo
-- foo
-
-sep
-
-1. foo
-2. foo
-   1. foo
-   2. foo
-      1. foo
-   3. foo
-3. foo
-   20. foo
-       141. foo
-            1. foo
-`;
-        // Identical to the 1-space fixture above, and identical to what
-        // listIndentation = 1 produces — confirming 'tab' is silently coerced.
-        expect(roundTrip(md, 'tab')).toBe(md);
-        expect(roundTrip(md, 'tab')).toBe(roundTrip(md, 1));
+    it('serializes the tab option using real tab characters', () => {
+        expect(roundTrip('- a\n  - b\n    - c\n', 'tab')).toBe('- a\n\t- b\n\t\t- c\n');
     });
 });
 
@@ -534,12 +479,12 @@ describe('stateToMarkdown — list looseness (preferLooseListItem)', () => {
     });
 
     it('list meta.loose carries the preferLooseListItem flag verbatim', () => {
-        // The serializer is the only consumer of meta.loose; assert the round
-        // contract by parsing a canonical loose list and reading the flag back.
         const looseStates = new MarkdownToState({
             footnote: false,
-            math: false,
-            isGitlabCompatibilityEnabled: false,
+            texMathDollars: false,
+            texMathGfm: false,
+            texMathSingleBackslash: false,
+            texMathDoubleBackslash: false,
             trimUnnecessaryCodeBlockEmptyLines: false,
             frontMatter: false,
         }).generate('- foo\n\n- bar\n');
@@ -549,8 +494,10 @@ describe('stateToMarkdown — list looseness (preferLooseListItem)', () => {
 
         const tightStates = new MarkdownToState({
             footnote: false,
-            math: false,
-            isGitlabCompatibilityEnabled: false,
+            texMathDollars: false,
+            texMathGfm: false,
+            texMathSingleBackslash: false,
+            texMathDoubleBackslash: false,
             trimUnnecessaryCodeBlockEmptyLines: false,
             frontMatter: false,
         }).generate('- foo\n- bar\n');
@@ -559,26 +506,93 @@ describe('stateToMarkdown — list looseness (preferLooseListItem)', () => {
     });
 });
 
-// Ordered-list start number is preserved through the markdown round-trip, and
-// the per-item number is computed by incrementing `meta.start` (see
-// stateToMarkdown.ts `serializeListItem`). The delimiter (`.` or `)`) likewise
-// comes from `meta.delimiter`, which a real boot seeds from
-// `muya.options.orderListDelimiter`.
 describe('stateToMarkdown — ordered list start + delimiter', () => {
-    function serialize(states: TState[]): string {
-        return new ExportMarkdown({ listIndentation: 1 }).generate(states);
+    function serialize(states: TState[], listIndentation: number | string = 1): string {
+        return new ExportMarkdown({ listIndentation }).generate(states);
     }
 
+    it('preserves repeated ordered markers from source markdown (#4772)', () => {
+        const md = `Below is the numbered list:
+
+1. One
+1. Two
+1. Three
+
+Text after numbered list.
+`;
+        expect(roundTrip(md)).toBe(md);
+
+        const list = parseMarkdown(md)[1] as IOrderListState;
+        expect(list.name).toBe('order-list');
+        expect(list.meta.sourceMarkers).toEqual([
+            '1.',
+            '1.',
+            '1.',
+        ]);
+        expect(list.children.map(item => item.meta?.orderMarker)).toEqual([
+            '1.',
+            '1.',
+            '1.',
+        ]);
+    });
+
+    it('preserves non-canonical ordered item numbers from source markdown', () => {
+        const md = `10) one
+20) two
+`;
+        expect(roundTrip(md)).toBe(md);
+    });
+
+    it('preserves repeated ordered markers in nested lists', () => {
+        const md = `1. outer
+   1. nested one
+   1. nested two
+1. outer again
+`;
+        expect(roundTrip(md)).toBe(md);
+    });
+
+    it('preserves 100+ source markers in dfm mode without throwing', () => {
+        const md = `100. one
+101. two
+`;
+        expect(roundTrip(md, 'dfm')).toBe(md);
+    });
+
+    it('renumbers a parsed ordered list after inserting a new item', () => {
+        const states = parseMarkdown(`1. one
+2. two
+`);
+        const list = states[0] as IOrderListState;
+
+        list.children.splice(1, 0, { name: 'list-item', children: [] });
+
+        expect(serialize(states)).toBe('1. one\n2. \n3. two\n');
+    });
+
+    it('renumbers a parsed ordered list after deleting an item', () => {
+        const states = parseMarkdown(`5. one
+6. two
+`);
+        const list = states[0] as IOrderListState;
+
+        list.children.shift();
+
+        expect(serialize(states)).toBe(`5. two
+`);
+    });
+
     it('keeps a non-1 start number through the round-trip', () => {
-        // The parser stores start=3; the serializer renders 3., 4. (start + i).
         expect(roundTrip('3. one\n4. two\n')).toBe('3. one\n4. two\n');
     });
 
     it('parses the start number into order-list meta.start', () => {
         const states = new MarkdownToState({
             footnote: false,
-            math: false,
-            isGitlabCompatibilityEnabled: false,
+            texMathDollars: false,
+            texMathGfm: false,
+            texMathSingleBackslash: false,
+            texMathDoubleBackslash: false,
             trimUnnecessaryCodeBlockEmptyLines: false,
             frontMatter: false,
         }).generate('3. one\n4. two\n');
@@ -610,5 +624,154 @@ describe('stateToMarkdown — ordered list start + delimiter', () => {
             ],
         }];
         expect(serialize(states)).toBe('5) one\n6) two\n');
+    });
+});
+
+// CommonMark: "a list is loose if any of its constituent list items directly
+// contain two block-level elements with a blank line between them". A tight
+// item therefore keeps its children together, but only where the next block can
+// start on its own — a second paragraph, for one, would be absorbed by the
+// first, so that pair still gets the blank line (and the list reopens loose).
+describe('stateToMarkdown — blocks inside a tight list item', () => {
+    const tightItemWithFence = '- Run the tests:\n  ```sh\n  pnpm test\n  ```\n- Done\n';
+
+    it('keeps a fenced code block in a tight item byte-identical', () => {
+        expect(roundTrip(tightItemWithFence)).toBe(tightItemWithFence);
+    });
+
+    it('reopens the item\'s list tight', () => {
+        const list = parseMarkdown(roundTrip(tightItemWithFence))[0] as IBulletListState;
+        expect(list.meta.loose).toBe(false);
+        expect(list.children[0].children.map(child => child.name))
+            .toEqual(['paragraph', 'code-block']);
+    });
+
+    it('keeps a paragraph that follows a fenced code block inside the item', () => {
+        const md = '- a\n  ```\n  x\n  ```\n  tail\n- b\n';
+        expect(roundTrip(md)).toBe(md);
+    });
+
+    it('keeps the tightness of an ordered item that holds a code block', () => {
+        const md = '1. Run the tests:\n   ```sh\n   pnpm test\n   ```\n2. Done\n';
+        expect(roundTrip(md)).toBe(md);
+    });
+
+    it('lets the blocks that interrupt a paragraph follow one without a blank line', () => {
+        for (const md of [
+            '- Intro\n  ## Sub\n- Next\n',
+            '- Intro\n  > quoted\n- Next\n',
+            '- Intro\n  ***\n- Next\n',
+            '- Intro\n  ___\n- Next\n',
+        ]) {
+            expect(roundTrip(md)).toBe(md);
+            const list = parseMarkdown(roundTrip(md))[0] as IBulletListState;
+            expect(list.meta.loose).toBe(false);
+        }
+    });
+
+    it('keeps the block that follows a heading, math block or diagram inside the item', () => {
+        for (const md of [
+            '- ## Heading\n  body\n- b\n',
+            '- Head\n  ===\n  body\n- b\n',
+            '- $$\n  x\n  $$\n  body\n- b\n',
+            '- ```mermaid\n  graph TD; A-->B\n  ```\n  body\n- b\n',
+        ])
+            expect(roundTrip(md)).toBe(md);
+    });
+
+    it('keeps a dash-only thematic break separated', () => {
+        // A run of dashes is read as a setext underline for the paragraph above
+        // it, so unlike `***` and `___` it keeps the blank line.
+        const states: IBulletListState[] = [{
+            name: 'bullet-list',
+            meta: { marker: '-', loose: false },
+            children: [
+                listItem([paragraph('a'), { name: 'thematic-break', text: '---' }]),
+                listItem([paragraph('b')]),
+            ],
+        }];
+        expect(serializeState(states)).toBe('- a\n\n  ---\n- b\n');
+    });
+
+    it('keeps an indented code block separated from the paragraph above it', () => {
+        // An indented code block cannot interrupt a paragraph.
+        const states: IBulletListState[] = [{
+            name: 'bullet-list',
+            meta: { marker: '-', loose: false },
+            children: [
+                listItem([
+                    paragraph('a'),
+                    { name: 'code-block', meta: { type: 'indented', lang: '' }, text: 'x' },
+                ]),
+                listItem([paragraph('b')]),
+            ],
+        }];
+        expect(serializeState(states)).toBe('- a\n\n      x\n- b\n');
+    });
+
+    it('keeps a github alert separated from the block above it', () => {
+        // The marker is only recognised on the first line of a blank-line
+        // delimited block, so an alert always takes the separator.
+        const states: IBulletListState[] = [{
+            name: 'bullet-list',
+            meta: { marker: '-', loose: false },
+            children: [
+                listItem([
+                    paragraph('a'),
+                    { name: 'github-alert', meta: { type: 'NOTE' }, children: [paragraph('x')] },
+                ]),
+                listItem([paragraph('b')]),
+            ],
+        }];
+        expect(serializeState(states)).toContain('- a\n\n  > [!NOTE]\n  > x');
+    });
+
+    it('still separates two paragraphs, which cannot both stay in a tight item', () => {
+        // The editor can produce this state (#5297). Joining the paragraphs
+        // would merge them, so the blank line stays and the list reopens loose.
+        const states: IBulletListState[] = [{
+            name: 'bullet-list',
+            meta: { marker: '-', loose: false },
+            children: [
+                listItem([paragraph('a'), paragraph('b')]),
+                listItem([paragraph('c')]),
+            ],
+        }];
+        expect(serializeState(states)).toBe('- a\n\n  b\n- c\n');
+        const reparsed = parseMarkdown(serializeState(states))[0] as IBulletListState;
+        expect(reparsed.children[0].children).toEqual([paragraph('a'), paragraph('b')]);
+        expect(reparsed.meta.loose).toBe(true);
+    });
+
+    it('leaves the blocks of a loose item separated', () => {
+        const out = roundTrip('- a\n\n  ```\n  x\n  ```\n- b\n');
+        expect(out).toContain('- a\n\n  ```');
+        expect((parseMarkdown(out)[0] as IBulletListState).meta.loose).toBe(true);
+    });
+});
+
+// The parser splits one markdown list into a bullet list and a task list
+// wherever items switch between plain and task (utils/marked/compatibleTaskList).
+// Those adjacent lists are still one list in markdown, so a blank line between
+// them turns a tight list loose on the next reopen (#5341).
+describe('stateToMarkdown — adjacent lists split from one markdown list', () => {
+    it('keeps a tight bullet list followed by a task list tight', () => {
+        expect(roundTrip('- a\n- [ ] b\n')).toBe('- a\n- [ ] b\n');
+    });
+
+    it('keeps a tight task list followed by a bullet list tight', () => {
+        expect(roundTrip('- [ ] a\n- b\n- [x] c\n')).toBe('- [ ] a\n- b\n- [x] c\n');
+    });
+
+    it('keeps tight split lists tight inside a list item', () => {
+        expect(roundTrip('- x\n  - a\n  - [ ] b\n')).toBe('- x\n  - a\n  - [ ] b\n');
+    });
+
+    it('still separates the items of a loose split list', () => {
+        expect(roundTrip('- a\n\n- [ ] b\n')).toBe('- a\n\n- [ ] b\n');
+    });
+
+    it('leaves lists with different markers unchanged', () => {
+        expect(roundTrip('- a\n* [ ] b\n')).toBe('- a\n* [ ] b\n');
     });
 });

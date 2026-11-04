@@ -2,10 +2,17 @@ import type { ILexOption } from './types';
 import { Marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import Prism from 'prismjs';
-import cjkEmStrongExtension from './extensions/cjkEmStrong';
+import compactNestedLists from './compactNestedLists';
 import emojiExtension from './extensions/emoji';
+import fancyListsHtmlExtension from './extensions/fancyListsHtml';
 import footnoteExtension from './extensions/footnote';
-import mathExtension from './extensions/math';
+import githubAlertsExtension from './extensions/githubAlerts';
+import inlineDelimitersExtension from './extensions/inlineDelimiters';
+import inlineDiffExtension from './extensions/inlineDiff';
+import markExtension from './extensions/mark';
+import mathExtension, { doubleBackslashMathExtension, gfmMathExtension, singleBackslashMathExtension } from './extensions/math';
+import multilineBlockquoteExtension from './extensions/multilineBlockquote';
+import referenceDefinitionTabs from './extensions/referenceDefinitionTabs';
 import superSubScriptExtension from './extensions/superSubscript';
 import fm, { frontMatterRender } from './frontMatter';
 import { DEFAULT_OPTIONS } from './options';
@@ -20,7 +27,6 @@ const DIAGRAM_TYPE = [
 ];
 
 function highlight(code: string, lang: string) {
-    // Language may be undefined (GH#591)
     if (!lang)
         return code;
 
@@ -37,29 +43,50 @@ function highlight(code: string, lang: string) {
 
 export function getHighlightHtml(src: string, options: ILexOption = {}) {
     options = Object.assign({}, DEFAULT_OPTIONS, options);
-    const { footnote, frontMatter, math, isGitlabCompatibilityEnabled, superSubScript }
+    const { footnote, frontMatter, texMathDollars, texMathGfm, texMathSingleBackslash, texMathDoubleBackslash, superSubScript, highlightSyntax, inlineDiff, multilineBlockquote, fancyLists }
         = options;
 
-    // Build a fresh Marked instance per call. `Marked.use({ walkTokens })`
-    // chains rather than replaces, so reusing a module-level singleton would
-    // cause walkTokens to fire N times after N invocations and corrupt token
-    // state (e.g. wiping `lang` on subsequent runs).
-    const marked = new Marked(markedHighlight({ highlight }));
+    // Use a fresh Marked instance; repeated use() chains walkTokens and corrupts repeated renders.
+    const marked = new Marked(markedHighlight({ highlight }), referenceDefinitionTabs());
 
     marked.use({
-        walkTokens: walkTokens({ math, isGitlabCompatibilityEnabled }),
+        walkTokens: walkTokens({ texMathDollars, texMathGfm }),
     });
 
-    // Treat CJK characters as punctuation for emphasis/strong flanking so
-    // `中文**"加粗"**中文` bolds (marktext/marktext#4307). Additive override —
-    // never regresses spec-conformant Latin emphasis.
-    marked.use(cjkEmStrongExtension());
+    marked.use(inlineDelimitersExtension());
 
     marked.use(emojiExtension({ isRenderEmoji: true }));
 
-    if (math) {
+    if (texMathDollars) {
         marked.use(
             mathExtension({
+                throwOnError: false,
+                useKatexRender: true,
+            }),
+        );
+    }
+
+    if (texMathGfm) {
+        marked.use(
+            gfmMathExtension({
+                throwOnError: false,
+                useKatexRender: true,
+            }),
+        );
+    }
+
+    if (texMathSingleBackslash) {
+        marked.use(
+            singleBackslashMathExtension({
+                throwOnError: false,
+                useKatexRender: true,
+            }),
+        );
+    }
+
+    if (texMathDoubleBackslash) {
+        marked.use(
+            doubleBackslashMathExtension({
                 throwOnError: false,
                 useKatexRender: true,
             }),
@@ -69,8 +96,23 @@ export function getHighlightHtml(src: string, options: ILexOption = {}) {
     if (superSubScript)
         marked.use(superSubScriptExtension());
 
+    if (highlightSyntax)
+        marked.use(markExtension());
+
+    if (inlineDiff)
+        marked.use(inlineDiffExtension());
+
+    marked.use(multilineBlockquoteExtension(multilineBlockquote === true));
+    marked.use(githubAlertsExtension(options.githubAlerts === true));
+
     if (footnote)
         marked.use(footnoteExtension());
+
+    if (fancyLists)
+        marked.use(fancyListsHtmlExtension());
+    else
+        // Export's pre-wrap stylesheet exposes marked's list-wrapper newlines (#5767).
+        marked.use(compactNestedLists());
 
     let html = '';
 

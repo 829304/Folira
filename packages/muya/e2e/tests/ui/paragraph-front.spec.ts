@@ -14,8 +14,8 @@ import { editor, floats } from '../helpers/selectors';
  * 0 ms timeout) shows + renders the menu. Resolving once the first
  * `.turn-into-item` is visible proves the menu rendered its submenu.
  */
-async function openFrontMenu(page: Page): Promise<void> {
-    const para = page.locator(editor.paragraph).first();
+async function openFrontMenu(page: Page, selector = editor.paragraph): Promise<void> {
+    const para = page.locator(selector).first();
     const box = await para.boundingBox();
     if (!box)
         throw new Error('paragraph has no bounding box');
@@ -74,6 +74,62 @@ test.describe('paragraph front button + menu', () => {
 });
 
 test.describe('paragraph front menu — Turn Into', () => {
+    for (const [label, expected, prefixLength] of [
+        ['atx-heading[class~="1"]', '# title ###\n', 2],
+        ['atx-heading[class~="2"]', '## title ###\n', 3],
+        ['paragraph', 'title\n', 0],
+    ] as const) {
+        for (const end of [7, 8]) {
+            test(`Turn Into ${label} preserves the heading body selection 7–${end}`, async ({ page }) => {
+                await page.evaluate((focus) => {
+                    window.muya!.setContent('### title ###\n');
+                    window.muya!.editor.scrollPage!.firstContentInDescendant()!.setCursor(7, focus, true);
+                }, end);
+                await openFrontMenu(page, editor.atxHeading);
+                await page.locator(`${floats.paragraphFrontMenu} .turn-into-item.${label}`).click();
+                await expect.poll(() => getMarkdown(page)).toBe(expected);
+                expect(await page.evaluate(() => window.muya!.getCursorOffset())).toEqual({
+                    anchor: { line: 0, ch: prefixLength + 3 }, focus: { line: 0, ch: prefixLength + end - 4 },
+                });
+                await page.evaluate(() => window.muya!.undo());
+                await expect.poll(() => getMarkdown(page)).toBe('### title ###\n');
+                expect(await page.evaluate(() => window.muya!.getCursorOffset())).toEqual({
+                    anchor: { line: 0, ch: 7 }, focus: { line: 0, ch: end },
+                });
+                await page.evaluate(() => window.muya!.redo());
+                await expect.poll(() => getMarkdown(page)).toBe(expected);
+                await page.keyboard.type('X');
+                await expect.poll(() => getMarkdown(page)).toBe(expected.replace('title', end === 7 ? 'titXle' : 'titXe'));
+            });
+        }
+    }
+
+    test('Turn Into heading preserves a paragraph caret inside its text', async ({ page }) => {
+        await page.evaluate(() => {
+            window.muya!.setContent('title\n');
+            window.muya!.editor.scrollPage!.firstContentInDescendant()!.setCursor(3, 3, true);
+        });
+        await openFrontMenu(page);
+        await page.locator(`${floats.paragraphFrontMenu} .turn-into-item.atx-heading[class~="2"]`).click();
+        await expect.poll(() => getMarkdown(page)).toBe('## title\n');
+        expect(await page.evaluate(() => window.muya!.getCursorOffset())).toEqual({
+            anchor: { line: 0, ch: 6 }, focus: { line: 0, ch: 6 },
+        });
+    });
+
+    test('Turn Into a different block does not reuse an unrelated caret', async ({ page }) => {
+        await page.evaluate(() => {
+            window.muya!.setContent('before\n\n### title ###\n');
+            window.muya!.editor.scrollPage!.firstContentInDescendant()!.setCursor(2, 2, true);
+        });
+        await openFrontMenu(page, editor.atxHeading);
+        await page.locator(`${floats.paragraphFrontMenu} .turn-into-item.paragraph`).click();
+        await expect.poll(() => getMarkdown(page)).toBe('before\n\ntitle\n');
+        expect(await page.evaluate(() => window.muya!.getCursorOffset())).toEqual({
+            anchor: { line: 2, ch: 5 }, focus: { line: 2, ch: 5 },
+        });
+    });
+
     test('Turn Into → Code Block converts an empty paragraph and round-trips', async ({ page }) => {
         // `canTurnIntoMenu` only offers code-block / diagram targets when the
         // paragraph is EMPTY (a non-empty paragraph is limited to
@@ -100,8 +156,7 @@ test.describe('paragraph front menu — Turn Into', () => {
         await expect(page.locator(editor.paragraph)).toHaveCount(0);
 
         // Empty fenced code block round-trips to a bare ``` fence pair.
-        const md = await getMarkdown(page);
-        expect(md).toBe('```\n\n```\n');
+        await expect.poll(() => getMarkdown(page)).toBe('```\n\n```\n');
     });
 
     test('Turn Into → Mermaid converts an empty paragraph to a diagram block and round-trips', async ({ page }) => {
@@ -122,8 +177,7 @@ test.describe('paragraph front menu — Turn Into', () => {
         await expect(page.locator(editor.paragraph)).toHaveCount(0);
 
         // Empty mermaid diagram round-trips to a ```mermaid fence.
-        const md = await getMarkdown(page);
-        expect(md).toBe('```mermaid\n\n```\n');
+        await expect.poll(() => getMarkdown(page)).toBe('```mermaid\n\n```\n');
     });
 
     test('Turn Into menu gates code-block/diagram to EMPTY paragraphs only', async ({ page }) => {
@@ -140,5 +194,20 @@ test.describe('paragraph front menu — Turn Into', () => {
         await expect(page.locator(`${menu} .turn-into-item.diagram.mermaid`)).toHaveCount(0);
         // Block-quote IS an allowed target for a non-empty paragraph.
         await expect(page.locator(`${menu} .turn-into-item.block-quote`)).toHaveCount(1);
+    });
+
+    test('Copy as submenu stays inside a narrow viewport', async ({ page }) => {
+        // An empty paragraph offers every Turn Into icon; they must wrap
+        // instead of widening the menu past room for the submenu.
+        await page.setViewportSize({ width: 480, height: 720 });
+        await page.evaluate(() => window.muya!.setContent(''));
+        await openFrontMenu(page);
+
+        await page.locator(`${floats.paragraphFrontMenu} li.copy-as`).hover();
+        const formats = page.locator(`${floats.paragraphFrontMenu} .copy-as-menu li.item`);
+        await expect(formats).toHaveCount(3);
+        for (const format of await formats.all()) {
+            await expect(format).toBeInViewport({ ratio: 1 });
+        }
     });
 });

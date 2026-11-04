@@ -27,12 +27,12 @@ PlantUML, and multiple editing modes (focus, typewriter, source-code).
 
 | Layer | Technology |
 |---|---|
-| Language | TypeScript 6 (strict) — `packages/muyajs/` stays JS behind an ambient shim |
+| Language | TypeScript 6 (strict) |
 | Desktop shell | Tauri 2 (Rust) over the system WebView: WebView2, WKWebView, webkit2gtk |
 | Renderer build | Vite 7 via `packages/desktop/vite.tauri.config.ts` (standalone; no electron-vite) |
 | Packaging | tauri-bundler, configured entirely in `packages/desktop/src-tauri/tauri.conf.json` |
 | Frontend | Vue 3 + Element Plus + Pinia 3 + Vue Router 4 |
-| Editor engine | `@muyajs/core` (`packages/muya`, TS rewrite); legacy `packages/muyajs` is being retired |
+| Editor engine | `@muyajs/core` (`packages/muya`, TS) |
 | Unit tests | Vitest 4 with jsdom |
 | Package manager | pnpm 10.33.4 workspace (`packageManager`); Node.js >= 20.19.0 |
 | Rust | stable toolchain, `rust-version = "1.77.2"` |
@@ -46,7 +46,7 @@ PlantUML, and multiple editing modes (focus, typewriter, source-code).
                             tooling scripts (lint, minify-locales, gen-third-party).
   pnpm-workspace.yaml       `packages: ['packages/*']` plus allowBuilds.
   pnpm-lock.yaml            Single lockfile for the whole workspace.
-  eslint.config.js          Root ESLint v9 flat config (desktop + muyajs;
+  eslint.config.js          Root ESLint v9 flat config (desktop;
                             website has its own ESLint 8 config and is ignored).
   scripts/                  minify-locales.ts, generateThirdPartyLicense.ts,
                             validateLicenses.ts, thirdPartyChecker.ts, bundle-size.ts.
@@ -82,12 +82,9 @@ PlantUML, and multiple editing modes (focus, typewriter, source-code).
                             types/ipc.ts (the invoke/event contract) and
                             preferences-schema.json (the settings schema).
         types/              Ambient .d.ts declarations (window bridges, Muya shim).
-    muyajs/                 Legacy editor engine (`@marktext/muyajs`), JS + DOM.
-                            Retired in favour of packages/muya; kept for the
-                            remaining `muya/lib/...` alias call sites.
     muya/                   `@muyajs/core` — TypeScript editor engine (parser,
                             block state, WYSIWYG renderer). Self-contained
-                            toolchain; see packages/muya/CLAUDE.md.
+                            toolchain; see packages/muya/AGENTS.md.
     website/                marktext-website (Vite + React 18), standalone.
                             Not part of desktop CI.
 ```

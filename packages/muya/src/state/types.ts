@@ -1,3 +1,6 @@
+import type { GithubAlertType } from '../utils/githubAlerts';
+import type { ListDelimiter, ListStyle } from '../utils/listMarker';
+
 export interface IParagraphState {
     name: 'paragraph';
     text: string;
@@ -8,6 +11,7 @@ export interface IAtxHeadingState {
     meta: {
         level: number;
     };
+    // The complete editable line, including opening/closing markers and whitespace.
     text: string;
 }
 
@@ -15,8 +19,8 @@ export interface ISetextHeadingState {
     name: 'setext-heading';
     meta: {
         level: number;
-        underline: string; // "===" | "---";
     };
+    syntax: { underline: string }; // The complete underline line, excluding its EOL.
     text: string;
 }
 
@@ -29,11 +33,11 @@ export interface ICodeBlockState {
     name: 'code-block';
     meta: {
         type: string; // "indented" | "fenced";
-        // The full fenced info string, verbatim (e.g. `js`, `js title="x"`, or a
-        // Pandoc/RMarkdown `{…}` block). The language for highlighting is its
-        // first word — derive via `firstWordOfInfo()`, never assume a single word.
+        // Full fence info string; derive the highlighting language with firstWordOfInfo().
         lang: string;
         fenceLength?: number;
+        // Absent for indented blocks. Older fenced states may omit it; readers default to backticks.
+        fenceChar?: '`' | '~';
     };
     text: string;
 }
@@ -46,7 +50,7 @@ export interface IHtmlBlockState {
 /**
  * @deprecated Reference definitions are stored as paragraph state nodes whose
  * `text` is the raw `[label]: url "title"` line (matches marktext's
- * "definition is paragraph text" model). `InlineRenderer.collectReferenceDefinitions`
+ * "definition is paragraph text" model). `InlineEngine.collectReferenceDefinitions`
  * regex-scans paragraphs to build the labels Map. This interface is unused
  * across the codebase and exists only for legacy type compatibility; remove
  * in v0.3.
@@ -58,11 +62,28 @@ export interface ILinkReferenceDefinitionState {
 
 export interface IBlockQuoteState {
     name: 'block-quote';
+    meta?: {
+        style?: 'fenced';
+    };
+    children: TState[];
+}
+
+export interface IGithubAlertState {
+    name: 'github-alert';
+    meta: {
+        type: GithubAlertType;
+        // Preserve non-canonical marker spelling on round-trip.
+        marker?: string;
+        blankLineAfterMarker?: boolean;
+    };
     children: TState[];
 }
 
 export interface IListItemState {
     name: 'list-item';
+    meta?: {
+        orderMarker?: string; // e.g. "1.", "001.", "10)"
+    };
     children: TState[];
 }
 
@@ -71,7 +92,9 @@ export interface IOrderListState {
     meta: {
         start: number;
         loose: boolean;
-        delimiter: string; // "." | ")";
+        delimiter: ListDelimiter;
+        style?: ListStyle; // Absent means decimal.
+        sourceMarkers?: string[]; // Original item markers for no-edit source round-trips.
     };
     children: IListItemState[];
 }
@@ -107,6 +130,7 @@ export interface ITableState {
 
 export interface ITaskListItemMeta {
     checked: boolean;
+    orderMarker?: string; // e.g. "1.", "007.", "10)"
 }
 
 export interface ITaskListItemState {
@@ -115,9 +139,22 @@ export interface ITaskListItemState {
     children: TState[];
 }
 
-export interface ITaskListMeta {
+/** A task list is unordered (`marker`) or ordered (`start`/`delimiter`). */
+export type ITaskListMeta = ITaskListMetaUnordered | ITaskListMetaOrdered;
+
+export interface ITaskListMetaUnordered {
+    ordered?: false;
     marker: string; // "-" | "+" | "*";
     loose: boolean;
+}
+
+export interface ITaskListMetaOrdered {
+    ordered: true;
+    start: number;
+    delimiter: ListDelimiter;
+    style?: ListStyle; // Absent means decimal.
+    loose: boolean;
+    sourceMarkers?: string[]; // Original item markers for no-edit source round-trips.
 }
 
 export interface ITaskListState {
@@ -127,7 +164,7 @@ export interface ITaskListState {
 }
 
 export interface IMathMeta {
-    mathStyle: string; // "" | "gitlab";
+    mathStyle: string; // "" | "gfm";
 }
 
 export interface IMathBlockState {
@@ -183,6 +220,7 @@ export type TLeafState
 
 export type TContainerState
     = | IBlockQuoteState
+        | IGithubAlertState
         | IOrderListState
         | IBulletListState
         | ITableState
@@ -196,9 +234,6 @@ export type TState = TLeafState | TContainerState;
 
 export type CodeContentState = ICodeBlockState | IHtmlBlockState | IDiagramState | IMathBlockState | IFrontmatterState;
 
-// Discriminated-union type guards. `TState` is keyed by `name`, so consumers can
-// narrow without `as I<X>State` casts. Use `isStateOfName(state, 'atx-heading')`
-// for ad-hoc narrowing or the per-name shorthands.
 export function isStateOfName<N extends TState['name']>(
     state: TState,
     name: N,
@@ -219,6 +254,7 @@ export const isDiagramState = (s: TState): s is IDiagramState => s.name === 'dia
 export const isTableCellState = (s: TState): s is ITableCellState => s.name === 'table.cell';
 
 export const isBlockQuoteState = (s: TState): s is IBlockQuoteState => s.name === 'block-quote';
+export const isGithubAlertState = (s: TState): s is IGithubAlertState => s.name === 'github-alert';
 export const isOrderListState = (s: TState): s is IOrderListState => s.name === 'order-list';
 export const isBulletListState = (s: TState): s is IBulletListState => s.name === 'bullet-list';
 export const isTableState = (s: TState): s is ITableState => s.name === 'table';
@@ -230,6 +266,12 @@ export const isFootnoteBlockState = (s: TState): s is IFootnoteBlockState => s.n
 
 export function isAnyListState(s: TState): s is IOrderListState | IBulletListState | ITaskListState {
     return s.name === 'order-list' || s.name === 'bullet-list' || s.name === 'task-list';
+}
+
+export function markdownListMarker(list: Pick<IOrderListState | IBulletListState | ITaskListState, 'meta'>): string {
+    return 'delimiter' in list.meta
+        ? `ordered:${list.meta.style ?? 'decimal'}${list.meta.delimiter}`
+        : `bullet:${list.meta.marker}`;
 }
 
 export interface ITurnoverOptions {

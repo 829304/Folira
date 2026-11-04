@@ -3,13 +3,13 @@ import type { ITaskListMeta, ITaskListState } from '../../../state/types';
 import type TaskListItem from '../taskListItem';
 import { CLASS_NAMES } from '../../../config';
 import { mixins } from '../../../utils';
-import Parent from '../../base/parent';
+import ListBlock from '../../base/list';
 import IContainerQueryBlock from '../../mixins/containerQueryBlock';
 import { ScrollPage } from '../../scrollPage';
 
 @mixins(IContainerQueryBlock)
-class TaskList extends Parent {
-    public meta: ITaskListMeta;
+class TaskList extends ListBlock {
+    public override meta: ITaskListMeta;
 
     static override blockName = 'task-list';
 
@@ -34,24 +34,25 @@ class TaskList extends Parent {
 
     constructor(muya: Muya, { meta }: ITaskListState) {
         super(muya);
-        this.tagName = 'ul';
         this.meta = meta;
-        this.datasets = {
-            marker: meta.marker,
-        };
+        if (meta.ordered) {
+            this.tagName = 'ol';
+            this.attributes = { start: String(meta.start) };
+            this.datasets = { delimiter: meta.delimiter, ...(meta.style ? { style: meta.style } : {}) };
+        }
+        else {
+            this.tagName = 'ul';
+            this.datasets = { marker: meta.marker };
+        }
         this.classList = [CLASS_NAMES.MU_TASK_LIST];
-        if (!meta.loose)
-            this.classList.push('mu-tight-list');
-
         this.createDomNode();
+        this.setLoose(meta.loose);
     }
 
-    /**
-     * Auto move checked list item to the end of task list.
-     */
+    // Ordered task lists preserve item order even when checked.
     orderIfNecessary() {
         const { autoMoveCheckedToEnd } = this.muya.options;
-        if (!autoMoveCheckedToEnd)
+        if (!autoMoveCheckedToEnd || this.meta.ordered)
             return;
 
         let first = this.firstChild as TaskListItem;

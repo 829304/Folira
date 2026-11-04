@@ -67,17 +67,15 @@ describe('duplicate same-src images: resize bar targets the clicked image', () =
         const containers = injectImages(muya, src);
 
         const handler = vi.fn();
-        muya.eventCenter.on('muya-transformer', (payload: { reference?: unknown }) => {
-            if (payload && payload.reference)
-                handler(payload.reference);
+        muya.eventCenter.on('selection-change', ({ selection }) => {
+            if (selection?.kind === 'image')
+                handler(selection.context.domNode);
         });
 
-        // Click the SECOND image.
         containers[1]!
             .querySelector('img')!
             .dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
-        // The resize bar must reference the second image's own container.
         expect(handler).toHaveBeenCalledTimes(1);
         expect(handler).toHaveBeenCalledWith(containers[1]);
     });

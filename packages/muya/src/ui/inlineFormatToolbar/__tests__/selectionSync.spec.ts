@@ -1,7 +1,9 @@
-// @vitest-environment happy-dom
+import type { Token } from '../../../inline/model/types';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Muya } from '../../../muya';
+// @vitest-environment happy-dom
+import { SelectionType } from '../../../selection/types';
 import { InlineFormatToolbar } from '../index';
 
 // The toolbar must perceive inline-format changes itself and update its
@@ -45,14 +47,59 @@ function emitSelectionChange(
     formats: Array<{ type: string }>,
     extra: { isCollapsed?: boolean; isSelectionInSameBlock?: boolean } = {},
 ): void {
+    const first = muya.editor.scrollPage!.firstContentInDescendant()!;
+    first.setCursor(0, Math.min(4, first.text.length), true);
+    const selection = muya.getSelection();
+    if (selection?.kind !== SelectionType.TEXT)
+        throw new Error('Expected a text selection');
     muya.eventCenter.emit('selection-change', {
-        formats,
-        isCollapsed: extra.isCollapsed ?? false,
-        isSelectionInSameBlock: extra.isSelectionInSameBlock ?? true,
+        selection: {
+            ...selection,
+            context: {
+                ...selection.context,
+                formats: formats as Token[],
+                isCollapsed: extra.isCollapsed ?? false,
+                isSelectionInSameBlock: extra.isSelectionInSameBlock ?? true,
+            },
+        },
+        docChanged: false,
     });
 }
 
 describe('inlineFormatToolbar self-syncs its highlight on selection-change', () => {
+    it('does not open for Find navigation while the editor retains focus', async () => {
+        const muya = bootMuya('apple apple\n');
+        const toolbar = new InlineFormatToolbar(muya);
+        const show = vi.spyOn(toolbar, 'show');
+        muya.domNode.focus();
+        muya.search('apple', { selectHighlight: true });
+        muya.setSearchVisible(false);
+        muya.setSearchVisible(true);
+        muya.find('next');
+        muya.find('previous');
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        expect(show).not.toHaveBeenCalled();
+        expect(toolbar.status).toBe(false);
+        emitSelectionChange(muya, []);
+        expect(show).toHaveBeenCalled();
+    });
+
+    it('hides while an external find input owns focus and ignores its retained editor selection', () => {
+        const muya = bootMuya('hello world\n');
+        const toolbar = new InlineFormatToolbar(muya);
+        emitSelectionChange(muya, []);
+        const selection = muya.getSelection();
+        const input = document.createElement('input');
+        document.body.appendChild(input);
+        input.focus();
+
+        expect(toolbar.status).toBe(false);
+        muya.eventCenter.emit('selection-change', { selection, docChanged: false });
+        expect(toolbar.status).toBe(false);
+        input.remove();
+    });
+
     it('lights up bold when a selection-change reports strong while the toolbar is open', () => {
         const muya = bootMuya('hello world\n');
         const toolbar = new InlineFormatToolbar(muya);
@@ -77,7 +124,7 @@ describe('inlineFormatToolbar self-syncs its highlight on selection-change', () 
         expect(toolbar.container!.querySelector('li.item.strong')!.classList.contains('active')).toBe(false);
     });
 
-    it('ignores selection-change while the toolbar is hidden', () => {
+    it('opens for a noncollapsed text selection', () => {
         const muya = bootMuya('hello world\n');
         const toolbar = new InlineFormatToolbar(muya);
         toolbar.status = false; // closed
@@ -85,7 +132,7 @@ describe('inlineFormatToolbar self-syncs its highlight on selection-change', () 
         emitSelectionChange(muya, [{ type: 'strong' }]);
 
         // The handler bails before the first render, so nothing is drawn.
-        expect(toolbar.container!.querySelector('li.item.strong')).toBeNull();
+        expect(toolbar.container!.querySelector('li.item.strong')).toBeTruthy();
     });
 
     it('ignores collapsed / cross-block selections (single-block tool)', () => {
@@ -94,9 +141,9 @@ describe('inlineFormatToolbar self-syncs its highlight on selection-change', () 
         toolbar.status = true;
 
         emitSelectionChange(muya, [{ type: 'strong' }], { isCollapsed: true });
-        expect(toolbar.container!.querySelector('li.item.strong')).toBeNull();
+        expect(toolbar.status).toBe(false);
 
         emitSelectionChange(muya, [{ type: 'strong' }], { isSelectionInSameBlock: false });
-        expect(toolbar.container!.querySelector('li.item.strong')).toBeNull();
+        expect(toolbar.status).toBe(false);
     });
 });

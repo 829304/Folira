@@ -1,4 +1,4 @@
-import type { IHighlight } from '../../inlineRenderer/types';
+import type { IHighlight } from '../../inline/model/types';
 import type { Muya } from '../../muya';
 import type { IContentCursor, INodeOffset, IRenderCursor } from '../../selection/types';
 import type { Nullable } from '../../types';
@@ -7,24 +7,37 @@ import type Parent from './parent';
 import diff from 'fast-diff';
 import TreeNode from '../../block/base/treeNode';
 import { ScrollPage } from '../../block/scrollPage';
-import { BACK_HASH, BRACKET_HASH, EVENT_KEYS, isFirefox } from '../../config';
+import { BACK_HASH, BRACKET_HASH, CLASS_NAMES, EVENT_KEYS, isOsx } from '../../config';
 import Selection from '../../selection';
+import { offsetInBlockAtPoint } from '../../selection/dom';
+import { createTextSelectionState } from '../../selection/state';
+import { ChangeSource } from '../../types';
 import {
     adjustOffset,
     diffToTextOp,
+    isCompositionEndEvent,
     isInputEvent,
     isKeyboardEvent,
     isMouseEvent,
 } from '../../utils';
-
-// import logger from './utils/logger'
-
-// const debug = logger('block.content:')
+import { editTab } from '../../utils/tab';
+import { isFoldableHeading } from '../commonMark/atxHeading/foldSection';
+import { revealBlock } from '../folding';
 
 // Word boundary regexes derived from VSCode's wordHelper. Used by `extractWord`
 // to find the word at the cursor for spell-check replacement.
 const WORD_SEPARATORS = /[`~!@#$%^&*()\-=+[{\]}\\|;:'",.<>/?\s]/g;
 const WORD_DEFINITION = /-?\d*\.\d\w*|[^`~!@#$%^&*()\-=+[{\]}\\|;:'",.<>/?\s]+/g;
+
+// Leave macOS Cmd+Up/Down to the browser’s document-boundary movement (#3452).
+// The platform flag is injectable for tests.
+export function isDocumentBoundaryArrow(event: KeyboardEvent, osx: boolean = isOsx): boolean {
+    return osx
+        && event.metaKey
+        && !event.ctrlKey
+        && !event.altKey
+        && (event.key === EVENT_KEYS.ArrowUp || event.key === EVENT_KEYS.ArrowDown);
+}
 
 /**
  * Extract the word at the given offset from the text.
@@ -48,7 +61,6 @@ function extractWord(
         offset = text.length - 1;
     }
 
-    // Matches all words starting at a good position.
     WORD_DEFINITION.lastIndex = text.lastIndexOf(' ', offset - 1) + 1;
     let match: RegExpExecArray | null = null;
     let left = -1;
@@ -68,7 +80,6 @@ function extractWord(
     if (left <= -1)
         return null;
 
-    // Find word ending.
     WORD_SEPARATORS.lastIndex = offset;
     match = WORD_SEPARATORS.exec(text);
     let right = -1;
@@ -77,7 +88,6 @@ function extractWord(
 
     WORD_SEPARATORS.lastIndex = 0;
 
-    // The last word in the string is a special case.
     if (right < 0) {
         return {
             left,
@@ -91,6 +101,22 @@ function extractWord(
         right,
         word: text.slice(left, right),
     };
+}
+
+/**
+ * Zero-width space an IME composes into instead of the block's trailing
+ * newline — see `Content._seedCompositionAnchor`.
+ */
+const COMPOSITION_ANCHOR = '\u200B';
+
+function countKeptBefore(text: string, offset: number): number {
+    let kept = 0;
+    for (let i = 0; i < offset; i++) {
+        if (text[i] !== COMPOSITION_ANCHOR)
+            kept++;
+    }
+
+    return kept;
 }
 
 function shouldRemoveClosingChar(
@@ -199,7 +225,6 @@ function deleteAutoPair(
     blockText: string,
 ) {
     let needRender = false;
-    // handle `deleteContentBackward` or `deleteContentForward`
     const deletedChar = blockText[offset];
     if (
         event.inputType === 'deleteContentBackward'
@@ -251,8 +276,6 @@ function collapsedInputAutoPair(
         return { text, needRender };
     }
 
-    // Not Unicode aware, since things like \p{Alphabetic} or \p{L} are not supported yet
-
     // Only pair quotes/brackets when the cursor is at
     // end-of-line or before whitespace.
     // Inserting `"foo` would otherwise become `""foo` and force
@@ -295,31 +318,32 @@ function collapsedInputAutoPair(
 }
 
 function lineBreakAutoPair(
-    event: InputEvent,
+    event: InputEvent | CompositionEvent,
     text: string,
     start: INodeOffset,
     end: INodeOffset,
     oldStart: INodeOffset,
     blockText: string,
 ) {
+    const inputType = isInputEvent(event) ? event.inputType : '';
+
     // Just work for `Shift + Enter` to create a soft and hard line break.
     if (
         blockText.endsWith('\n')
         && start.offset === text.length
-        && (event.inputType === 'insertText' || event.type === 'compositionend')
+        && typeof event.data === 'string'
+        && (inputType === 'insertText' || event.type === 'compositionend')
     ) {
         text = blockText + event.data;
-        // I don't know why firefox don't need to offset++
-        // For more info: https://github.com/marktext/muya/issues/130
-        if (!isFirefox) {
-            start.offset++;
-            end.offset++;
-        }
+        // Re-anchor to rebuilt text: Chromium and Firefox retain different DOM offsets after composition.
+        // See https://github.com/marktext/muya/issues/130.
+        start.offset = text.length;
+        end.offset = text.length;
     }
     else if (
         blockText.length === oldStart.offset
         && blockText[oldStart.offset - 2] === '\n'
-        && event.inputType === 'deleteContentBackward'
+        && inputType === 'deleteContentBackward'
     ) {
         text = blockText.substring(0, oldStart.offset - 1);
         start.offset = text.length;
@@ -332,6 +356,8 @@ function lineBreakAutoPair(
 class Content extends TreeNode {
     private _text: string;
     protected isComposed: boolean;
+    private _compositionAnchor: Nullable<Text> = null;
+    private _compositionLineEnd: Nullable<Element> = null;
 
     static override blockName = 'content';
 
@@ -343,8 +369,8 @@ class Content extends TreeNode {
         return this.muya.editor.selection;
     }
 
-    protected get inlineRenderer() {
-        return this.muya.editor.inlineRenderer;
+    protected get inlineEngine() {
+        return this.muya.editor.inlineEngine;
     }
 
     protected get autoPairType() {
@@ -365,7 +391,11 @@ class Content extends TreeNode {
     }
 
     set text(text) {
+        if (!this.muya.canMutate)
+            return;
         const oldText = this._text;
+        if (oldText !== text)
+            this.transactions.captureSelection();
         this._text = text;
         const { path } = this;
         if (this.blockName === 'language-input') {
@@ -373,11 +403,10 @@ class Content extends TreeNode {
             path.push('meta', 'lang');
         }
 
-        // dispatch change to modify json state
         if (oldText !== text) {
             const diffs = diff(oldText, text);
 
-            this.jsonState.editOperation(path, diffToTextOp(diffs));
+            this.transactions.editOperation(path, diffToTextOp(diffs));
         }
     }
 
@@ -397,7 +426,7 @@ class Content extends TreeNode {
         this.tagName = 'span';
         this.classList = ['mu-content'];
         this.attributes = {
-            contenteditable: true,
+            contenteditable: !muya.isReadOnly,
         };
         this._text = text;
         this.isComposed = false;
@@ -424,23 +453,23 @@ class Content extends TreeNode {
     }
 
     tabHandler(_event: Event): void {
-    // Do nothing.
     }
 
     keyupHandler(_event: Event): void {
-    // Do nothing.
     }
 
     inputHandler(_event: Event): void {
-    // Do nothing.
     }
 
     backspaceHandler(_event: Event): void {
-    // Do nothing.
+    }
+
+    /** Return true to consume a block shortcut before the default key routing. */
+    beforeKeydown(_event: KeyboardEvent): boolean {
+        return false;
     }
 
     enterHandler(_event: Event): void {
-    // Do nothing.
     }
 
     deleteHandler(event: Event): void {
@@ -451,50 +480,45 @@ class Content extends TreeNode {
             event.preventDefault();
     }
 
+    private _revealArrowSelectionTarget(event: KeyboardEvent, start: number, end: number): void {
+        const rtl = this.domNode?.closest('[dir]')?.getAttribute('dir') === 'rtl';
+        const backwards = event.key === EVENT_KEYS.ArrowUp || event.key === (rtl ? EVENT_KEYS.ArrowRight : EVENT_KEYS.ArrowLeft);
+        if (backwards ? start !== 0 : end !== this.text.length)
+            return;
+        const target = backwards ? this.previousContentInContext() : this.nextContentInContext();
+        if (target)
+            revealBlock(target);
+    }
+
     arrowHandler(event: Event) {
         if (!isKeyboardEvent(event))
             return;
 
-        const previousContentBlock = this.previousContentInContext();
-        const nextContentBlock = this.nextContentInContext();
         const { start, end } = this.getCursor()!;
-        const { topOffset, bottomOffset } = Selection.getCursorYOffset(
-            this.domNode!,
-        );
 
-        // Just do nothing if the cursor is not collapsed or `shiftKey` pressed
-        if (start.offset !== end.offset || event.shiftKey)
-            return;
-
-        if (
-            (event.key === EVENT_KEYS.ArrowUp && topOffset > 0)
-            || (event.key === EVENT_KEYS.ArrowDown && bottomOffset > 0)
-        ) {
+        if (event.shiftKey) {
+            this._revealArrowSelectionTarget(event, start.offset, end.offset);
             return;
         }
+        if (start.offset !== end.offset)
+            return;
 
-        const { muya } = this;
+        if (this._deferArrowToBrowser(event, start.offset, end.offset))
+            return;
+
+        const direction = this._arrowDirection(event, start.offset, this.text.length);
+        if (direction == null)
+            return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
         let cursorBlock = null;
         let offset = 0;
-        // In RTL the physical Left/Right arrows are visually mirrored, so the
-        // cross-block boundary keys swap (offset 0 is the visual right end).
-        const isRtl = this.domNode?.closest('[dir]')?.getAttribute('dir') === 'rtl';
-        const prevKey = isRtl ? EVENT_KEYS.ArrowRight : EVENT_KEYS.ArrowLeft;
-        const nextKey = isRtl ? EVENT_KEYS.ArrowLeft : EVENT_KEYS.ArrowRight;
 
-        if (
-            event.key === EVENT_KEYS.ArrowUp
-            || (event.key === prevKey && start.offset === 0)
-        ) {
-            event.preventDefault();
-            event.stopPropagation();
-
+        if (direction === 'up') {
+            const previousContentBlock = this.previousContentInContext(true);
             if (!previousContentBlock) {
-                // First block, no previous: ArrowUp moves the caret to the
-                // start of the line (offset 0) instead of staying put (#3193).
-                // A boundary ArrowLeft has nowhere to go, so leave it. Skip the
-                // re-set when the caret is already at offset 0, so a no-op
-                // ArrowUp doesn't emit a spurious selection-change or re-render.
                 if (event.key === EVENT_KEYS.ArrowUp && start.offset !== 0)
                     this.setCursor(0, 0, true);
 
@@ -502,34 +526,22 @@ class Content extends TreeNode {
             }
 
             cursorBlock = previousContentBlock;
-            offset = previousContentBlock.text.length;
+            offset = this._upArrowOffset(previousContentBlock, event);
         }
-        else if (
-            event.key === EVENT_KEYS.ArrowDown
-            || (event.key === nextKey && start.offset === this.text.length)
-        ) {
-            event.preventDefault();
-            event.stopPropagation();
-            if (nextContentBlock) {
-                cursorBlock = nextContentBlock;
-            }
-            // Only append a trailing paragraph when the last block has content.
-            // Otherwise ArrowDown in an already-empty last paragraph would keep
-            // creating empty paragraphs on every keypress (#3520).
-            else if (this.text.length > 0) {
-                const newNodeState = {
-                    name: 'paragraph',
-                    text: '',
-                };
+        else {
+            cursorBlock = this.nextContentInContext(true);
+            if (!cursorBlock && this.text.length > 0 && !(isFoldableHeading(this.parent) && this.parent.folded)) {
+                const newNodeState = { name: 'paragraph', text: '' };
                 const newNode = ScrollPage.loadBlock(newNodeState.name).create(
-                    muya,
+                    this.muya,
                     newNodeState,
                 );
-                this.scrollPage?.append(newNode, 'user');
+                this.scrollPage?.append(newNode, ChangeSource.User);
                 cursorBlock = newNode.children.head;
             }
+
             if (cursorBlock)
-                offset = adjustOffset(0, cursorBlock, event);
+                offset = this._downArrowOffset(cursorBlock, event);
         }
 
         if (cursorBlock) {
@@ -538,16 +550,100 @@ class Content extends TreeNode {
         }
     }
 
+    private _upArrowOffset(block: Content, event: KeyboardEvent): number {
+        if (event.key !== EVENT_KEYS.ArrowUp)
+            return block.text.length;
+
+        return this._nearestOffsetAtColumn(block, 'bottom') ?? block.text.length;
+    }
+
+    private _moveDownOntoTrailingBlankLine(event: KeyboardEvent, offset: number): boolean {
+        // Only inline blocks paint this line as a span the browser cannot reach,
+        // so ArrowDown clamps to the line above instead. `softNewlineAsSpace`
+        // drops the span and a code block renders its own, which it can reach.
+        if (!this.domNode?.lastElementChild?.classList.contains(CLASS_NAMES.MU_LINE_END))
+            return false;
+
+        if (event.key !== EVENT_KEYS.ArrowDown || this.text.indexOf('\n', offset) !== this.text.length - 1)
+            return false;
+
+        event.preventDefault();
+        event.stopPropagation();
+        this.setCursor(this.text.length, this.text.length, true);
+
+        return true;
+    }
+
+    /**
+     * Whether the key is left to the browser's own move. Its y-offset test cannot
+     * measure a caret on an empty line (no rect), so a line break on the caret's
+     * side decides that case instead.
+     */
+    private _deferArrowToBrowser(event: KeyboardEvent, start: number, end: number): boolean {
+        if (this._moveDownOntoTrailingBlankLine(event, end))
+            return true;
+
+        if (Selection.getCursorCoords() == null && this._lineBreakOnCaretSide(event, start, end))
+            return true;
+
+        const { topOffset, bottomOffset } = Selection.getCursorYOffset(this.domNode!);
+
+        return (event.key === EVENT_KEYS.ArrowUp && topOffset > 0)
+            || (event.key === EVENT_KEYS.ArrowDown && bottomOffset > 0);
+    }
+
+    /** The cross-block direction the key moves in, or null for the keys the browser keeps. */
+    private _arrowDirection(event: KeyboardEvent, offset: number, textLength: number): 'up' | 'down' | null {
+        // In RTL the physical Left/Right arrows are visually mirrored, so the
+        // cross-block boundary keys swap (offset 0 is the visual right end).
+        const isRtl = this.domNode?.closest('[dir]')?.getAttribute('dir') === 'rtl';
+        const prevKey = isRtl ? EVENT_KEYS.ArrowRight : EVENT_KEYS.ArrowLeft;
+        const nextKey = isRtl ? EVENT_KEYS.ArrowLeft : EVENT_KEYS.ArrowRight;
+
+        if (event.key === EVENT_KEYS.ArrowUp || (event.key === prevKey && offset === 0))
+            return 'up';
+
+        if (event.key === EVENT_KEYS.ArrowDown || (event.key === nextKey && offset === textLength))
+            return 'down';
+
+        return null;
+    }
+
+    private _lineBreakOnCaretSide(event: KeyboardEvent, start: number, end: number): boolean {
+        if (event.key === EVENT_KEYS.ArrowUp)
+            return this.text.slice(0, start).includes('\n');
+
+        if (event.key === EVENT_KEYS.ArrowDown)
+            return this.text.slice(end).includes('\n');
+
+        return false;
+    }
+
+    private _downArrowOffset(block: Content, event: KeyboardEvent): number {
+        const boundary = adjustOffset(0, block, event);
+        if (event.key !== EVENT_KEYS.ArrowDown)
+            return boundary;
+
+        const nearest = this._nearestOffsetAtColumn(block, 'top');
+        // A hit can land before an ATX heading's `#` prefix; keep it a lower bound.
+        return nearest == null ? boundary : Math.max(nearest, boundary);
+    }
+
+    private _nearestOffsetAtColumn(block: Content, edge: 'top' | 'bottom'): number | null {
+        const x = Selection.getCursorCoords()?.x;
+        if (x == null)
+            return null;
+
+        return offsetInBlockAtPoint(document, block, x, edge);
+    }
+
     override createDomNode() {
         super.createDomNode();
         this.update();
     }
 
-    /**
-     * Get cursor if selection is in this block.
-     */
     getCursor(): IContentCursor | null {
-        const selection = this.selection.getSelection();
+        const selection = this.selection.getTextSelection();
         if (selection == null)
             return null;
 
@@ -557,7 +653,6 @@ class Content extends TreeNode {
             isCollapsed,
             isSelectionInSameBlock, // This is always be true.
             direction,
-            type,
         } = selection;
 
         if (anchor.block !== this || focus.block !== this)
@@ -571,26 +666,27 @@ class Content extends TreeNode {
             isCollapsed,
             isSelectionInSameBlock,
             direction,
-            type,
         };
     }
 
-    /**
-     * Set cursor at the special position
-     * @param {number} begin
-     * @param {number} end
-     * @param {boolean} needUpdate
-     */
     setCursor(begin: number, end: number, needUpdate = false) {
-        const anchor = { offset: begin, block: this, path: this.path };
-        const focus = { offset: end, block: this, path: this.path };
+        const anchor = {
+            offset: Math.max(0, Math.min(begin, this.text.length)),
+            block: this,
+            path: this.path,
+        };
+        const focus = {
+            offset: Math.max(0, Math.min(end, this.text.length)),
+            block: this,
+            path: this.path,
+        };
 
         if (needUpdate)
             this.update({ anchor, focus, block: this });
 
         this.muya.editor.activeContentBlock = this;
 
-        this.selection.setSelection(anchor, focus);
+        this.selection.setSelection(createTextSelectionState(anchor, focus));
     }
 
     update(_cursor?: IRenderCursor, _highlights: IHighlight[] = []) {
@@ -601,18 +697,99 @@ class Content extends TreeNode {
     composeHandler(event: Event) {
         if (event.type === 'compositionstart') {
             this.isComposed = true;
+            this._seedCompositionAnchor();
         }
         else if (event.type === 'compositionend') {
             this.isComposed = false;
+            this._consumeCompositionAnchor();
             // Because the compose event will not cause `input` event, So need call `inputHandler` by ourself
             this.inputHandler(event);
         }
     }
 
+    // Give Chromium an IME anchor after a trailing newline so it does not overwrite
+    // the newline and lose the first keystroke (#3468). An empty node is ignored.
+    // The zero-width anchor exists only during composition, outside text-offset mapping.
+    private _seedCompositionAnchor() {
+        const { domNode } = this;
+        const cursor = this.getCursor();
+        if (
+            domNode == null
+            || cursor == null
+            || cursor.start.offset !== cursor.end.offset
+            || cursor.start.offset !== this.text.length
+            || !this.text.endsWith('\n')
+        ) {
+            return;
+        }
+
+        const anchor = document.createTextNode(COMPOSITION_ANCHOR);
+        // Ahead of a code block's trailing line break: past it, the composition
+        // would start a line below the caret.
+        domNode.insertBefore(anchor, domNode.querySelector(`:scope > .${CLASS_NAMES.MU_TRAILING_BREAK}`));
+        this._compositionAnchor = anchor;
+
+        // Remove the artificial newline layout while the anchor supplies a real following node,
+        // or composition appears one line below the caret.
+        const lineEnd = domNode.querySelector(`.${CLASS_NAMES.MU_LINE_END}`);
+        if (lineEnd != null) {
+            lineEnd.classList.remove(CLASS_NAMES.MU_LINE_END);
+            this._compositionLineEnd = lineEnd;
+        }
+
+        // Place the caret before the zero-width space; a trailing caret draws left of the composing glyph.
+        const range = document.createRange();
+        range.setStart(anchor, 0);
+        range.collapse(true);
+        const selection = document.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+    }
+
     /**
-     * used in input handler
-     * @param {input event} event
+     * Strip the seeded anchor, keeping the text the IME committed into it and
+     * the caret where the user sees it, so the input handler that runs next
+     * reads an anchor-free block.
      */
+    private _consumeCompositionAnchor() {
+        const anchor = this._compositionAnchor;
+        const lineEnd = this._compositionLineEnd;
+        this._compositionAnchor = null;
+        this._compositionLineEnd = null;
+        lineEnd?.classList.add(CLASS_NAMES.MU_LINE_END);
+        if (anchor == null)
+            return;
+
+        const selection = document.getSelection();
+        const text = anchor.textContent ?? '';
+        // Capture the caret before touching the node: assigning `textContent`
+        // replaces the text node's data and drops any selection inside it.
+        const caretOffset = selection?.anchorNode === anchor
+            ? countKeptBefore(text, selection.anchorOffset)
+            : null;
+        const stripped = text.split(COMPOSITION_ANCHOR).join('');
+
+        if (stripped === '') {
+            // Cancelled composition removes its anchor; restore the caret to the original block end.
+            anchor.parentNode?.removeChild(anchor);
+            if (caretOffset != null)
+                this.setCursor(this.text.length, this.text.length);
+
+            return;
+        }
+
+        anchor.textContent = stripped;
+
+        if (caretOffset == null || selection == null)
+            return;
+
+        const range = document.createRange();
+        range.setStart(anchor, caretOffset);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
     autoPair(
         event: Event,
         text: string,
@@ -622,17 +799,17 @@ class Content extends TreeNode {
         isInInlineCode = false,
         type = 'format',
     ) {
-    // TODO: @JOCS, remove use this selection directly.
         const { anchor, focus } = this.selection;
         const oldStart = anchor!.offset <= focus!.offset ? anchor : focus;
         let needRender = false;
 
-        // The event will not be input event, when click task list item input element.
-        if (!isInputEvent(event) || !oldStart)
+        // Checkbox clicks are not input events. Allow compositionend, which can be the only
+        // IME commit signal forwarded by composeHandler (#5279).
+        if ((!isInputEvent(event) && !isCompositionEndEvent(event)) || !oldStart)
             return { text, needRender };
 
         if (this.text !== text) {
-            if (start.offset === end.offset && event.type === 'input') {
+            if (isInputEvent(event) && start.offset === end.offset && event.type === 'input') {
                 const collapsed = collapsedInputAutoPair(event, text, start, end, {
                     blockText: this.text,
                     options: this.muya.options,
@@ -650,47 +827,24 @@ class Content extends TreeNode {
         return { text, needRender };
     }
 
-    protected insertTab() {
-        const { muya, text } = this;
-        const { tabSize } = muya.options;
-        const tabCharacter = String.fromCharCode(32).repeat(tabSize);
-        const { start, end } = this.getCursor()!;
-
-        if (this.isCollapsed) {
-            this.text
-                = text.substring(0, start.offset)
-                    + tabCharacter
-                    + text.substring(end.offset);
-            const offset = start.offset + tabCharacter.length;
-
-            this.setCursor(offset, offset, true);
-        }
+    protected insertTab(unindent = false) {
+        const cursor = this.getCursor();
+        if (!cursor)
+            return;
+        const edit = editTab(this.text, cursor.anchor.offset, cursor.focus.offset, this.muya.options.tabSize, unindent);
+        if (edit.text !== this.text)
+            this.text = edit.text;
+        this.setCursor(edit.anchor, edit.focus, true);
     }
 
-    /**
-     * Replace the word at/around the current cursor with `replacement`.
-     *
-     * Used by the desktop spell checker: right
-     * clicking a misspelled word selects the whole word via Chromium, and
-     * choosing a suggestion replaces it inline. `extractWord` uses
-     * VSCode-derived word boundaries.
-     *
-     * Unsafe: the caller asserts that exactly the word `word` is selected. If
-     * the word found at the cursor does not match `word` the call is a no-op
-     * (returns false) — this guards against a Chromium selection mismatch.
-     *
-     * @param word The expected word at the cursor; the whole word must be selected.
-     * @param replacement The replacement text.
-     * @returns True when the replacement was applied.
-     */
+    // Replace only if the word at the cursor still matches `word`; return whether it was applied.
+    // The caller must select the whole word for spell-check replacement.
     replaceCurrentWordInlineUnsafe(word: string, replacement: string): boolean {
         const cursor = this.getCursor();
         if (cursor == null)
             return false;
 
         const { text } = this;
-        // Use the start offset of the (possibly whole-word) selection as the
-        // probe point.
         const wordInfo = extractWord(text, cursor.start.offset);
         if (wordInfo == null)
             return false;
@@ -699,7 +853,6 @@ class Content extends TreeNode {
         if (selectedWord !== word)
             return false;
 
-        // Reuse the text setter so the change dispatches a json edit op.
         this.text = text.substring(0, left) + replacement + text.substring(right);
 
         const offset = left + replacement.length;
@@ -712,19 +865,29 @@ class Content extends TreeNode {
         if (!isKeyboardEvent(event))
             return;
 
+        if (this.beforeKeydown(event))
+            return;
+
         if (this.muya.ui.handleContentKeydown(event))
             return;
 
         if (this._wrapSelectionWithAutoPair(event))
             return;
 
+        if (isDocumentBoundaryArrow(event))
+            return;
+
         switch (event.key) {
             case EVENT_KEYS.Backspace:
-                this.backspaceHandler(event);
+                if (!this.isComposed)
+                    this.backspaceHandler(event);
+
                 break;
 
             case EVENT_KEYS.Delete:
-                this.deleteHandler(event);
+                if (!this.isComposed)
+                    this.deleteHandler(event);
+
                 break;
 
             case EVENT_KEYS.Enter:
@@ -813,7 +976,7 @@ class Content extends TreeNode {
         return ancestors;
     }
 
-    override remove(source = 'user') {
+    override remove(source: ChangeSource = ChangeSource.User) {
         super.remove(source);
 
         return this;

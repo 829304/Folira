@@ -1,6 +1,13 @@
+import type { IClipboardImageCopy } from './clipboard/image';
 import type { TState } from './state/types';
 
+export enum ChangeSource {
+    User = 'user',
+    Api = 'api',
+}
+
 export interface IMuyaOptions {
+    readOnly: boolean;
     fontSize: number;
     lineHeight: number;
     editorFontFamily?: string;
@@ -15,9 +22,9 @@ export interface IMuyaOptions {
     autoPairQuote: boolean;
     bulletListMarker: string;
     orderListDelimiter: string;
-    tabSize: number;
+    tabSize: number | 'tab';
     codeBlockLineNumbers: boolean;
-    listIndentation: number;
+    listIndentation: number | 'dfm' | 'tab';
     frontMatter: boolean;
     frontmatterType: string; // '-' | '+' | ';' | '{';
     mermaidTheme: string;
@@ -31,8 +38,16 @@ export interface IMuyaOptions {
     spellcheckHideMarks: boolean;
     superSubScript: boolean;
     footnote: boolean;
-    math: boolean;
-    isGitlabCompatibilityEnabled: boolean;
+    texMathDollars: boolean;
+    texMathGfm: boolean;
+    texMathSingleBackslash: boolean;
+    texMathDoubleBackslash: boolean;
+    highlightSyntax: boolean;
+    inlineDiff: boolean;
+    multilineBlockquote: boolean;
+    githubAlerts: boolean;
+    fancyLists: boolean;
+    softNewlineAsSpace: boolean;
     autoMoveCheckedToEnd: boolean;
     disableHtml: boolean;
     locale: {
@@ -64,6 +79,20 @@ export interface IMuyaOptions {
      * When omitted, muya falls back to `navigator.clipboard.readText()`.
      */
     clipboardText?: () => Promise<string>;
+    clipboardWriteText?: (text: string) => Promise<boolean>;
+    /** Stable document identity, including unsaved tabs, for preserving copied image references. */
+    documentId?: () => string;
+    /** Called after the copy event commits its text/HTML fallback to the OS clipboard. */
+    clipboardWriteImage?: (data: IClipboardImageCopy) => Promise<boolean>;
+    /** Persist a different document's absolute image URL using the target's insert preferences. */
+    clipboardImageAction?: (src: string) => Promise<string>;
+    /**
+     * Fetch HTML for pasted HTTP(S) links when the host can bypass browser
+     * CSP/CORS restrictions. Muya parses the title and falls back to the URL
+     * after 1.5 seconds or on failure. Without this hook, browser fetch is used.
+     * Return an empty string when the response is unavailable or is not HTML.
+     */
+    fetchLinkHtml?: (url: string) => Promise<string>;
     /**
      * Persist an image per the embedder's insert preference (copy into the
      * document's assets folder, upload to an image host, or keep the path) and
@@ -78,6 +107,12 @@ export interface IMuyaOptions {
      * the raw `src` verbatim.
      */
     imageAction?: (state: IImageActionState) => Promise<string>;
+    /**
+     * Check whether a local image drop can proceed before changing the document.
+     * Return undefined for immediate insertion, or a promise resolving to false
+     * to abort. Image persistence still uses imageAction after the check.
+     */
+    beforeImageDrop?: () => Promise<boolean> | undefined;
     /**
      * Resolve a dropped `File` to a local filesystem path.
      *

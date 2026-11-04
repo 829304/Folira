@@ -4,7 +4,7 @@ import type Content from '../../block/base/content';
 import type { Muya } from '../../muya';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Muya as MuyaClass } from '../../muya';
-import { SelectionCaretType, SelectionDirection } from '../../selection/types';
+import { SelectionDirection } from '../../selection/types';
 
 // muyajs `pasteCtrl` MERGE semantics ported into @muyajs/core: pasting a
 // paragraph into a non-empty text block merges its first paragraph inline
@@ -69,13 +69,13 @@ function contentBlocks(muya: Muya): Content[] {
 
 function stubSelection(muya: Muya, block: Content, start: number, end: number) {
     const path = block.path;
-    muya.editor.selection.getSelection = () => ({
+    muya.editor.selection.getTextSelection = () => ({
         anchor: { offset: start, block, path },
         focus: { offset: end, block, path },
         isCollapsed: start === end,
         isSelectionInSameBlock: true,
         direction: SelectionDirection.FORWARD,
-        type: SelectionCaretType.RANGE,
+
     });
 }
 
@@ -118,7 +118,28 @@ describe('paste — paragraph merges inline into a non-empty text block (A3)', (
     });
 });
 
+describe('paste — same-line display math (#4904)', () => {
+    it('renders pasted double-dollar math without rewriting its markdown', async () => {
+        const source = '$$ E=MC^2 $$';
+        const muya = bootMuya('');
+        const block = contentBlocks(muya)[0];
+
+        expect(await paste(muya, block, 0, 0, source)).toBe(`${source}\n`);
+        expect(muya.domNode.querySelector('.katex-display')).not.toBeNull();
+    });
+});
+
 describe('paste — multi-line paragraph into a heading keeps only the first line (A6)', () => {
+    it.each([
+        ['one\n\ntwo', '## titleone ###\n\ntwo rest\n'],
+        ['# one\n\ntwo', '## titleone ###\n\ntwo rest\n'],
+        ['- one\n\ntwo', '## title ###\n\n- one\n\ntwo rest\n'],
+        ['# one', '## titleone rest ###\n'],
+    ])('keeps the closing marker on the heading when pasting %j', async (pasted, expected) => {
+        const muya = bootMuya('## title rest ###\n');
+        expect(await paste(muya, contentBlocks(muya)[0], 8, 8, pasted)).toBe(expected);
+    });
+
     it('only the first soft-line lands in the heading, the rest become a paragraph', async () => {
         const muya = bootMuya('# Title\n');
         const block = contentBlocks(muya)[0]; // atx-heading content, text '# Title'

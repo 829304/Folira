@@ -1,4 +1,4 @@
-import type { IEvent, IListeners, Listener } from './types';
+import type { IEvent, IListeners, Listener, TEventArgs, TEventListener } from './types';
 
 // TODO: @Jocs use the same name function in utils.
 function* uniqueIdGenerator() {
@@ -14,25 +14,6 @@ class EventCenter {
     public events: IEvent[] = [];
     public listeners: IListeners = {};
 
-    // Answers "is this exact binding already here" without walking `events`.
-    //
-    // The walk was once per bind over a table that grows with the document —
-    // roughly one entry per block, so 8000 blocks meant 33 million comparisons
-    // and 16000 meant four times that. Quadratic, and it bit hardest on the
-    // large files the editor is meant to handle.
-    //
-    // `events` stays the source of truth (and stays public — the listener-leak
-    // spec counts it). This only indexes it, by target. One list per target
-    // rather than a map keyed by event name: a single element carries a handful
-    // of listeners, so the list is short enough to scan, and a map per target
-    // costs more memory than the scan saves — measured at 150 bytes a block.
-    //
-    // Scanning also preserves the `===` comparison the check has always used,
-    // which matters for a `capture` passed as an options object.
-    //
-    // Weak on the target so a removed element takes its list with it.
-    private _bound = new WeakMap<HTMLElement | Document, IEvent[]>();
-
     private get _eventId() {
         return `${PREFIX}${idIterator.next().value}`;
     }
@@ -47,26 +28,18 @@ class EventCenter {
         listener: EventListener,
         capture?: boolean | AddEventListenerOptions,
     ): string {
-        let bound = this._bound.get(target);
-        if (!bound) {
-            bound = [];
-            this._bound.set(target, bound);
-        }
-
-        if (bound.some(e => e.event === event && e.listener === listener && e.capture === capture))
+        if (this._checkHasBind(target, event, listener, capture))
             return '';
 
         const eventId = this._eventId;
         target.addEventListener(event, listener, capture);
-        const entry: IEvent = {
+        this.events.push({
             eventId,
             target,
             event,
             listener,
             capture,
-        };
-        this.events.push(entry);
-        bound.push(entry);
+        });
 
         return eventId;
     }
@@ -83,16 +56,8 @@ class EventCenter {
         if (removeEvent) {
             const { target, event, listener, capture } = removeEvent;
             target.removeEventListener(event, listener, capture);
-            const index = this.events.indexOf(removeEvent);
+            const index = this.events.findIndex(e => e.eventId === eventId);
             this.events.splice(index, 1);
-
-            // Must come off the index too, or re-binding the same listener
-            // after detaching it would be mistaken for a duplicate and
-            // silently dropped.
-            const bound = this._bound.get(target);
-            const boundIndex = bound?.indexOf(removeEvent) ?? -1;
-            if (bound && boundIndex !== -1)
-                bound.splice(boundIndex, 1);
         }
     }
 
@@ -106,13 +71,12 @@ class EventCenter {
         }
 
         this.events = [];
-        this._bound = new WeakMap();
     }
 
     /**
      * inner method for on and once
      */
-    subscribe(event: string, listener: Listener, once = false) {
+    subscribe<K extends string>(event: K, listener: TEventListener<K>, once = false) {
         const listeners = this.listeners[event];
         const handler = { listener, once };
         if (listeners && Array.isArray(listeners))
@@ -124,7 +88,7 @@ class EventCenter {
     /**
      * [on] on custom event
      */
-    on(event: string, listener: Listener) {
+    on<K extends string>(event: K, listener: TEventListener<K>) {
         this.subscribe(event, listener);
     }
 
@@ -145,14 +109,14 @@ class EventCenter {
     /**
      * [once] subscribe event and listen once
      */
-    once(event: string, listener: Listener) {
+    once<K extends string>(event: K, listener: TEventListener<K>) {
         this.subscribe(event, listener, true);
     }
 
     /**
      * emit custom event
      */
-    emit(event: string, ...data: unknown[]) {
+    emit<K extends string>(event: K, ...data: TEventArgs<K>) {
         const eventListener = this.listeners[event];
 
         if (eventListener && Array.isArray(eventListener)) {
@@ -173,6 +137,27 @@ class EventCenter {
      */
     unsubscribeAll() {
         this.listeners = {};
+    }
+
+    // Determine whether the event has been bind
+    private _checkHasBind(
+        cTarget: HTMLElement | Document,
+        cEvent: string,
+        cListener: EventListenerOrEventListenerObject,
+        cCapture?: boolean | AddEventListenerOptions,
+    ) {
+        for (const { target, event, listener, capture } of this.events) {
+            if (
+                target === cTarget
+                && event === cEvent
+                && listener === cListener
+                && capture === cCapture
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

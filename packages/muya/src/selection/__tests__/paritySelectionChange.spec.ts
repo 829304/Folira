@@ -1,29 +1,9 @@
-// @vitest-environment happy-dom
-
 import type Content from '../../block/base/content';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Muya } from '../../muya';
-
-// PARITY SCOREBOARD — gap PG1 (file PG01).
-//
-// Legacy `packages/muyajs` emitted `selectionChange` with an `affiliation`
-// chain of the ancestor PARAGRAPH-type blocks plus per-block `.type` (the
-// markdown block type: `h1`, `p`, `pre`, …) and `.functionType`
-// (`codeContent`, `cellContent`, …). The desktop store
-// (`createApplicationMenuState`) consumed those to light up the Paragraph-menu
-// check marks, the Loose/Task-list toggles, table/code-fence detection, and to
-// disable the Format menu inside code.
-//
-// `@muyajs/core`'s `selection-change` payload exposes only flat caret/range
-// info: { anchor, focus, anchorBlock, anchorPath, focusBlock, focusPath,
-// isCollapsed, isSelectionInSameBlock, direction, type, selectedImage,
-// cursorCoords, formats }. There is NO `affiliation` ancestor chain, and
-// `type` is the selection kind ('Caret' | 'Range'), never the block markdown
-// type. Net effect: the native Paragraph/Format menu state is dead.
-//
-// These tests assert the DESIRED (pre-migration) shape — they are expected to
-// FAIL today. When the engine restores the ancestor affiliation / block-type
-// info, drop the `.fails`.
+// @vitest-environment happy-dom
+import { createTextSelectionState } from '../state';
 
 const bootedMuyas: Muya[] = [];
 let originalVersion: string | undefined;
@@ -36,9 +16,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-    // `destroy()` detaches the engine's DOM listeners — including the
-    // `document`-level keydown/click handlers registered by selection — and
-    // removes the host node, so listeners don't leak across tests.
     while (bootedMuyas.length)
         bootedMuyas.pop()!.destroy();
     if (hadVersion)
@@ -62,12 +39,23 @@ function emitSelectionFor(muya: Muya, content: Content): Record<string, unknown>
         payload = p as Record<string, unknown>;
     });
     muya.editor.selection.setSelection(
-        { offset: 0, block: content, path: content.path },
-        { offset: 0, block: content, path: content.path },
+        createTextSelectionState(
+            {
+                offset: 1,
+                block: content,
+                path: content.path,
+            },
+            {
+                offset: 1,
+                block: content,
+                path: content.path,
+            },
+        ),
     );
     if (!payload)
         throw new Error('selection-change was not emitted');
-    return payload;
+    const { selection } = payload as { selection: { context: Record<string, unknown> } };
+    return selection.context;
 }
 
 describe('parity PG1: selection-change block affiliation', () => {
@@ -95,11 +83,9 @@ describe('parity PG1: selection-change block affiliation', () => {
             // A consumer can learn the cursor sits in an `h1` heading (so
             // `heading1MenuItem` can be checked) — the affiliation chain reports
             // the markdown block type, separate from the selection kind
-            // (`type` stays 'Caret' / 'Range').
+            // (stored separately from the runtime context).
             const affiliation = payload.affiliation as Array<{ type: string }>;
             expect(affiliation.map(entry => entry.type)).toContain('h1');
-            // The selection kind is still the flat caret/range type.
-            expect(payload.type).toBe('Caret');
         },
     );
 
@@ -120,7 +106,6 @@ describe('parity PG1: selection-change block affiliation', () => {
             };
             expect(info.type).toBe('span');
             expect(info.functionType).toBe('codeContent');
-            // The fenced code block contributes a `pre`-typed affiliation entry.
             const affiliation = payload.affiliation as Array<{ type: string }>;
             expect(affiliation.map(entry => entry.type)).toContain('pre');
         },
@@ -171,7 +156,6 @@ describe('parity PG1: selection-change block affiliation', () => {
     it(
         'PG1: loose lists report isLooseListItem true on both the list and the item',
         () => {
-            // Blank lines between items make a loose list.
             const muya = bootMuya('- one\n\n- two\n');
             const leaf = muya.editor.scrollPage!.firstContentInDescendant()!;
             const payload = emitSelectionFor(muya, leaf);

@@ -22,6 +22,7 @@ import {
     ParagraphQuickInsertMenu,
     PreviewToolBar,
     pt,
+    renderDiagramForExport,
     TableChessboard,
     TableColumnToolbar,
     TableDragBar,
@@ -97,10 +98,7 @@ const HOST_OPTIONS = {
     codeBlockLineNumbers: true,
 } satisfies Partial<IMuyaOptions>;
 
-// `editor-container` parents the live `#editor` div. Phase 4 rebuilds
-// destroy → re-create the editor under this parent (the destroy() call
-// removes the previous #editor from the DOM, so we need a new node to
-// host the next Muya).
+// Rebuilds need a stable parent because destroy() removes the editor root.
 const editorParent = document.querySelector<HTMLElement>('.editor-container')!;
 
 function makeEditorNode(): HTMLElement {
@@ -127,6 +125,7 @@ window.__e2e = {
     INITIAL_MARKDOWN,
     PICKED_IMAGE_URL,
     UPLOADED_IMAGE_URL,
+    renderDiagramForExport,
     rebuildMuya: (options: Partial<IMuyaOptions> = {}) => {
         muya.destroy();
         const fresh = makeEditorNode();

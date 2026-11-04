@@ -32,7 +32,6 @@ function selectionOver(
     end: number,
     blockName: string = 'paragraph.content',
 ) {
-    // The fake block only exposes the two fields getClipboardData reads.
     const block = { text, blockName } as unknown as Content;
     return {
         isSelectionInSameBlock: true,
@@ -50,7 +49,7 @@ function makeClipboard(
     const clipboard = new Clipboard(fakeMuya());
     Object.defineProperty(clipboard, 'selection', {
         get: () => ({
-            getSelection: () => selectionOver(text, begin, end, blockName),
+            getTextSelection: () => selectionOver(text, begin, end, blockName),
             table: { hasSelection: false, getStateForCopy: () => null, clear: vi.fn() },
         }),
     });

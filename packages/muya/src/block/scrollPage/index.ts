@@ -5,6 +5,7 @@ import type Content from '../base/content';
 import type TreeNode from '../base/treeNode';
 import type { IConstructor, TBlockPath } from '../types';
 import { BLOCK_DOM_PROPERTY } from '../../config';
+import { ChangeSource } from '../../types';
 import { isHTMLElement, isMouseEvent } from '../../utils';
 import logger from '../../utils/logger';
 import Parent from '../base/parent';
@@ -21,12 +22,6 @@ export class ScrollPage extends Parent {
 
     static override blockName = 'scrollpage';
 
-    // Registry of block constructors keyed by their static blockName.
-    // Stored as Parent constructors — the overwhelming majority of
-    // call sites do `loadBlock(...).create(...).append(child)`, which only
-    // makes sense for Parent. Content leaves register themselves through
-    // their containing Parent's create flow and don't go through
-    // `loadBlock(...).create()` externally.
     private static _registeredBlocks = new Map<string, IConstructor<Parent>>();
 
     static register(Block: IConstructor<TreeNode>) {
@@ -34,11 +29,7 @@ export class ScrollPage extends Parent {
         this._registeredBlocks.set(blockName, Block as IConstructor<Parent>);
     }
 
-    // Returns the registered constructor. Asserts non-undefined for
-    // callers (the registry is populated by `registerBlocks()` once at
-    // `editor.init()` time, and `loadBlock` runs strictly after init.).
-    // Mismatched names hit the warn branch and the caller crashes at
-    // `.create()` — matches the original loose contract.
+    // Requires registerBlocks() during editor initialization; unknown names warn and cannot be created.
     static loadBlock(blockName: string): IConstructor<Parent> {
         const block = this._registeredBlocks.get(blockName);
 
@@ -95,7 +86,7 @@ export class ScrollPage extends Parent {
 
     updateState(state: TState[]) {
         const { muya } = this;
-        // Empty scrollPage dom
+        muya.ui.hideAllFloatTools();
         this.empty();
         this.append(
             ...state.map((block) => {
@@ -104,10 +95,19 @@ export class ScrollPage extends Parent {
         );
     }
 
-    /**
-     * Find the content block by the path
-     * @param {Array} path
-     */
+    /** One undo step, preserving adjacent block instances; the caller restores the replacement's selection. */
+    replaceBlock(block: Parent, states: TState[]): Parent[] {
+        const { muya } = this;
+        return muya.transact(() => {
+            muya.ui.hideAllFloatTools();
+            const replacements = states.map(state => ScrollPage.loadBlock(state.name).create(muya, state));
+            for (const replacement of replacements)
+                this.insertBefore(replacement, block);
+            block.remove();
+            return replacements;
+        });
+    }
+
     queryBlock(path: TBlockPath) {
         if (path.length === 0)
             return this;
@@ -118,7 +118,14 @@ export class ScrollPage extends Parent {
     }
 
     updateRefLinkAndImage(label: string) {
-        const REG = new RegExp(`\\[${label}\\](?!:)`);
+        // Labels match case-insensitively with whitespace runs collapsed
+        // (CommonMark), and may contain regex metacharacters such as `c++`.
+        const pattern = label
+            .trim()
+            .split(/\s+/)
+            .map(part => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('\\s+');
+        const REG = new RegExp(`\\[\\s*${pattern}\\s*\\](?!:)`, 'i');
 
         this.breadthFirstTraverse((node) => {
             if (node.isContent() && REG.test(node.text))
@@ -137,6 +144,10 @@ export class ScrollPage extends Parent {
     }
 
     private _updateActiveStatus = () => {
+        if (this.muya.isReadOnly) {
+            this._blurFocus = { blur: null, focus: null };
+            return;
+        }
         const { blur, focus } = this._blurFocus;
 
         if (blur == null && focus == null)
@@ -181,6 +192,8 @@ export class ScrollPage extends Parent {
 
     // Create a new paragraph if click the blank area in editor.
     private _clickHandler(event: Event) {
+        if (this.muya.isReadOnly)
+            return;
         if (!isMouseEvent(event) || !isHTMLElement(event.target))
             return;
 
@@ -209,7 +222,7 @@ export class ScrollPage extends Parent {
                         this.muya,
                         state,
                     );
-                    this.append(newNode, 'user');
+                    this.append(newNode, ChangeSource.User);
                     const cursorBlock = newNode.lastContentInDescendant();
                     cursorBlock.setCursor(0, 0, true);
                 }

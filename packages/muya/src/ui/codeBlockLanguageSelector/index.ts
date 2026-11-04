@@ -3,47 +3,16 @@ import type LangInputContent from '../../block/content/langInputContent';
 import type ParagraphContent from '../../block/content/paragraphContent';
 import type { Muya } from '../../index';
 import { ScrollPage } from '../../block/scrollPage';
-import logger from '../../utils/logger';
+import { SelectionType } from '../../selection/types';
+import { firstWordOfInfo, parseFenceLine } from '../../utils';
+import { createDiagramState, diagramTypeOfLang } from '../../utils/diagram/fence';
 import { search } from '../../utils/prism';
 
 import { h, patch } from '../../utils/snabbdom';
 import BaseScrollFloat from '../baseScrollFloat';
+import fileIcons from '../utils/fileIcons';
 
 import './index.css';
-/**
- * The icon set weighs 170 KB — the largest thing in the renderer's first-paint
- * bundle after the engine itself — and this popup is its only consumer. Loading
- * it here, on the first render of the language list, keeps it out of startup
- * for every session that never opens one.
- *
- * Rendering stays synchronous: the list draws without icons if the module has
- * not landed, and draws again when it has. `loadFileIcons` is a no-op once the
- * module is in hand, so the redraw cannot recurse.
- */
-const debug = logger('codeBlockLanguageSelector:');
-
-type FileIcons = Awaited<typeof import('../utils/fileIcons')>['default'];
-let fileIcons: FileIcons | null = null;
-let loadingFileIcons: Promise<void> | null = null;
-
-function loadFileIcons(onReady: () => void): void {
-    if (fileIcons || loadingFileIcons)
-        return;
-
-    loadingFileIcons = import('../utils/fileIcons')
-        .then((module) => {
-            fileIcons = module.default;
-            onReady();
-        })
-        .catch((err) => {
-            // The list is still usable without icons, so this does not take the
-            // popup down — but it says so. A silent catch here would leave the
-            // icons permanently missing with nothing to explain why, which is
-            // exactly how the emoji table's failure mode hid itself.
-            debug.error(`cannot load the icon set: ${String(err)}`);
-            loadingFileIcons = null;
-        });
-}
 
 const defaultOptions = {
     placement: 'bottom-start' as const,
@@ -55,32 +24,45 @@ const defaultOptions = {
     showArrow: false,
 };
 
-const DIAGRAM_LANGS = new Set(['mermaid', 'vega-lite', 'plantuml', 'flowchart', 'sequence']);
-
-// The language the user actually typed after the ``` fence. The selector's
-// fuzzy search may resolve a non-code language (e.g. `vega-lite`) to an
-// unrelated Prism language, so the diagram check keys off this raw text.
-function typedFenceLang(text: string): string {
-    return text.match(/`{3,}\s*([\w-]+)/)?.[1] ?? '';
+// The opening fence of the paragraph the user is typing into: its character
+// and the language typed after it (empty for a bare fence or a non-fence
+// paragraph). The selector's fuzzy search may resolve a non-code language
+// (e.g. `vega-lite`) to an unrelated Prism language, so the diagram check
+// tries this raw text before the picked item.
+function typedFence(text: string): { lang: string; fenceChar: '`' | '~' } {
+    const fence = parseFenceLine(text);
+    if (!fence)
+        return { lang: '', fenceChar: '`' };
+    return { lang: firstWordOfInfo(fence.info), fenceChar: fence.fenceChar };
 }
 
-// Build the state for the block a ```lang fence becomes. Diagram languages
-// (from the typed text) become a diagram block, mirroring markdownToState's
-// file-load path; GitLab math becomes a math-block; everything else a fenced
-// code block highlighted with the selector's matched language.
-function newBlockStateForLang(typedLang: string, matchedLang: string, isGitlabMath: boolean) {
-    if (isGitlabMath)
-        return { name: 'math-block', meta: { mathStyle: 'gitlab' }, text: '' };
+// Build the state for the block a ```lang fence becomes. A diagram language,
+// typed in full or picked from a partial query (`mer` → mermaid, #5060),
+// becomes a diagram block, mirroring markdownToState's file-load path; gfm
+// math becomes a math-block; everything else a fenced code block highlighted
+// with the selector's matched language.
+function newBlockStateForLang(
+    typedLang: string,
+    matchedLang: string,
+    isGfmMath: boolean,
+    fenceChar: '`' | '~',
+) {
+    if (isGfmMath)
+        return { name: 'math-block', meta: { mathStyle: 'gfm' }, text: '' };
 
-    if (DIAGRAM_LANGS.has(typedLang)) {
-        return {
-            name: 'diagram',
-            meta: { type: typedLang, lang: typedLang === 'vega-lite' ? 'json' : 'yaml' },
-            text: '',
-        };
-    }
+    const diagramType = diagramTypeOfLang(typedLang) ?? diagramTypeOfLang(matchedLang);
+    if (diagramType)
+        return createDiagramState(diagramType);
 
-    return { name: 'code-block', meta: { lang: matchedLang, type: 'fenced' }, text: '' };
+    return {
+        name: 'code-block',
+        meta: {
+            lang: matchedLang,
+            type: 'fenced',
+            fenceChar,
+        },
+        text: '',
+    };
 }
 
 export class CodeBlockLanguageSelector extends BaseScrollFloat {
@@ -106,14 +88,10 @@ export class CodeBlockLanguageSelector extends BaseScrollFloat {
 
             const { text, domNode } = block;
             let lang = '';
-            if (block.blockName === 'paragraph.content') {
-                const token = text.match(/(^ {0,3}`{3,})([^` ]+)/);
-                if (token && token[2])
-                    lang = token[2];
-            }
-            else if (block.blockName === 'language-input') {
+            if (block.blockName === 'paragraph.content')
+                lang = typedFence(text).lang;
+            else if (block.blockName === 'language-input')
                 lang = text;
-            }
 
             const modes = search(lang);
             if (modes.length) {
@@ -129,14 +107,13 @@ export class CodeBlockLanguageSelector extends BaseScrollFloat {
         });
 
         // Self-hide when the caret leaves the picker's target block (#4654).
-        eventCenter.on('selection-change', ({ anchorBlock }) => {
-            if (this.status && anchorBlock !== this._block)
+        eventCenter.on('selection-change', ({ selection }) => {
+            if (this.status && (selection?.kind !== SelectionType.TEXT || selection.context.anchorBlock !== this._block))
                 this.hide();
         });
     }
 
     render() {
-        loadFileIcons(() => this.render());
         const { renderArray, _oldVNode: oldVNode, scrollElement, activeItem } = this;
         let children = (
             renderArray as {
@@ -146,12 +123,12 @@ export class CodeBlockLanguageSelector extends BaseScrollFloat {
         ).map((item) => {
             let iconClassNames;
             if (item.name)
-                iconClassNames = fileIcons?.getClassByLanguage(item.name);
+                iconClassNames = fileIcons.getClassByLanguage(item.name);
 
             // Because `markdown mode in Codemirror` don't have extensions.
             // if still can not get the className, add a common className 'atom-icon light-cyan'
             if (!iconClassNames && item.name === 'markdown')
-                iconClassNames = fileIcons?.getClassByName('fakeName.md');
+                iconClassNames = fileIcons.getClassByName('fakeName.md');
 
             const text = h('div.language', item.name);
             const selector = activeItem === item ? 'li.item.active' : 'li.item';
@@ -223,9 +200,15 @@ export class CodeBlockLanguageSelector extends BaseScrollFloat {
         }
 
         if (isParagraphContent(block)) {
-            const isGitlabMath
-                = muya.options.isGitlabCompatibilityEnabled && name === 'math';
-            const state = newBlockStateForLang(typedFenceLang(block.text), name, isGitlabMath);
+            const isGfmMath
+                = muya.options.texMathGfm && name === 'math';
+            const { lang: typedLang, fenceChar } = typedFence(block.text);
+            const state = newBlockStateForLang(
+                typedLang,
+                name,
+                isGfmMath,
+                fenceChar,
+            );
 
             const newBlock = ScrollPage.loadBlock(state.name).create(
                 this.muya,

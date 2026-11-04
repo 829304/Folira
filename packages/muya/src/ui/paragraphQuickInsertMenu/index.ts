@@ -1,15 +1,18 @@
 import type { VNode } from 'snabbdom';
 import type { Muya } from '../../index';
+import type { IBaseOptions, IKeyboardShortcutOptions } from '../types';
 import type {
     IQuickInsertMenuItem,
 } from './config';
 import Fuse from 'fuse.js';
-import { replaceBlockByLabel } from '../../block/blockTransforms';
+import { canInsertLabel, replaceBlockByLabel } from '../../block/blockTransforms';
 import ParagraphContent from '../../block/content/paragraphContent';
 import { deepClone } from '../../utils';
 import { query } from '../../utils/dom';
 import { h, patch } from '../../utils/snabbdom';
 import BaseScrollFloat from '../baseScrollFloat';
+import { renderMenuIcon } from '../menuIcon';
+import { getShortcutHint } from '../shortcuts';
 import {
     getLabelFromEvent,
     MENU_CONFIG,
@@ -38,10 +41,11 @@ export class ParagraphQuickInsertMenu extends BaseScrollFloat {
     public override activeItem: IQuickInsertMenuItem['children'][number] | null = null;
     public override renderArray: IQuickInsertMenuItem['children'] = [];
     private _renderData: IQuickInsertMenuItem[] = [];
+    declare protected options: IBaseOptions & IKeyboardShortcutOptions;
 
-    constructor(muya: Muya) {
+    constructor(muya: Muya, options: Partial<IBaseOptions> & IKeyboardShortcutOptions = {}) {
         const name = 'mu-quick-insert';
-        super(muya, name);
+        super(muya, name, options);
         this.renderArray = [];
         this.renderData = MENU_CONFIG;
         this.render();
@@ -92,7 +96,7 @@ export class ParagraphQuickInsertMenu extends BaseScrollFloat {
         });
 
         const handleKeydown = (event: Event) => {
-            const selectionResult = editor.selection.getSelection();
+            const selectionResult = editor.selection.getTextSelection();
             const anchorBlock = selectionResult?.anchor.block;
             const isSelectionInSameBlock = selectionResult?.isSelectionInSameBlock;
             if (isSelectionInSameBlock && anchorBlock instanceof ParagraphContent) {
@@ -111,7 +115,37 @@ export class ParagraphQuickInsertMenu extends BaseScrollFloat {
             }
         };
 
-        eventCenter.attachDOMEvent(domNode, 'keydown', handleKeydown);
+        if (this.options.keyboardShortcuts !== false)
+            eventCenter.attachDOMEvent(domNode, 'keydown', handleKeydown);
+        eventCenter.subscribe('shortcut-hints-change', () => {
+            if (this.status)
+                this.render();
+        });
+        eventCenter.attachDOMEvent(this.container!, 'mousemove', (event: Event) => {
+            this.container!.classList.remove('mu-keyboard-navigation');
+            if (!(event.target instanceof Element))
+                return;
+
+            const itemElement = event.target.closest<HTMLElement>('.item');
+            if (!itemElement || !this.container!.contains(itemElement))
+                return;
+
+            const item = this.renderArray.find(({ label }) => {
+                return label === itemElement.dataset.label;
+            });
+            if (item && item !== this.activeItem)
+                this.activeItem = item;
+        });
+    }
+
+    override step(direction: 'previous' | 'next') {
+        this.container!.classList.add('mu-keyboard-navigation');
+        super.step(direction);
+    }
+
+    override hide() {
+        this.container!.classList.remove('mu-keyboard-navigation');
+        super.hide();
     }
 
     render() {
@@ -122,34 +156,23 @@ export class ParagraphQuickInsertMenu extends BaseScrollFloat {
             const items = [];
 
             for (const item of section.children) {
-                const { title, subTitle, label, icon, shortCut } = item;
+                const { title, subTitle, label, icon } = item;
+                const shortCut = getShortcutHint(this.options, label, item.shortCut);
                 const iconVnode = h(
                     'div.icon-container',
-                    h(
-                        'i.icon',
-                        h(
-                            `i.icon-${label.replace(/\s/g, '-')}`,
-                            {
-                                style: {
-                                    'background': `url(${icon}) no-repeat`,
-                                    'background-size': '100%',
-                                },
-                            },
-                            '',
-                        ),
-                    ),
+                    renderMenuIcon({ label, icon }),
                 );
 
                 const description = h('div.description', [
                     h(
                         'div.big-title',
                         {
-                            attrs: { title: subTitle },
+                            attrs: { title: `${i18n.t(title)}\n${i18n.t(subTitle)}` },
                         },
                         i18n.t(title),
                     ),
                 ]);
-                const shortCutVnode = h('div.short-cut', [h('span', shortCut)]);
+                const shortCutVnode = shortCut ? h('div.short-cut', { attrs: { title: shortCut } }, [h('span', shortCut)]) : null;
                 const selector
                     = activeItem!.label === label ? 'div.item.active' : 'div.item';
                 items.push(
@@ -196,17 +219,28 @@ export class ParagraphQuickInsertMenu extends BaseScrollFloat {
                 ?.children
                 .splice(2, 1);
         }
-        let result = menuConfig;
+
+        for (const menu of menuConfig) {
+            menu.children = menu.children.filter(({ label }) => {
+                if (!canInsertLabel(label, muya))
+                    return false;
+                return !label.startsWith('github-alert ') || block?.parent?.parent?.isScrollPage;
+            });
+        }
+        const availableMenus = menuConfig.filter(menu => menu.children.length);
+        let result = availableMenus;
         if (text !== '') {
             result = [];
 
-            for (const menu of menuConfig) {
-                for (const child of menu.children)
+            for (const menu of availableMenus) {
+                for (const child of menu.children) {
                     child.i18nTitle = i18n.t(child.title);
+                    child.searchText = i18n.t(child.subTitle);
+                }
 
                 const fuse = new Fuse(menu.children, {
                     includeScore: true,
-                    keys: ['i18nTitle', 'title'],
+                    keys: ['i18nTitle', 'title', 'searchText'],
                 });
                 const match = fuse
                     .search(text)
@@ -231,11 +265,13 @@ export class ParagraphQuickInsertMenu extends BaseScrollFloat {
 
     override selectItem({ label }: IQuickInsertMenuItem['children'][number]) {
         const { _block: block, muya } = this;
-        replaceBlockByLabel({
-            label,
-            block: block!.parent!,
-            muya,
-        });
+        if (block?.outMostBlock) {
+            replaceBlockByLabel({
+                label,
+                block: block.parent!,
+                muya,
+            });
+        }
         // delay hide to avoid dispatch enter handler
         setTimeout(this.hide.bind(this));
     }
