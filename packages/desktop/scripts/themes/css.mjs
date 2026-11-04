@@ -120,7 +120,7 @@ export function resolveValue (map, name, seen = new Set()) {
 /** Read the custom properties a stylesheet declares, without their `--`. */
 export function variablesOf (css) {
   const found = new Map()
-  for (const match of stripComments(css).matchAll(/^\s*--([A-Za-z0-9_-]+)\s*:\s*([^;]+);/gm)) {
+  for (const match of stripComments(css).matchAll(/(?:^|(?<=[;{]))\s*--([A-Za-z0-9_-]+)\s*:\s*([^;{}]+);/gm)) {
     found.set(match[1], match[2].trim().replace(/\s+/g, ' '))
   }
   return found

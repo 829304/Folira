@@ -39,7 +39,7 @@
     "test": "vitest run",
     "test:unit": "vitest run test/unit",
     "themes": "node scripts/themes/build.mjs",
-    "themes:check": "node scripts/themes/build.mjs --check && node scripts/themes/tokens.mjs --check",
+    "themes:check": "node scripts/themes/build.mjs --check && node scripts/themes/tokens.mjs --check && node scripts/themes/verify.mjs",
     "typecheck": "pnpm --filter @muyajs/core build:types && vue-tsc --noEmit -p tsconfig.json",
     "typecheck:watch": "pnpm --filter @muyajs/core build:types && vue-tsc --noEmit -p tsconfig.json --watch"
   },

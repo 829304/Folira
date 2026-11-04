@@ -72,9 +72,12 @@ describe('theme.ts emoji-picker Linux font patch', () => {
     addStyles({ theme: 'light', ...commonOptions })
 
     expect(commonStyleHtml()).toContain(EMOJI_SELECTOR)
-    // The theme sheet itself carries the theme CSS, not the emoji patch.
-    const themeHtml = (document.querySelector('#ag-theme') as HTMLStyleElement | null)?.innerHTML
-    expect(themeHtml).not.toContain('.mu-emoji-picker')
+    // The theme sheets carry the theme CSS, not the emoji patch. Each axis has
+    // its own sheet now, and Prism is a third one.
+    for (const id of ['ag-theme-ui', 'ag-theme-md', 'ag-theme-prism']) {
+      const html = (document.querySelector(`#${id}`) as HTMLStyleElement | null)?.innerHTML ?? ''
+      expect(html, id).not.toContain('.mu-emoji-picker')
+    }
   })
 
   it('routes nothing emoji-related through addStyles off Linux', async() => {

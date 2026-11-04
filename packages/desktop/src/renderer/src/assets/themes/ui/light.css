@@ -1,7 +1,6 @@
 /* Folira UI theme: light. Generated from index.css by scripts/themes/build.mjs. */
 
 :root {
-  --fui-editorAreaWidth: 750px;
   --fui-themeColor: rgba(33, 181, 111, 1);
   --fui-themeColor90: rgba(33, 181, 111, 0.9);
   --fui-themeColor80: rgba(33, 181, 111, 0.8);

@@ -50,7 +50,6 @@
   --fmd-floatHoverColor: rgba(101, 101, 101, 0.04);
   --fmd-floatBorderColor: rgba(0, 0, 0, 0.03);
   --fmd-maskColor: rgba(232, 232, 232, 0.8);
-  --fmd-editorAreaWidth: 750px;
   --fmd-button-border-focus: var(--button-border);
   --fmd-float-shadow: rgb(15 15 15 / 3%) 0 0 0 1px, rgb(15 15 15 / 4%) 0 3px 6px, rgb(15 15 15 / 5%) 0 9px 24px;
 }

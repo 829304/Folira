@@ -50,9 +50,9 @@
   --fmd-floatHoverColor: rgba(211, 198, 170, 0.04);
   --fmd-floatBorderColor: rgba(0, 0, 0, 0.05);
   --fmd-maskColor: rgba(0, 0, 0, 0.7);
-  --fmd-editorAreaWidth: 750px;
   --fmd-button-border-focus: var(--button-border);
   --fmd-float-shadow: rgb(15 15 15 / 3%) 0 0 0 1px, rgb(15 15 15 / 4%) 0 3px 6px, rgb(15 15 15 / 5%) 0 9px 24px;
+  --fmd-floatShadow: rgba(0, 0, 0, 0.2);
 }
 
 .mu-front-menu,

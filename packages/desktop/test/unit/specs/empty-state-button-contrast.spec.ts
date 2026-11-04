@@ -31,13 +31,43 @@ const parseVars = (css: string): Record<string, string> => {
   return vars
 }
 
+/** Index of the comma that separates a var()'s name from its fallback, if any. */
+const topLevelComma = (text: string): number => {
+  let depth = 0
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '(') depth++
+    else if (text[i] === ')') depth--
+    else if (text[i] === ',' && depth === 0) return i
+  }
+  return -1
+}
+
+/** Expands the innermost var() so nested fallbacks like rgb() survive. */
+const expandOnce = (text: string, vars: Record<string, string>): string => {
+  const start = text.indexOf('var(')
+  if (start < 0) return text
+  let depth = 0
+  let end = start + 3
+  for (; end < text.length; end++) {
+    if (text[end] === '(') depth++
+    else if (text[end] === ')') {
+      depth--
+      if (depth === 0) break
+    }
+  }
+  const inner = text.slice(start + 4, end)
+  const comma = topLevelComma(inner)
+  const name = (comma < 0 ? inner : inner.slice(0, comma)).trim()
+  const fallback = comma < 0 ? '' : inner.slice(comma + 1).trim()
+  const replacement = (vars[name] ?? fallback).trim()
+  return text.slice(0, start) + replacement + text.slice(end + 1)
+}
+
 const resolveVar = (value: string, vars: Record<string, string>): string => {
   let v = value
   let guard = 0
   while (/var\(/.test(v) && guard++ < 20) {
-    v = v
-      .replace(/var\(\s*(--[\w-]+)\s*(?:,[^)]*)?\)/g, (_, name) => vars[name] ?? '')
-      .trim()
+    v = expandOnce(v, vars).trim()
   }
   return v
 }
@@ -142,9 +172,11 @@ const extractButtonVars = (
 }
 
 // Only the :root half of base.css matters here: the .editor-wrapper block
-// re-binds the same names to the Markdown theme.
+// re-binds the same names to the Markdown theme. Read the block itself instead
+// of slicing at the selector — the file's header comment names it too.
 const baseSource = readFileSync(BASE_CSS, 'utf8')
-const baseVars = parseVars(baseSource.slice(0, baseSource.indexOf('.editor-wrapper')))
+const baseRoot = /:root\s*\{([^}]*)\}/.exec(baseSource)?.[1] ?? ''
+const baseVars = parseVars(baseRoot)
 const themeFiles = readdirSync(UI_DIR).filter((f) => f.endsWith('.css'))
 
 const COMPONENTS = [
@@ -178,6 +210,10 @@ describe('empty-state button readability (#4774)', () => {
       const failures: string[] = []
 
       for (const file of themeFiles) {
+        // The theme file declares the axis-private names (`--fui-…`) that
+        // base.css points at, so the two maps are merged as-is: a base value
+        // such as `var(--fui-buttonPrimaryBgColor, #…)` resolves through the
+        // entry the theme file contributes.
         const vars = {
           ...baseVars,
           ...parseVars(readFileSync(resolve(UI_DIR, file), 'utf8'))

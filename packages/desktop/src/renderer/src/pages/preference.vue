@@ -21,7 +21,7 @@ import { usePreferencesStore } from '@/store/preferences'
 import { storeToRefs } from 'pinia'
 import TitleBar from '@/prefComponents/common/titlebar.vue'
 import SideBar from '@/prefComponents/sideBar/index.vue'
-import { addThemeStyle } from '@/util/theme'
+import { applyTheme } from '@/util/theme'
 import { DEFAULT_STYLE } from '@/config'
 import { isOsx } from '@/util'
 import { registerSettingsComponents } from '@/prefComponents/settingsComponents'
@@ -36,7 +36,15 @@ registerSettingsComponents(getCurrentInstance()!.appContext.app)
 const preferencesStore = usePreferencesStore()
 
 // Computed properties
-const { theme, titleBarStyle } = storeToRefs(preferencesStore)
+const { theme, uiTheme, mdTheme, titleBarStyle } = storeToRefs(preferencesStore)
+
+// The settings window is chrome, but it renders the editor preview and the
+// theme picker, so it must follow the same pair the editor resolved instead of
+// the legacy single `theme` field.
+const activeTheme = computed<{ ui: string; md: string }>(() => ({
+  ui: uiTheme.value || theme.value,
+  md: mdTheme.value || theme.value
+}))
 
 const showCustomTitleBar = computed<boolean>(() => {
   // Always show the custom title bar on macOS to provide a close button
@@ -47,17 +55,22 @@ const showCustomTitleBar = computed<boolean>(() => {
 })
 
 // Watchers
-watch(theme, (newValue, oldValue) => {
-  if (newValue !== oldValue) {
-    addThemeStyle(newValue)
+watch(
+  () => [activeTheme.value.ui, activeTheme.value.md] as const,
+  ([ui, md], [previousUi, previousMd]) => {
+    if (ui !== previousUi || md !== previousMd) {
+      applyTheme({ ui, md })
+    }
   }
-})
+)
 
 // Lifecycle
 onMounted(() => {
   nextTick(() => {
     const state = window.marktext?.initialState ?? DEFAULT_STYLE
-    addThemeStyle(state.theme ?? DEFAULT_STYLE.theme)
+    const initial = state as typeof DEFAULT_STYLE & { uiTheme?: string; mdTheme?: string }
+    const fallback = initial.theme ?? DEFAULT_STYLE.theme
+    applyTheme({ ui: initial.uiTheme || fallback, md: initial.mdTheme || fallback })
 
     preferencesStore.ASK_FOR_USER_PREFERENCE()
     // This window shares `index.html`, and therefore its loading screen, with

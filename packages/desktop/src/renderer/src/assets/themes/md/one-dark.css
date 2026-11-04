@@ -50,9 +50,10 @@
   --fmd-floatHoverColor: #3a3f4b;
   --fmd-floatBorderColor: #181a1f;
   --fmd-maskColor: rgba(0, 0, 0, 0.7);
-  --fmd-editorAreaWidth: 750px;
   --fmd-button-border-focus: var(--button-border);
   --fmd-float-shadow: rgb(15 15 15 / 3%) 0 0 0 1px, rgb(15 15 15 / 4%) 0 3px 6px, rgb(15 15 15 / 5%) 0 9px 24px;
+  --fmd-floatShadow: rgba(0, 0, 0, 0.3);
+  --fmd-highlightThemeColor: #e2c08d;
 }
 
 .v-modal {

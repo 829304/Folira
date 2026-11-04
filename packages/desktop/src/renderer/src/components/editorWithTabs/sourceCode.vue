@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
 import { findMarkdownHeadingLine, scrollSourceEditorToLine } from '@/util/sourceModeToc'
@@ -44,6 +44,9 @@ const viewDestroyed = ref(false)
 const tabId = ref<string | null>(null)
 
 const { theme, sourceCode } = storeToRefs(preferencesStore)
+// Source mode renders Markdown, so its CodeMirror palette follows the
+// Markdown axis; `theme` is only the fallback when no Markdown theme is set.
+const mdTheme = computed<string>(() => preferencesStore.mdTheme || theme.value)
 const { currentFile: currentTab } = storeToRefs(editorStore)
 
 const isValidMuyaIndexCursor = (cursor: unknown): cursor is MuyaIndexCursorLike => {
@@ -348,9 +351,9 @@ onMounted(() => {
     }
   }
 
-  if (railscastsThemes.includes(theme.value)) {
+  if (railscastsThemes.includes(mdTheme.value)) {
     codeMirrorConfig.theme = 'railscasts'
-  } else if (oneDarkThemes.includes(theme.value)) {
+  } else if (oneDarkThemes.includes(mdTheme.value)) {
     codeMirrorConfig.theme = 'one-dark'
   }
 

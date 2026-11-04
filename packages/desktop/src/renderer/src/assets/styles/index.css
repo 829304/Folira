@@ -13,6 +13,9 @@
   --successBgColor: rgba(33, 181, 111, 0.12);
   --warningColor: var(--notificationWarningBg);
   --warningBgColor: rgba(255, 136, 0, 0.12);
+
+  /* Layout, set by the width preference; not part of either axis. */
+  --editorAreaWidth: 750px;
 }
 
 ::-webkit-scrollbar,

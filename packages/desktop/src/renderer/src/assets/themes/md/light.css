@@ -1,7 +1,6 @@
 /* Folira Markdown theme: light. Generated from index.css by scripts/themes/build.mjs. */
 
 .editor-wrapper {
-  --fmd-editorAreaWidth: 750px;
   --fmd-themeColor: rgba(33, 181, 111, 1);
   --fmd-themeColor90: rgba(33, 181, 111, 0.9);
   --fmd-themeColor80: rgba(33, 181, 111, 0.8);

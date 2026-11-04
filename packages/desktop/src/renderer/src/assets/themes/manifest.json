@@ -92,7 +92,7 @@
   {
     "id": "light",
     "label": "Light",
-    "appearance": "dark",
+    "appearance": "light",
     "prism": null
   },
   {

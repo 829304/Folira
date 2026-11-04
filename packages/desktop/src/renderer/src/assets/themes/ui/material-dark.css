@@ -65,7 +65,6 @@
   --fui-floatBorderColor: rgba(0, 0, 0, 0.03);
   --fui-floatShadow: rgba(0, 0, 0, 0.2);
   --fui-maskColor: rgba(0, 0, 0, 0.7);
-  --fui-editorAreaWidth: 750px;
 }
 
 .title-bar .frameless-titlebar-button > div > svg {

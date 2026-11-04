@@ -22,7 +22,11 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      # Full history: the theme check compares the generated palettes against
+      # the pre-split theme files in 4df59485^.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup
 
       - name: Run ESLint
@@ -30,3 +34,6 @@ jobs:
 
       - name: Run TypeScript typecheck
         run: pnpm typecheck
+
+      - name: Check the theme artifacts
+        run: pnpm --filter folira themes:check

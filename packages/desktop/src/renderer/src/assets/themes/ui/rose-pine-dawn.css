@@ -65,7 +65,6 @@
   --fui-floatBorderColor: rgba(0, 0, 0, 0.08);
   --fui-floatShadow: rgba(0, 0, 0, 0.1);
   --fui-maskColor: rgba(0, 0, 0, 0.3);
-  --fui-editorAreaWidth: 750px;
 }
 
 ::-webkit-scrollbar {

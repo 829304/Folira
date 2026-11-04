@@ -53,6 +53,23 @@ const CHROME_SELECTOR =
 /** Prism themes that ship under a different name than the editor theme. */
 const PRISM_ALIASES = { 'material-dark': 'dark' }
 
+/**
+ * Layout variables the user controls at runtime (`setEditorWidth` writes them
+ * at :root). They are not palette, so they must not be re-bound inside
+ * `.editor-wrapper` — that would make the width preference a no-op in the
+ * editor while the settings window kept obeying it.
+ */
+const STRUCTURAL = new Set(['editorAreaWidth'])
+
+/** Names declared inside a theme file, without the axis prefix. */
+const declaredNames = css => {
+  const names = new Set()
+  for (const match of css.matchAll(/--(?:fui-|fmd-)([A-Za-z0-9_-]+)\s*:/g)) names.add(match[1])
+  return names
+}
+
+const referencedNames = css => [...new Set([...css.matchAll(/var\(\s*--(?:fui-|fmd-)([A-Za-z0-9_-]+)/g)].map(m => m[1]))]
+
 const rewrite = (value, kind) =>
   value.replace(/var\(\s*--([A-Za-z0-9_-]+)/g, (match, name) => {
     // Aliases stay public: base.css declares them in both scopes.
@@ -71,6 +88,7 @@ function splitTheme (id, css) {
     if (!decl.prop.startsWith('--')) continue
     const name = decl.prop.slice(2)
     if (aliasOf.has(name)) continue // declared globally in base.css
+    if (STRUCTURAL.has(name)) continue // layout, user-controlled at :root
     const place = axis[name] ?? 'deprecated'
     // Deprecated names go on both axes: nothing reads them today, but dropping
     // them would change rendering for anyone who styles the app.
@@ -175,16 +193,24 @@ function migrateLight () {
 
 function luminance (value) {
   const hex = value.match(/^#([0-9a-f]{3,8})$/i)
-  if (!hex) return null
-  let digits = hex[1]
-  if (digits.length === 3) {
-    digits = digits
-      .split('')
-      .map(d => d + d)
-      .join('')
+  if (hex) {
+    let digits = hex[1]
+    if (digits.length === 3) {
+      digits = digits
+        .split('')
+        .map(d => d + d)
+        .join('')
+    }
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(digits.slice(i, i + 2), 16) / 255)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
   }
-  const [r, g, b] = [0, 2, 4].map(i => parseInt(digits.slice(i, i + 2), 16) / 255)
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  // The built-in light theme spells its background as rgba(), not hex.
+  const fn = value.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i)
+  if (fn) {
+    const [r, g, b] = fn.slice(1, 4).map(channel => Number(channel) / 255)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  }
+  return null
 }
 
 const titleCase = id =>
@@ -198,16 +224,29 @@ const titleCase = id =>
 function renderBaseCss (lightLiterals) {
   const themeNames = Object.keys(axis)
     .filter(name => !aliasOf.has(name))
+    .filter(name => !STRUCTURAL.has(name))
     .sort()
   const fallback = name => lightLiterals.get(name) ?? 'initial'
+  // Reference an axis only where it declares the name: pointing at an
+  // `--fmd-` that no Markdown palette defines reads as a typo to
+  // theme-variables.spec.ts, which requires every var() to resolve.
+  const rootValue = name =>
+    axis[name] === 'md'
+      ? fallback(name)
+      : `var(--${PREFIX.ui}${name}, ${fallback(name)})`
+  const scopeValue = name => {
+    if (axis[name] === 'md') return `var(--${PREFIX.md}${name}, ${fallback(name)})`
+    if (axis[name] !== 'dual') return `var(--${PREFIX.ui}${name}, ${fallback(name)})`
+    return `var(--${PREFIX.md}${name}, var(--${PREFIX.ui}${name}, ${fallback(name)}))`
+  }
   const root = [
-    ...themeNames.map(name => `  --${name}: var(--${PREFIX.ui}${name}, ${fallback(name)});`),
+    ...themeNames.map(name => `  --${name}: ${rootValue(name)};`),
     ...[...aliasOf].map(([kebab, camel]) => `  --${kebab}: var(--${camel});`)
   ]
+  // Structural names are deliberately absent here: :root keeps the value
+  // index.css declares, so `setEditorWidth` and user CSS reach the editor.
   const scope = [
-    ...themeNames.map(
-      name => `  --${name}: var(--${PREFIX.md}${name}, var(--${PREFIX.ui}${name}, ${fallback(name)}));`
-    ),
+    ...themeNames.map(name => `  --${name}: ${scopeValue(name)};`),
     ...[...aliasOf].map(([kebab, camel]) => `  --${kebab}: var(--${camel});`)
   ]
   return [
@@ -300,11 +339,23 @@ function aggregate () {
     for (const name of variablesOf(mdCss).keys()) {
       if (!name.startsWith(PREFIX.md)) throw new Error(`md/${id}.css declares non-md variable --${name}`)
     }
-    const background =
-      uiCss.match(/--fui-editorBgColor:\s*([^;]+);/)?.[1] ?? mdCss.match(/--fmd-editorBgColor:\s*([^;]+);/)?.[1]
-    const lum = background ? luminance(background.trim()) : null
+    // Resolve the background through the theme's own references instead of
+    // reading a literal: `light` spells it as rgba(), and several themes point
+    // at a palette entry. A value we cannot resolve is a generator bug, not a
+    // reason to guess "dark".
+    const literals = new Map()
+    for (const [name, value] of variablesOf(uiCss)) {
+      literals.set(name.slice(PREFIX.ui.length), value)
+    }
+    for (const [name, value] of variablesOf(mdCss)) {
+      const bare = name.slice(PREFIX.md.length)
+      if (!literals.has(bare)) literals.set(bare, value)
+    }
+    const background = resolveValue(literals, 'editorBgColor')
+    const lum = background === null ? null : luminance(background.trim())
+    if (lum === null) throw new Error(`${id}: cannot resolve editorBgColor for the appearance flag`)
     const prism = PRISM_ALIASES[id] ?? (prismIds.has(id) ? id : null)
-    return { id, label: titleCase(id), appearance: lum !== null && lum > 0.5 ? 'light' : 'dark', prism }
+    return { id, label: titleCase(id), appearance: lum > 0.5 ? 'light' : 'dark', prism }
   })
 
   writeFile(path.join(THEMES, 'base.css'), renderBaseCss(lightLiterals))
@@ -314,6 +365,108 @@ function aggregate () {
       manifest.filter(t => t.appearance === 'dark').length
     } dark), variables: ${Object.keys(axis).length}, aliases: ${aliasOf.size}`
   )
+}
+
+/* -------------------------------------------------------- normalisation */
+
+const BLOCK_OF = { ui: ':root', md: MD_SCOPE }
+
+/**
+ * Rewrites only the variable block of a theme file. The tail rules are kept
+ * byte-for-byte: they carry hand-written layout, not palette.
+ */
+function rewriteThemeFile (id, kind, transform) {
+  const file = path.join(THEMES, `${kind}/${id}.css`)
+  const source = fs.readFileSync(file, 'utf8')
+  const block = parseBlocks(stripComments(source)).find(candidate => candidate.selector === BLOCK_OF[kind])
+  if (!block) throw new Error(`${kind}/${id}.css: no ${BLOCK_OF[kind]} block`)
+
+  const decls = parseDeclarations(block.body)
+  const next = transform(decls)
+  if (next === null) return
+
+  const rendered = next.map(decl => `  ${decl.prop}: ${decl.value};`).join('\n')
+  const open = source.indexOf('{', source.indexOf(BLOCK_OF[kind]))
+  const end = closingBrace(source, open)
+  writeFile(file, `${source.slice(0, open + 1)}\n${rendered}\n${source.slice(end)}`)
+}
+
+const bareName = (kind, prop) => prop.slice(2 + PREFIX[kind].length)
+
+/** `--editorAreaWidth` belongs to the layout, not to either palette. */
+function stripStructural (id) {
+  for (const kind of ['ui', 'md']) {
+    rewriteThemeFile(id, kind, decls => {
+      const kept = decls.filter(decl => !STRUCTURAL.has(bareName(kind, decl.prop)))
+      return kept.length === decls.length ? null : kept
+    })
+  }
+}
+
+/**
+ * A declaration may reference a name the other axis owns (`--fmd-floatShadow`
+ * used by a Markdown-only rule while `floatShadow` is chrome). Copying the
+ * donor's value onto this axis keeps the reference intact and keeps the axis
+ * independent; leaving it out resolves to nothing and drops the declaration.
+ */
+function promoteCrossAxis (id) {
+  const files = { ui: `ui/${id}.css`, md: `md/${id}.css` }
+  const known = {}
+  const refs = {}
+  for (const kind of ['ui', 'md']) {
+    known[kind] = new Map()
+    const css = fs.readFileSync(path.join(THEMES, files[kind]), 'utf8')
+    for (const [name, value] of variablesOf(css)) known[kind].set(name.slice(PREFIX[kind].length), value)
+    refs[kind] = referencedNames(css)
+  }
+
+  for (const kind of ['ui', 'md']) {
+    const other = kind === 'ui' ? 'md' : 'ui'
+    rewriteThemeFile(id, kind, decls => {
+      const declared = new Set(decls.map(decl => bareName(kind, decl.prop)))
+      const pending = [...refs[kind]]
+      let changed = false
+      while (pending.length) {
+        const name = pending.shift()
+        if (declared.has(name)) continue
+        const donor = known[kind].get(name) ?? known[other].get(name)
+        if (donor === undefined) {
+          throw new Error(`${files[kind]}: --${PREFIX[kind]}${name} is referenced but no theme defines it`)
+        }
+        // Re-home the donor's own references so the copy inherits nothing.
+        const value = donor.replace(/var\(\s*--(?:fui-|fmd-)([A-Za-z0-9_-]+)/g, (whole, ref) => {
+          pending.push(ref)
+          return `var(--${PREFIX[kind]}${ref}`
+        })
+        decls.push({ prop: `--${PREFIX[kind]}${name}`, value })
+        declared.add(name)
+        known[kind].set(name, value)
+        changed = true
+      }
+      return changed ? decls : null
+    })
+  }
+}
+
+/** index.css owns the layout defaults the themes no longer declare. */
+function ensureStructuralDefault () {
+  const source = fs.readFileSync(INDEX_CSS, 'utf8')
+  if (source.includes('--editorAreaWidth:')) return
+  const open = source.indexOf('{', source.indexOf(':root'))
+  const end = closingBrace(source, open)
+  const line = '\n  /* Layout, set by the width preference; not part of either axis. */\n  --editorAreaWidth: 750px;'
+  writeFile(INDEX_CSS, `${source.slice(0, end)}${line}\n${source.slice(end)}`)
+}
+
+function normalize () {
+  for (const id of idsIn('ui')) {
+    stripStructural(id)
+    promoteCrossAxis(id)
+    // A promotion can reveal a reference the donor itself made to a name that
+    // only became known in this pass, so settle it in a second run.
+    promoteCrossAxis(id)
+  }
+  ensureStructuralDefault()
 }
 
 if (migrate) {
@@ -339,4 +492,5 @@ if (migrate) {
   }
 }
 
+normalize()
 aggregate()

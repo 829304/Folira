@@ -148,6 +148,44 @@ ${getEmojiPickerPatch()}
 `
 }
 
+/**
+ * A user stylesheet usually overrides colours at `:root`. base.css re-declares
+ * those names inside `.editor-wrapper`, so a custom property declared only at
+ * the root stops applying to the body — the editor would ignore the override.
+ * Mirror the custom-property declarations of document-level rules onto the
+ * editor scope so a `:root { --editorColor: … }` reaches both axes.
+ */
+const mirrorDocumentRules = (css: string): string => {
+  const mirrored: string[] = []
+  let index = 0
+  while (index < css.length) {
+    const open = css.indexOf('{', index)
+    if (open < 0) break
+    const selector = css.slice(index, open).trim()
+    let depth = 0
+    let close = open
+    for (; close < css.length; close++) {
+      if (css[close] === '{') depth++
+      else if (css[close] === '}') {
+        depth--
+        if (depth === 0) break
+      }
+    }
+    const body = css.slice(open + 1, close)
+    index = close + 1
+    // At-rules (@media, @supports) need their own recursive handling; until
+    // then they pass through untouched rather than being mis-scoped.
+    if (!selector || selector.startsWith('@')) continue
+    if (!body.includes('--')) continue
+    const parts = selector.split(',').map(part => part.trim())
+    if (!parts.some(part => part === ':root' || part === 'html' || part === 'body')) continue
+    const scoped = [...new Set(parts.map(part => (part === ':root' || part === 'html' || part === 'body' ? '.editor-wrapper' : part)))]
+      .join(', ')
+    mirrored.push(`${scoped} {${body}}`)
+  }
+  return mirrored.length ? `${css}\n\n${mirrored.join('\n')}` : css
+}
+
 export interface CustomStyleOptions {
   customCss?: string
   [key: string]: unknown
@@ -163,7 +201,7 @@ export const addCustomStyle = (options: CustomStyleOptions): void => {
     customStyleEle.id = 'custom-styles'
     document.head.appendChild(customStyleEle)
   }
-  customStyleEle.innerHTML = customCss
+  customStyleEle.innerHTML = mirrorDocumentRules(customCss)
 }
 
 export interface AddStylesOptions extends CommonStyleOptions {
