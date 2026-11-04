@@ -1,3 +1,5 @@
+import { CLASS_NAMES } from '../config';
+
 // Visible line count for a code block, matching marktext `a028a7c2`:
 //   - each `\n` adds a row
 //   - a trailing `\n` still counts as the next visible (empty) row in
@@ -114,9 +116,19 @@ function measureLineTops(
         node = walker.nextNode() as Text | null;
     }
 
-    // Lines with no text node to measure from: the trailing empty line after a
-    // final "\n", or the single line of a wholly empty code block. Read the
-    // line height here, while nothing has been written yet.
+    // The line after a final newline has no text of its own; CodeBlockContent
+    // renders a trailing break there to give it a line box, so read that box
+    // rather than stacking one line height below the previous number. With
+    // wrap on, the previous logical line spans several visual rows and that
+    // estimate lands inside it. Still the read pass: nothing is written yet.
+    const trailingBreak = codeEl.querySelector(`.${CLASS_NAMES.MU_TRAILING_BREAK}`);
+    if (trailingBreak !== null && tops.length === lineStarts.length - 1) {
+        tops.push(trailingBreak.getBoundingClientRect().top);
+    }
+
+    // Lines with no text node to measure from: the single line of a wholly
+    // empty code block, or a trailing line with no break element to read.
+    // Read the line height here, while nothing has been written yet.
     const lineHeight = tops.length < spans.length
         ? Number.parseFloat(getComputedStyle(wrapper).lineHeight) || 24
         : 0;

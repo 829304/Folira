@@ -54,6 +54,33 @@ describe('math rule gating', () => {
         });
     });
 
+    it('parses block math delimited by single dollars', () => {
+        // The tokenizer accepts `$` as a block delimiter as well as `$$`, so
+        // the gate has to accept a lone `$` line too.
+        const states = parse('$\nx + 1\n$\n');
+
+        expect(names(states)).toContain('math-block');
+    });
+
+    it('parses block math nested in a blockquote', () => {
+        // The blockquote strips its own `> ` prefixes before the tokenizer
+        // runs, so the gate has to look past them. The math block lands inside
+        // the quote, not at the top level — assert it where it sits.
+        const states = parse('> $\n> x + 1\n> $\n');
+
+        expect(names(states)).toEqual(['block-quote']);
+        expect(names((states[0] as Extract<TState, { name: 'block-quote' }>).children)).toContain('math-block');
+    });
+
+    it('parses block math nested in a list item', () => {
+        const states = parse('- $\n  x + 1\n  $\n');
+
+        expect(names(states)).toEqual(['bullet-list']);
+        const items = (states[0] as Extract<TState, { name: 'bullet-list' }>).children;
+        expect(names(items)).toEqual(['list-item']);
+        expect(names((items[0] as Extract<TState, { name: 'list-item' }>).children)).toContain('math-block');
+    });
+
     it('leaves a document without any dollar sign alone', () => {
         const states = parse('# Title\n\nJust prose.\n');
 

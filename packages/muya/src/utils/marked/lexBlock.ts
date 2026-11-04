@@ -13,6 +13,90 @@ import { DEFAULT_OPTIONS } from './options';
 import { restoreCodeTabs } from './restoreCodeTabs';
 import walkTokens from './walkTokens';
 
+function isBlank(char: string): boolean {
+    return char === ' ' || char === '\t';
+}
+
+function skipBlanks(line: string, end: number, from: number): number {
+    let i = from;
+    while (i < end && isBlank(line[i]))
+        i++;
+
+    return i;
+}
+
+/** Skips `>` markers and the blanks around them; returns the first real char. */
+function skipBlockquotePrefixes(line: string, end: number): number {
+    let i = 0;
+    for (;;) {
+        i = skipBlanks(line, end, i);
+        if (i >= end || line[i] !== '>')
+            return i;
+        i++;
+    }
+}
+
+/** Skips one list marker in front of block content, if the line has one. */
+function skipListMarker(line: string, end: number, from: number): number {
+    if (from >= end)
+        return from;
+
+    const marker = line[from];
+    if (marker === '-' || marker === '+' || marker === '*') {
+        if (from + 1 < end && isBlank(line[from + 1]))
+            return skipBlanks(line, end, from + 1);
+
+        return from;
+    }
+
+    if (marker < '0' || marker > '9')
+        return from;
+
+    let digits = from;
+    while (digits < end && line[digits] >= '0' && line[digits] <= '9')
+        digits++;
+
+    if (digits + 1 >= end)
+        return from;
+
+    const delimiter = line[digits];
+    if ((delimiter !== '.' && delimiter !== ')') || !isBlank(line[digits + 1]))
+        return from;
+
+    return skipBlanks(line, end, digits + 1);
+}
+
+/**
+ * True when `line` is a math delimiter (`$` or `$$`) that may open a block,
+ * ignoring block-container prefixes.
+ *
+ * Scanned rather than matched: a regex for the prefixes re-reads the same run
+ * of blanks on every iteration, which backtracks quadratically on a long blank
+ * line, and this runs once per line of every document containing a `$`.
+ */
+function isBlockMathOpener(line: string): boolean {
+    const end = line.endsWith('\r') ? line.length - 1 : line.length;
+    const start = skipListMarker(line, end, skipBlockquotePrefixes(line, end));
+
+    if (start >= end || line[start] !== '$')
+        return false;
+
+    let i = start + 1;
+    if (i < end && line[i] === '$')
+        i++;
+
+    return skipBlanks(line, end, i) === end;
+}
+
+function hasBlockMathOpener(src: string): boolean {
+    for (const line of src.split('\n')) {
+        if (line.includes('$') && isBlockMathOpener(line))
+            return true;
+    }
+
+    return false;
+}
+
 export function lexBlock(
     src: string,
     options: ILexOption = DEFAULT_OPTIONS,
@@ -32,14 +116,20 @@ export function lexBlock(
     // 4 MB file spent 11.2 s in `lexBlock` with both rules registered and 0.7 s
     // with neither.
     //
-    // Both rules need a `$` at all. The block rule needs a `$$` line of its
-    // own — a quoted or list-indented `> $$` still is block math. No such
-    // line, no block math.
+    // Both rules need a `$` at all. The block rule needs a line that is only
+    // `$` or `$$` once its container prefixes are stripped — a quoted or
+    // list-indented one still counts.
     //
     // Tested against the original `src`: front matter is stripped below, and a
     // superset with no `$` guarantees the remainder has none either.
     const inlineMathPossible = texMathDollars && src.includes('$');
-    const blockMathPossible = inlineMathPossible && /(?:^|\n)[ \t>]*\$\$/.test(src);
+    // Candidate detection for the block rule: a line that holds nothing but
+    // `$` or `$$` once its container prefixes (blockquote `>`, a list marker)
+    // are stripped can open block math, and the tokenizer decides the rest.
+    // Erring towards registering the rule is deliberate: a missed opener
+    // silently turns a formula into a paragraph, while a false positive only
+    // costs one `indexOf` per token boundary in documents that have a `$`.
+    const blockMathPossible = inlineMathPossible && hasBlockMathOpener(src);
 
     if (inlineMathPossible) {
         m.use(
@@ -115,7 +205,14 @@ export function lexBlock(
     const parsed = lexer.blockTokens(src);
     if (src.includes('\t'))
         restoreCodeTabs(parsed, src);
-    tokens.push(...parsed);
+    // Appended one token at a time: `push(...parsed)` passes every token as a
+    // separate argument, and a document dense in short paragraphs (70k of them
+    // in ~210 KB) exceeds the engine argument limit and throws
+    // `RangeError: Maximum call stack size exceeded` before the stream exists.
+    // The front matter token stays ahead of the body, hence appending to the
+    // accumulator instead of replacing it.
+    for (const token of parsed)
+        tokens.push(token);
     tokens = compatibleTaskList(tokens as Token[]);
     if (options.githubAlerts)
         normalizeGithubAlertTokens(tokens as Token[], lexer);

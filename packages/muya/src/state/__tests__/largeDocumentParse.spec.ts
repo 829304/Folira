@@ -74,4 +74,13 @@ describe('large document parsing', () => {
 
         expect(states.length).toBeGreaterThan(0);
     }, 120_000);
+
+    it('parses a token-dense document past the engine argument limit', () => {
+        // 70k one-word paragraphs in ~210 KB. Token density, not file size, is
+        // what overflows `push(...tokens)`: the same byte count in long
+        // paragraphs holds a few hundred tokens and never reaches the limit.
+        const states = new MarkdownToState(PARSE_OPTIONS).generate('a\n\n'.repeat(70_000));
+
+        expect(states.length).toBeGreaterThanOrEqual(70_000);
+    }, 120_000);
 });

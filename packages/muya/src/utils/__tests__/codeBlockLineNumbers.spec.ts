@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
+import { CLASS_NAMES } from '../../config';
 import {
     cancelLineNumberReposition,
     computeLineCount,
@@ -140,6 +141,40 @@ describe('repositionLineNumberSpans', () => {
         expect((wrapper.children[0] as HTMLElement).style.top).toBe('0px');
         expect((wrapper.children[1] as HTMLElement).style.top).toBe('30px');
         expect((wrapper.children[2] as HTMLElement).style.top).toBe('60px');
+    });
+
+    it('measures the trailing break instead of stacking a line height', () => {
+        // With wrap on, the last logical line spans several visual rows, so
+        // `previous top + line height` lands inside it. CodeBlockContent puts a
+        // break element on the line after a final newline; its box is the
+        // number the row needs.
+        const wrapper = document.createElement('span');
+        syncLineNumbersSpans(wrapper, 3);
+        const codeEl = document.createElement('code');
+        codeEl.appendChild(document.createTextNode('a\nb\n'));
+        const trailing = document.createElement('span');
+        trailing.className = CLASS_NAMES.MU_TRAILING_BREAK;
+        trailing.appendChild(document.createElement('br'));
+        codeEl.appendChild(trailing);
+
+        const tops = [100, 140];
+        let call = 0;
+        const rangeProto = Range.prototype as unknown as {
+            getBoundingClientRect: () => { top: number };
+        };
+        const origRangeRect = rangeProto.getBoundingClientRect;
+        rangeProto.getBoundingClientRect = () => ({ top: tops[call++] });
+        (trailing as unknown as { getBoundingClientRect: () => { top: number } })
+            .getBoundingClientRect = () => ({ top: 180 });
+
+        try {
+            repositionLineNumberSpans(wrapper, codeEl);
+        }
+        finally {
+            rangeProto.getBoundingClientRect = origRangeRect;
+        }
+
+        expect((wrapper.children[2] as HTMLElement).style.top).toBe('80px');
     });
 });
 
