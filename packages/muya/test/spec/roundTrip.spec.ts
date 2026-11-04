@@ -47,7 +47,12 @@ const fixtures: IFixture[] = [
 ];
 
 function readFixture(rel: string): string {
-    return fs.readFileSync(path.join(fixturesDir, rel), 'utf8');
+    // The app normalises CRLF to LF when it loads a document
+    // (src-tauri/src/commands/markdown.rs, load_markdown), so the engine only
+    // ever sees LF at runtime. A Windows checkout checks these fixtures out
+    // with CRLF, and a trailing \r on a fence line stops it closing the
+    // block, so the round trip would differ from the app for no real reason.
+    return fs.readFileSync(path.join(fixturesDir, rel), 'utf8').replace(/\r\n/g, '\n');
 }
 
 function roundTrip(markdown: string): string {
