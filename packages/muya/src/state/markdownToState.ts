@@ -53,6 +53,41 @@ const CONTAINER_TOKEN_TYPES = new Set([
     'footnote',
 ]);
 
+/**
+ * A LIFO wrapper over the lexed block tokens.
+ *
+ * `shift`/`unshift` on a large array are O(n) per call, and `unshift(...tokens)`
+ * spreads every child token as a call argument, which overflows the stack once a
+ * document has enough blocks. Holding the tokens reversed makes both ends O(1).
+ */
+class TokenStream {
+    private readonly _stack: TBlockToken[];
+
+    constructor(tokens: TBlockToken[]) {
+        this._stack = tokens.slice().reverse();
+    }
+
+    next(): TBlockToken | undefined {
+        return this._stack.pop();
+    }
+
+    /** The token that would come next, without consuming it. */
+    peek(): TBlockToken | undefined {
+        return this._stack[this._stack.length - 1];
+    }
+
+    /** Queues a token, or an ordered list of them, at the front of the stream. */
+    prepend(tokens: TBlockToken | TBlockToken[]): void {
+        if (Array.isArray(tokens)) {
+            for (let i = tokens.length - 1; i >= 0; i--)
+                this._stack.push(tokens[i]);
+        }
+        else {
+            this._stack.push(tokens);
+        }
+    }
+}
+
 export class MarkdownToState {
     constructor(private _options: Partial<IMarkdownToStateOptions> = DEFAULT_OPTIONS) {}
 
@@ -75,7 +110,7 @@ export class MarkdownToState {
         } = this._options;
 
         // Synthetic block-end markers make this stream wider than the lexer output.
-        const tokens: TBlockToken[] = lexBlock(markdown, {
+        const lexed: TBlockToken[] = lexBlock(markdown, {
             footnote,
             texMathDollars,
             frontMatter,
@@ -86,13 +121,14 @@ export class MarkdownToState {
             githubAlerts,
             fancyLists,
         });
+        const tokens = new TokenStream(lexed);
 
         const states: TState[] = [];
         let token: TBlockToken | undefined;
         const parentList: TState[][] = [states];
 
         // eslint-disable-next-line no-cond-assign
-        while ((token = tokens.shift())) {
+        while ((token = tokens.next())) {
             if (CONTAINER_TOKEN_TYPES.has(token.type))
                 this._handleContainerToken(token, parentList, tokens);
             else
@@ -105,7 +141,7 @@ export class MarkdownToState {
     private _handleContainerToken(
         token: TBlockToken,
         parentList: TState[][],
-        tokens: TBlockToken[],
+        tokens: TokenStream,
     ) {
         let state: TState;
         switch (token.type) {
@@ -135,8 +171,8 @@ export class MarkdownToState {
                 state = { name: 'github-alert', meta: token.meta, children: [] };
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'githubAlert' });
-                tokens.unshift(...token.tokens as TBlockToken[]);
+                tokens.prepend({ type: 'block-end', tokenType: 'githubAlert' });
+                tokens.prepend(token.tokens as TBlockToken[]);
                 break;
             }
 
@@ -147,8 +183,8 @@ export class MarkdownToState {
                 };
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'blockquote' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                tokens.prepend({ type: 'block-end', tokenType: 'blockquote' });
+                tokens.prepend(token.tokens as TBlockToken[]);
                 break;
             }
 
@@ -160,8 +196,8 @@ export class MarkdownToState {
                 };
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'multilineBlockquote' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                tokens.prepend({ type: 'block-end', tokenType: 'multilineBlockquote' });
+                tokens.prepend(token.tokens as TBlockToken[]);
                 break;
             }
 
@@ -169,8 +205,8 @@ export class MarkdownToState {
                 state = this._buildListState(token);
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'list' });
-                tokens.unshift(...(token.items as TBlockToken[]));
+                tokens.prepend({ type: 'block-end', tokenType: 'list' });
+                tokens.prepend(token.items as TBlockToken[]);
                 break;
             }
 
@@ -198,8 +234,8 @@ export class MarkdownToState {
                 state = itemState;
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'list-item' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                tokens.prepend({ type: 'block-end', tokenType: 'list-item' });
+                tokens.prepend(token.tokens as TBlockToken[]);
                 break;
             }
 
@@ -213,8 +249,8 @@ export class MarkdownToState {
                 };
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'footnote' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                tokens.prepend({ type: 'block-end', tokenType: 'footnote' });
+                tokens.prepend(token.tokens as TBlockToken[]);
                 break;
             }
         }
@@ -282,7 +318,7 @@ export class MarkdownToState {
     private _handleLeafToken(
         token: TBlockToken,
         parentList: TState[][],
-        tokens: TBlockToken[],
+        tokens: TokenStream,
         trimUnnecessaryCodeBlockEmptyLines: boolean,
     ) {
         let state: TState;
@@ -364,8 +400,8 @@ export class MarkdownToState {
 
             case 'text': {
                 value = token.text;
-                while (tokens[0]?.type === 'text') {
-                    const next = tokens.shift() as Extract<TBlockToken, { type: 'text' }>;
+                while (tokens.peek()?.type === 'text') {
+                    const next = tokens.next() as Extract<TBlockToken, { type: 'text' }>;
                     value += `\n${next.text}`;
                 }
                 state = {
