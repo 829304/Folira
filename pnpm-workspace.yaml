@@ -1,3 +1,4 @@
+nodeLinker: hoisted
 packages:
   - 'packages/*'
   # muya v2 (TS) nests its dev surface and Playwright suite inside its own
