@@ -155,26 +155,31 @@ describe('scheduleLineNumberReposition', () => {
             order.push('read');
             return { top: 0 };
         };
+        const spans: HTMLElement[] = [];
         for (const wrapper of wrappers) {
-            for (const span of Array.from(wrapper.children)) {
-                const style = (span as HTMLElement).style;
-                const descriptor = Object.getOwnPropertyDescriptor(
-                    Object.getPrototypeOf(style),
-                    'top',
-                )!;
-                Object.defineProperty(style, 'top', {
-                    configurable: true,
-                    get: () => descriptor.get!.call(style),
-                    set: (value: string) => {
-                        order.push('write');
-                        descriptor.set!.call(style, value);
+            for (const span of Array.from(wrapper.children) as HTMLElement[]) {
+                // happy-dom 21 keeps style behind a proxy that rejects
+                // defineProperty, so the accessor goes on the element: a
+                // shadowing style getter that logs writes and forwards
+                // everything else to the real declaration.
+                const real = span.style;
+                const watched = new Proxy(real, {
+                    get: (target, prop) => Reflect.get(target, prop, target),
+                    set: (target, prop, value) => {
+                        if (prop === 'top')
+                            order.push('write');
+                        return Reflect.set(target, prop, value, target);
                     },
                 });
+                Object.defineProperty(span, 'style', { configurable: true, get: () => watched });
+                spans.push(span);
             }
         }
 
         const restore = () => {
             rangeProto.getBoundingClientRect = origRangeRect;
+            for (const span of spans)
+                Reflect.deleteProperty(span, 'style');
         };
 
         return { order, restore };
