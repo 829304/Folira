@@ -32,14 +32,14 @@ export function lexBlock(
     // 4 MB file spent 11.2 s in `lexBlock` with both rules registered and 0.7 s
     // with neither.
     //
-    // Both rules need a `$` at all. The block rule needs more: it matches
-    // `$$\n…\n$$`, so any text it can match contains a newline immediately
-    // followed by the closing delimiter. No `\n$`, no block math.
+    // Both rules need a `$` at all. The block rule needs a `$$` line of its
+    // own — a quoted or list-indented `> $$` still is block math. No such
+    // line, no block math.
     //
     // Tested against the original `src`: front matter is stripped below, and a
     // superset with no `$` guarantees the remainder has none either.
     const inlineMathPossible = texMathDollars && src.includes('$');
-    const blockMathPossible = inlineMathPossible && src.includes('\n$');
+    const blockMathPossible = inlineMathPossible && /(?:^|\n)[ \t>]*\$\$/.test(src);
 
     if (inlineMathPossible) {
         m.use(
