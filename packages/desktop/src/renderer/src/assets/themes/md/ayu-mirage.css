@@ -1,0 +1,79 @@
+/* Folira Markdown theme: ayu-mirage. Generated from ayu-mirage.theme.css by scripts/themes/build.mjs. */
+
+.editor-wrapper {
+  --fmd-themeColor: #ffcc66;
+  --fmd-themeColor90: rgba(255, 204, 102, 0.9);
+  --fmd-themeColor80: rgba(255, 204, 102, 0.8);
+  --fmd-themeColor70: rgba(255, 204, 102, 0.7);
+  --fmd-themeColor60: rgba(255, 204, 102, 0.6);
+  --fmd-themeColor50: rgba(255, 204, 102, 0.5);
+  --fmd-themeColor40: rgba(255, 204, 102, 0.4);
+  --fmd-themeColor30: rgba(255, 204, 102, 0.3);
+  --fmd-themeColor20: rgba(255, 204, 102, 0.2);
+  --fmd-highlightColor: rgba(255, 204, 102, 0.6);
+  --fmd-selectionColor: rgba(52, 68, 88, 0.8);
+  --fmd-editorColor: #cbccc6;
+  --fmd-editorColor80: rgba(203, 204, 198, 0.8);
+  --fmd-editorColor50: rgba(203, 204, 198, 0.5);
+  --fmd-editorColor40: rgba(203, 204, 198, 0.4);
+  --fmd-editorColor30: rgba(203, 204, 198, 0.3);
+  --fmd-editorColor10: rgba(203, 204, 198, 0.1);
+  --fmd-editorColor04: rgba(203, 204, 198, 0.04);
+  --fmd-editorBgColor: #1f2430;
+  --fmd-deleteColor: #f28779;
+  --fmd-iconColor: rgba(203, 204, 198, 0.56);
+  --fmd-codeBlockBgColor: #272d38;
+  --fmd-footnoteBgColor: rgba(39, 45, 56, 0.3);
+  --fmd-inputBgColor: #171b24;
+  --fmd-buttonFontColor: rgba(203, 204, 198, 0.6);
+  --fmd-buttonBgColor: #272d38;
+  --fmd-buttonBorder: 1px solid rgba(0, 0, 0, 0.2);
+  --fmd-buttonBgColorHover: #323a48;
+  --fmd-buttonBorderHover: 1px solid rgba(0, 0, 0, 0.3);
+  --fmd-buttonBgColorActive: #1f262f;
+  --fmd-buttonBorderActive: var(--fmd-buttonBorder);
+  --fmd-tableBorderColor: #272d38;
+  --fmd-h1Color: #ffcc66;
+  --fmd-h2Color: #73d0ff;
+  --fmd-h3Color: #bae67e;
+  --fmd-h4Color: #5ccfe6;
+  --fmd-h5Color: #ffd580;
+  --fmd-h6Color: #f28779;
+  --fmd-blockquoteTextColor: rgba(203, 204, 198, 0.6);
+  --fmd-blockquoteBorderColor: #5c6773;
+  --fmd-hrColor: #323a48;
+  --fmd-linkColor: #73d0ff;
+  --fmd-strongColor: #cccac2;
+  --fmd-emColor: #ffd580;
+  --fmd-listMarkerColor: #ffcc66;
+  --fmd-floatBgColor: #272d38;
+  --fmd-floatHoverColor: rgba(203, 204, 198, 0.04);
+  --fmd-floatBorderColor: rgba(0, 0, 0, 0.05);
+  --fmd-maskColor: rgba(0, 0, 0, 0.7);
+  --fmd-editorAreaWidth: 750px;
+  --fmd-button-border-focus: var(--button-border);
+  --fmd-float-shadow: rgb(15 15 15 / 3%) 0 0 0 1px, rgb(15 15 15 / 4%) 0 3px 6px, rgb(15 15 15 / 5%) 0 9px 24px;
+}
+
+.mu-front-menu,
+.mu-float-wrapper {
+  box-shadow: 0 4px 8px 0 var(--fmd-floatShadow) !important;
+}
+
+:not(pre) > code[class*='language-'],
+pre:not(.CodeMirror-line),
+pre[class*='language-'],
+pre.mu-code-block {
+  background: var(--fmd-codeBlockBgColor) !important;
+  border: none !important;
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  border-top: 2px dashed var(--fmd-editorColor10) !important;
+  background: none !important;
+}
+
+figure.mu-active.mu-math-block > div.mu-math-preview,
+figure.mu-active.mu-diagram-block > div.mu-diagram-preview {
+  box-shadow: 0 3px 8px 0 var(--fmd-floatShadow) !important;
+}

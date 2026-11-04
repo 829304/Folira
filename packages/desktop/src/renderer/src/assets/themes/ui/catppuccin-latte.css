@@ -1,0 +1,125 @@
+/* Folira UI theme: catppuccin-latte. Generated from catppuccin-latte.theme.css by scripts/themes/build.mjs. */
+
+:root {
+  --fui-themeColor: #1e66f5;
+  --fui-themeColor90: rgba(30, 102, 245, 0.9);
+  --fui-themeColor80: rgba(30, 102, 245, 0.8);
+  --fui-themeColor70: rgba(30, 102, 245, 0.7);
+  --fui-themeColor60: rgba(30, 102, 245, 0.6);
+  --fui-themeColor50: rgba(30, 102, 245, 0.5);
+  --fui-themeColor40: rgba(30, 102, 245, 0.4);
+  --fui-themeColor30: rgba(30, 102, 245, 0.3);
+  --fui-themeColor20: rgba(30, 102, 245, 0.2);
+  --fui-themeColor10: rgba(30, 102, 245, 0.1);
+  --fui-highlightColor: rgba(30, 102, 245, 0.3);
+  --fui-selectionColor: rgba(172, 176, 190, 0.5);
+  --fui-editorColor: #4c4f69;
+  --fui-editorColor80: rgba(76, 79, 105, 0.8);
+  --fui-editorColor60: rgba(76, 79, 105, 0.6);
+  --fui-editorColor50: rgba(76, 79, 105, 0.5);
+  --fui-editorColor40: rgba(76, 79, 105, 0.4);
+  --fui-editorColor30: rgba(76, 79, 105, 0.3);
+  --fui-editorColor10: rgba(76, 79, 105, 0.1);
+  --fui-editorColor04: rgba(76, 79, 105, 0.04);
+  --fui-editorBgColor: #eff1f5;
+  --fui-deleteColor: #d20f39;
+  --fui-iconColor: rgba(76, 79, 105, 0.56);
+  --fui-codeBgColor: #e6e9ef;
+  --fui-footnoteBgColor: rgba(230, 233, 239, 0.5);
+  --fui-inputBgColor: #dce0e8;
+  --fui-focusColor: var(--fui-themeColor);
+  --fui-buttonFontColor: rgba(76, 79, 105, 0.7);
+  --fui-buttonBgColor: #e6e9ef;
+  --fui-buttonBorder: 1px solid rgba(0, 0, 0, 0.08);
+  --fui-buttonShadow: none;
+  --fui-buttonFontColorHover: var(--fui-buttonFontColor);
+  --fui-buttonBgColorHover: #dce0e8;
+  --fui-buttonBorderHover: 1px solid rgba(0, 0, 0, 0.12);
+  --fui-buttonFontColorActive: var(--fui-buttonFontColor);
+  --fui-buttonBgColorActive: #ccd0da;
+  --fui-buttonBorderActive: var(--fui-buttonBorder);
+  --fui-buttonPrimaryFontColor: #ffffff;
+  --fui-buttonPrimaryBgColor: var(--fui-themeColor);
+  --fui-buttonPrimaryBorder: none;
+  --fui-buttonPrimaryShadow: none;
+  --fui-buttonPrimaryFontColorHover: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: #7287fd;
+  --fui-buttonPrimaryBorderHover: var(--fui-buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: #1852d6;
+  --fui-buttonPrimaryBorderActive: var(--fui-buttonPrimaryBorder);
+  --fui-buttonPrimaryFocusBorder: none;
+  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 0 1px var(--fui-themeColor);
+  --fui-tableBorderColor: #ccd0da;
+  --fui-headingColor: #4c4f69;
+  --fui-sideBarColor: rgba(76, 79, 105, 0.7);
+  --fui-sideBarIconColor: var(--fui-iconColor);
+  --fui-sideBarTitleColor: rgba(76, 79, 105, 0.9);
+  --fui-sideBarTextColor: rgba(76, 79, 105, 0.5);
+  --fui-sideBarBgColor: #eaedf2;
+  --fui-sideBarItemHoverBgColor: rgba(76, 79, 105, 0.05);
+  --fui-itemBgColor: #dce0e8;
+  --fui-floatFontColor: rgba(76, 79, 105, 0.8);
+  --fui-floatBgColor: #e6e9ef;
+  --fui-floatHoverColor: rgba(76, 79, 105, 0.06);
+  --fui-floatBorderColor: rgba(0, 0, 0, 0.08);
+  --fui-floatShadow: rgba(0, 0, 0, 0.1);
+  --fui-maskColor: rgba(0, 0, 0, 0.3);
+  --fui-editorAreaWidth: 750px;
+}
+
+::-webkit-scrollbar {
+  background: var(--fui-editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: #4c4f69;
+}
+
+.title-bar .frameless-titlebar-minimize:hover,
+.title-bar .frameless-titlebar-toggle:hover {
+  background-color: rgba(76, 79, 105, 0.08);
+}
+
+.side-bar {
+  border-right: 1px solid #ccd0da !important;
+}
+
+.recent-files-projects a,
+.open-project a {
+  box-shadow: none !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+.editor-tabs:after {
+  position: absolute;
+  content: '';
+  border-bottom: 1px solid #ccd0da;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+
+.editor-tabs ul.tabs-container:after {
+  position: absolute;
+  content: '';
+  border-bottom: 1px solid #ccd0da;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.tabs-container > li,
+.tabs-container > li.active {
+  background: var(--fui-editorBgColor) !important;
+}
+
+.open-project button,
+.recent-files-projects button {
+  box-shadow: none !important;
+}

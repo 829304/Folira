@@ -1,0 +1,136 @@
+/* Folira Markdown theme: graphite. Generated from graphite.theme.css by scripts/themes/build.mjs. */
+
+.editor-wrapper {
+  --fmd-themeColor: rgb(104, 134, 170);
+  --fmd-themeColor90: rgba(104, 134, 170, 0.9);
+  --fmd-themeColor80: rgba(104, 134, 170, 0.8);
+  --fmd-themeColor70: rgba(104, 134, 170, 0.7);
+  --fmd-themeColor60: rgba(104, 134, 170, 0.6);
+  --fmd-themeColor50: rgba(104, 134, 170, 0.5);
+  --fmd-themeColor40: rgba(104, 134, 170, 0.4);
+  --fmd-themeColor30: rgba(104, 134, 170, 0.3);
+  --fmd-themeColor20: rgba(104, 134, 170, 0.2);
+  --fmd-highlightColor: rgba(104, 134, 170, 0.4);
+  --fmd-selectionColor: rgba(0, 0, 0, 0.1);
+  --fmd-editorColor: rgba(43, 48, 50, 0.7);
+  --fmd-editorColor80: rgba(43, 48, 50, 0.8);
+  --fmd-editorColor50: rgba(43, 48, 50, 0.5);
+  --fmd-editorColor40: rgba(43, 48, 50, 0.4);
+  --fmd-editorColor30: rgba(150, 150, 150, 0.8);
+  --fmd-editorColor10: rgba(43, 48, 50, 0.1);
+  --fmd-editorColor04: rgba(43, 48, 50, 0.04);
+  --fmd-editorBgColor: #f7f7f7;
+  --fmd-deleteColor: #ff6969;
+  --fmd-iconColor: rgba(150, 150, 150, 0.8);
+  --fmd-codeBlockBgColor: rgba(104, 134, 170, 0.05);
+  --fmd-footnoteBgColor: rgba(0, 0, 0, 0.03);
+  --fmd-inputBgColor: rgba(0, 0, 0, 0.06);
+  --fmd-buttonFontColor: var(--fmd-editorColor);
+  --fmd-buttonBgColor: #ffffff;
+  --fmd-buttonBorder: 1px solid #dcdfe6;
+  --fmd-buttonBgColorHover: linear-gradient(#fafafa, #f5f5f5);
+  --fmd-buttonBorderHover: var(--fmd-buttonBorder);
+  --fmd-buttonBgColorActive: #f5f5f5;
+  --fmd-buttonBorderActive: var(--fmd-buttonBorder);
+  --fmd-tableBorderColor: #e5e5e5;
+  --fmd-h1Color: #6886aa;
+  --fmd-h2Color: #5f9ea0;
+  --fmd-h3Color: #b8860b;
+  --fmd-h4Color: #7b68ee;
+  --fmd-h5Color: #cd5c5c;
+  --fmd-h6Color: #708090;
+  --fmd-blockquoteTextColor: rgba(43, 48, 50, 0.5);
+  --fmd-blockquoteBorderColor: rgb(104, 134, 170);
+  --fmd-hrColor: rgba(43, 48, 50, 0.1);
+  --fmd-linkColor: rgb(104, 134, 170);
+  --fmd-strongColor: rgba(43, 48, 50, 0.8);
+  --fmd-emColor: #5f9ea0;
+  --fmd-listMarkerColor: #6886aa;
+  --fmd-floatBgColor: rgb(237, 237, 238);
+  --fmd-floatHoverColor: rgba(43, 48, 50, 0.04);
+  --fmd-floatBorderColor: rgba(0, 0, 0, 0.03);
+  --fmd-maskColor: rgba(232, 232, 232, 0.8);
+  --fmd-editorAreaWidth: 750px;
+  --fmd-button-border-focus: var(--button-border);
+  --fmd-float-shadow: rgb(15 15 15 / 3%) 0 0 0 1px, rgb(15 15 15 / 4%) 0 3px 6px, rgb(15 15 15 / 5%) 0 9px 24px;
+}
+
+.mu-container li.mu-list-item {
+  color: var(--fmd-editorColor);
+}
+
+li.mu-task-list-item {
+  list-style-type: none;
+  position: relative;
+}
+
+li.mu-task-list-item > input[type='checkbox'] {
+  position: absolute;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  top: 0.1em;
+  transform: rotate(-90deg);
+  margin: 0;
+  left: -24px;
+  transform-origin: center;
+  transition: all 0.2s ease;
+}
+
+li.mu-task-list-item > input.mu-checkbox-checked {
+  transform: rotate(0);
+  opacity: 0.5;
+}
+
+li.mu-task-list-item > input[type='checkbox']::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  display: inline-block;
+  border: 2px solid var(--fmd-editorColor);
+  border-radius: 2px;
+  background-color: var(--fmd-editorBgColor);
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: all 0.2s ease;
+}
+
+li.mu-task-list-item > input.mu-checkbox-checked::before {
+  border: transparent;
+  background-color: var(--fmd-editorColor);
+}
+
+li.mu-task-list-item > input::after {
+  content: '';
+  transform: rotate(-45deg) scale(0);
+  width: 9px;
+  height: 5px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-right: none;
+  position: absolute;
+  display: inline-block;
+  top: 1px;
+  left: 5px;
+  transition: all 0.2s ease;
+}
+
+li.mu-task-list-item > input.mu-checkbox-checked::after {
+  transform: rotate(-45deg) scale(1);
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  display: block;
+  left: 50%;
+  top: 50%;
+  height: 2px;
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 2px dashed var(--fmd-editorColor50);
+  transform: translateX(-50%) translateY(-50%);
+}

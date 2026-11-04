@@ -47,7 +47,7 @@
 import { computed, watch, nextTick, onMounted, ref } from 'vue'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
-import { addStyles, addThemeStyle, addCustomStyle, type AddStylesOptions } from '@/util/theme'
+import { addStyles, applyTheme, addCustomStyle, type AddStylesOptions } from '@/util/theme'
 import Recent from '@/components/recent/index.vue'
 import EditorWithTabs from '@/components/editorWithTabs/index.vue'
 import TitleBar from '@/components/titleBar/index.vue'
@@ -88,10 +88,14 @@ const timer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const { windowActive, platform, init } = storeToRefs(mainStore)
 const { showTabBar } = storeToRefs(layoutStore)
-const { sourceCode, theme, customCss, textDirection, zoom } = storeToRefs(preferencesStore)
+const { sourceCode, theme, uiTheme, mdTheme, customCss, textDirection, zoom } = storeToRefs(preferencesStore)
+
+// An empty axis preference follows theme, so a pre-split preferences file still works.
+const effectiveUiTheme = computed(() => uiTheme.value || theme.value)
+const effectiveMdTheme = computed(() => mdTheme.value || theme.value)
+
 const { projectTree } = storeToRefs(projectStore)
 const { currentFile } = storeToRefs(editorStore)
-
 const pathname = computed(() => currentFile.value?.pathname)
 const filename = computed(() => currentFile.value?.filename)
 const isSaved = computed(() => currentFile.value?.isSaved)
@@ -113,9 +117,11 @@ const hasCurrentFile = computed<boolean>(() => {
 })
 
 // Watchers
-watch(theme, (value, oldValue) => {
-  if (value !== oldValue) {
-    addThemeStyle(value)
+// The two axes move independently: re-apply both on either change so switching
+// one never resets the other.
+watch([effectiveUiTheme, effectiveMdTheme], ([ui, md], [oldUi, oldMd]) => {
+  if (ui !== oldUi || md !== oldMd) {
+    applyTheme({ ui, md })
   }
 })
 
@@ -273,7 +279,9 @@ onMounted(async () => {
       theme: init?.theme ?? DEFAULT_STYLE.theme,
       codeFontFamily: init?.codeFontFamily ?? DEFAULT_STYLE.codeFontFamily,
       codeFontSize: init?.codeFontSize ?? DEFAULT_STYLE.codeFontSize,
-      hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar
+      hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar,
+      uiTheme: effectiveUiTheme.value,
+      mdTheme: effectiveMdTheme.value
     }
     addStyles(style)
   })

@@ -1,0 +1,173 @@
+/* Folira UI theme: one-dark. Generated from one-dark.theme.css by scripts/themes/build.mjs. */
+
+:root {
+  --fui-themeColor: rgba(77, 120, 204, 1);
+  --fui-themeColor90: rgba(77, 120, 204, 0.9);
+  --fui-themeColor80: rgba(77, 120, 204, 0.8);
+  --fui-themeColor70: rgba(77, 120, 204, 0.7);
+  --fui-themeColor60: rgba(77, 120, 204, 0.6);
+  --fui-themeColor50: rgba(77, 120, 204, 0.5);
+  --fui-themeColor40: rgba(77, 120, 204, 0.4);
+  --fui-themeColor30: rgba(77, 120, 204, 0.3);
+  --fui-themeColor20: rgba(77, 120, 204, 0.2);
+  --fui-themeColor10: rgba(77, 120, 204, 0.1);
+  --fui-highlightThemeColor: #e2c08d;
+  --fui-highlightColor: #ffffff10;
+  --fui-selectionColor: #67769660;
+  --fui-editorColor: #9da5b4;
+  --fui-editorColor80: #9da5b4;
+  --fui-editorColor60: rgba(157, 165, 180, 0.6);
+  --fui-editorColor50: rgba(157, 165, 180, 0.5);
+  --fui-editorColor40: rgba(157, 165, 180, 0.4);
+  --fui-editorColor30: rgba(157, 165, 180, 0.3);
+  --fui-editorColor10: rgba(157, 165, 180, 0.1);
+  --fui-editorColor04: rgba(157, 165, 180, 0.04);
+  --fui-editorBgColor: #282c34;
+  --fui-deleteColor: #ff6969;
+  --fui-iconColor: rgba(255, 255, 255, 0.56);
+  --fui-codeBgColor: #3a3f4b;
+  --fui-footnoteBgColor: rgba(66, 67, 68, 0.5);
+  --fui-inputBgColor: rgba(0, 0, 0, 0.1);
+  --fui-focusColor: #568af2;
+  --fui-buttonFontColor: #9da5b4;
+  --fui-buttonBgColor: linear-gradient(#3a3f4b, #353b45);
+  --fui-buttonBorder: 1px solid #181a1f;
+  --fui-buttonShadow: none;
+  --fui-buttonFontColorHover: #d7dae0;
+  --fui-buttonBgColorHover: linear-gradient(#3e4451, #3a3f4b);
+  --fui-buttonBorderHover: var(--fui-buttonBorder);
+  --fui-buttonFontColorActive: var(--fui-buttonFontColor);
+  --fui-buttonBgColorActive: #2c313a;
+  --fui-buttonBorderActive: var(--fui-buttonBorder);
+  --fui-buttonFocusBorder: 1px solid #568af2;
+  --fui-buttonPrimaryFontColor: #ffffff;
+  --fui-buttonPrimaryBgColor: linear-gradient(#557ecf, #4d78cc);
+  --fui-buttonPrimaryBorder: 1px solid #181a1f;
+  --fui-buttonPrimaryShadow: none;
+  --fui-buttonPrimaryFontColorHover: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: linear-gradient(#6187d2, #5981d0);
+  --fui-buttonPrimaryBorderHover: var(--fui-buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: #3d6bc8;
+  --fui-buttonPrimaryBorderActive: var(--fui-buttonPrimaryBorder);
+  --fui-buttonPrimaryFocusBorder: none;
+  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(24, 26, 31, 0.5), 0 0 0 1px #568af2;
+  --fui-tableBorderColor: #363839;
+  --fui-headingColor: #e2c08d;
+  --fui-sideBarColor: #9da5b4;
+  --fui-sideBarIconColor: var(--fui-iconColor);
+  --fui-sideBarTitleColor: #9da5b4;
+  --fui-sideBarTextColor: #9da5b4;
+  --fui-sideBarBgColor: #24282f;
+  --fui-sideBarItemHoverBgColor: #3a3f4b;
+  --fui-itemBgColor: #21252b;
+  --fui-floatFontColor: #9da5b4;
+  --fui-floatBgColor: #21252b;
+  --fui-floatHoverColor: #3a3f4b;
+  --fui-floatBorderColor: #181a1f;
+  --fui-floatShadow: rgba(0, 0, 0, 0.3);
+  --fui-maskColor: rgba(0, 0, 0, 0.7);
+  --fui-editorAreaWidth: 750px;
+}
+
+::-webkit-scrollbar,
+::-webkit-scrollbar-corner {
+  background: var(--fui-editorBgColor);
+}
+
+::-webkit-scrollbar:vertical {
+  width: 10px;
+}
+
+::-webkit-scrollbar:vertical:hover {
+  width: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #414956;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5362;
+}
+
+.el-dialog,
+.el-dialog.ag-dialog-table {
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid #181a1f !important;
+  background: #252830 !important;
+}
+
+.el-button:focus {
+  color: var(--fui-buttonFontColor);
+}
+
+.el-button--primary:focus {
+  color: var(--fui-buttonPrimaryFontColor);
+  background: var(--fui-buttonPrimaryBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: #ffffff;
+}
+
+.title-bar .frameless-titlebar-minimize:hover,
+.title-bar .frameless-titlebar-toggle:hover {
+  background-color: rgba(215, 218, 224, 0.05) !important;
+}
+
+.side-bar {
+  border-right: 1px solid #181a1f !important;
+}
+
+.open-project button.button-primary,
+.recent-files-projects button.button-primary {
+  box-shadow: none;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+.editor-tabs:after {
+  position: absolute;
+  content: '';
+  border-bottom: 1px solid #181a1f;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+
+.editor-tabs ul.tabs-container:after {
+  position: absolute;
+  content: '';
+  border-bottom: 1px solid #181a1f;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.tabs-container > li,
+.tabs-container > li.active {
+  background: var(--fui-editorBgColor) !important;
+}
+
+.tabs-container > li.active {
+  border: 1px solid #181a1f;
+  border-bottom: none;
+}
+
+.tabs-container > li.active:after {
+  top: 0 !important;
+  right: auto !important;
+  width: 2px !important;
+  height: auto !important;
+  background: #4d78cc !important;
+}
+
+.tabs-container svg.close-icon #unsaved-circle-icon {
+  fill: #4d78cc;
+}

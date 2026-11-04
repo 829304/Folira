@@ -1,0 +1,54 @@
+/* Folira Markdown theme: light. Generated from index.css by scripts/themes/build.mjs. */
+
+.editor-wrapper {
+  --fmd-editorAreaWidth: 750px;
+  --fmd-themeColor: rgba(33, 181, 111, 1);
+  --fmd-themeColor90: rgba(33, 181, 111, 0.9);
+  --fmd-themeColor80: rgba(33, 181, 111, 0.8);
+  --fmd-themeColor70: rgba(33, 181, 111, 0.7);
+  --fmd-themeColor60: rgba(33, 181, 111, 0.6);
+  --fmd-themeColor50: rgba(33, 181, 111, 0.5);
+  --fmd-themeColor40: rgba(33, 181, 111, 0.4);
+  --fmd-themeColor30: rgba(33, 181, 111, 0.3);
+  --fmd-themeColor20: rgba(33, 181, 111, 0.2);
+  --fmd-highlightColor: rgba(33, 181, 111, 0.4);
+  --fmd-selectionColor: rgba(0, 0, 0, 0.1);
+  --fmd-editorColor: #4d4d4d;
+  --fmd-editorColor80: #333333;
+  --fmd-editorColor50: #808080;
+  --fmd-editorColor40: #999999;
+  --fmd-editorColor30: #b3b3b3;
+  --fmd-editorColor10: #e6e6e6;
+  --fmd-editorColor04: #f7f7f7;
+  --fmd-editorBgColor: rgba(255, 255, 255, 1);
+  --fmd-deleteColor: #ff6969;
+  --fmd-iconColor: #6b737b;
+  --fmd-codeBlockBgColor: rgba(0, 0, 0, 0.03);
+  --fmd-footnoteBgColor: rgba(0, 0, 0, 0.03);
+  --fmd-inputBgColor: rgba(0, 0, 0, 0.06);
+  --fmd-buttonFontColor: #4d4d4d;
+  --fmd-buttonBgColor: #ffffff;
+  --fmd-buttonBorder: 1px solid #dcdfe6;
+  --fmd-buttonBgColorHover: linear-gradient(#f9f9f9, #f2f2f2);
+  --fmd-buttonBorderHover: 1px solid #dcdfe6;
+  --fmd-buttonBgColorActive: #f0f0f0;
+  --fmd-buttonBorderActive: 1px solid #dcdfe6;
+  --fmd-tableBorderColor: #e5e5e5;
+  --fmd-h1Color: #333333;
+  --fmd-h2Color: #333333;
+  --fmd-h3Color: #333333;
+  --fmd-h4Color: #333333;
+  --fmd-h5Color: #333333;
+  --fmd-h6Color: #333333;
+  --fmd-blockquoteTextColor: #808080;
+  --fmd-blockquoteBorderColor: rgba(33, 181, 111, 1);
+  --fmd-hrColor: #e6e6e6;
+  --fmd-linkColor: rgba(33, 181, 111, 1);
+  --fmd-strongColor: #4d4d4d;
+  --fmd-emColor: #4d4d4d;
+  --fmd-listMarkerColor: #808080;
+  --fmd-floatBgColor: #fff;
+  --fmd-floatHoverColor: rgba(0, 0, 0, 0.04);
+  --fmd-floatBorderColor: rgba(0, 0, 0, 0.1);
+  --fmd-maskColor: rgba(232, 232, 232, 0.8);
+}

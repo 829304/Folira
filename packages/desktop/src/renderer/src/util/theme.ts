@@ -1,15 +1,14 @@
 import {
-  THEME_STYLE_ID,
+  UI_THEME_STYLE_ID,
+  MD_THEME_STYLE_ID,
+  PRISM_STYLE_ID,
   COMMON_STYLE_ID,
   DEFAULT_CODE_FONT_FAMILY,
   oneDarkThemes,
   railscastsThemes
 } from '../config'
-import { hasThemeStylesheet, loadThemeCss } from './themeColor'
+import { getTheme, loadMdCss, loadPrismCss, loadUiCss } from './themeColor'
 import { isLinux } from './index'
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const ORIGINAL_THEME = '#409EFF'
 
 const patchTheme = (css: string): string => {
   return `@media not print {\n${css}\n}`
@@ -21,56 +20,81 @@ const getEmojiPickerPatch = (): string => {
     : ''
 }
 
-export const addThemeStyle = (theme: string): void => {
-  const isCmRailscasts = railscastsThemes.includes(theme)
-  const isCmOneDark = oneDarkThemes.includes(theme)
-  const isDarkTheme = isCmOneDark || isCmRailscasts
-  let themeStyleEle = document.querySelector(`#${THEME_STYLE_ID}`) as HTMLStyleElement | null
-  if (!themeStyleEle) {
-    themeStyleEle = document.createElement('style')
-    themeStyleEle.id = THEME_STYLE_ID
-    document.head.appendChild(themeStyleEle)
+const ensureStyle = (id: string): HTMLStyleElement => {
+  let element = document.querySelector(`#${id}`) as HTMLStyleElement | null
+  if (!element) {
+    element = document.createElement('style')
+    element.id = id
+    document.head.appendChild(element)
   }
+  return element
+}
 
-  // The stylesheet arrives a frame or two late; the body/CodeMirror classes
-  // below must not wait on it, so they are applied first and the CSS is
-  // injected when it lands. `light` is the built-in look and has no file.
-  if (theme === 'light') {
-    themeStyleEle.innerHTML = patchTheme(
-      ':root {\n  --link-color: var(--linkColor);\n  --blockquote-border-color: var(--blockquoteBorderColor);\n}'
-    )
-  } else if (hasThemeStylesheet(theme)) {
-    const element = themeStyleEle
-    loadThemeCss(theme)
-      .then((css) => {
-        // A later switch may have won the race; only the newest theme's CSS
-        // may be written.
-        if (element.dataset.theme === theme) element.innerHTML = patchTheme(css)
-      })
-      .catch((err) => console.error(`[theme] cannot load ${theme}:`, err))
-  }
-  themeStyleEle.dataset.theme = theme
+// Each axis counts its own requests. The two stylesheets load concurrently and
+// can settle in either order, so "the newest request wins" is tracked per axis
+// rather than by comparing the element's own dataset.
+let uiRequest = 0
+let mdRequest = 0
+let prismRequest = 0
 
-  // workaround: use dark icons
-  document.body.classList.remove('dark')
-  if (isDarkTheme) {
-    document.body.classList.add('dark')
-  }
+export interface ThemePair {
+  ui: string
+  md: string
+}
 
-  // change CodeMirror theme
+/**
+ * Apply a UI theme and a Markdown theme. The Prism sheet belongs to the
+ * Markdown theme: syntax highlighting is part of the body, not the chrome.
+ */
+export const applyTheme = ({ ui, md }: ThemePair): void => {
+  const uiEl = ensureStyle(UI_THEME_STYLE_ID)
+  const mdEl = ensureStyle(MD_THEME_STYLE_ID)
+  const prismEl = ensureStyle(PRISM_STYLE_ID)
+
+  uiEl.dataset.theme = ui
+  const uiToken = ++uiRequest
+  loadUiCss(ui)
+    .then((css) => {
+      if (uiToken === uiRequest) uiEl.innerHTML = patchTheme(css)
+    })
+    .catch((err) => console.error(`[theme] cannot load ui/${ui}:`, err))
+
+  mdEl.dataset.theme = md
+  const mdToken = ++mdRequest
+  loadMdCss(md)
+    .then((css) => {
+      if (mdToken === mdRequest) mdEl.innerHTML = patchTheme(css)
+    })
+    .catch((err) => console.error(`[theme] cannot load md/${md}:`, err))
+
+  const prismToken = ++prismRequest
+  loadPrismCss(md)
+    .then((css) => {
+      if (prismToken === prismRequest) prismEl.innerHTML = patchTheme(css)
+    })
+    .catch((err) => console.error(`[theme] cannot load prism for ${md}:`, err))
+
+  // Icons and native-ish chrome follow the UI theme, not the body.
+  document.body.classList.toggle('dark', getTheme(ui)?.appearance === 'dark')
+
   const cm = document.querySelector('.CodeMirror')
   if (cm) {
     cm.classList.remove('cm-s-default')
     cm.classList.remove('cm-s-one-dark')
     cm.classList.remove('cm-s-railscasts')
-    if (isCmOneDark) {
+    if (oneDarkThemes.includes(md)) {
       cm.classList.add('cm-s-one-dark')
-    } else if (isCmRailscasts) {
+    } else if (railscastsThemes.includes(md)) {
       cm.classList.add('cm-s-railscasts')
     } else {
       cm.classList.add('cm-s-default')
     }
   }
+}
+
+/** Legacy entry point: one theme for both axes. */
+export const addThemeStyle = (theme: string): void => {
+  applyTheme({ ui: theme, md: theme })
 }
 
 export const setEditorWidth = (value: string): void => {
@@ -144,11 +168,14 @@ export const addCustomStyle = (options: CustomStyleOptions): void => {
 
 export interface AddStylesOptions extends CommonStyleOptions {
   theme: string
+  /** Per-axis overrides; empty or missing means "same as `theme`". */
+  uiTheme?: string
+  mdTheme?: string
 }
 
 // Append common sheet and theme at the end of head - order is important.
 export const addStyles = (options: AddStylesOptions): void => {
-  const { theme } = options
-  addThemeStyle(theme)
+  const { theme, uiTheme, mdTheme } = options
+  applyTheme({ ui: uiTheme || theme, md: mdTheme || theme })
   addCommonStyle(options)
 }

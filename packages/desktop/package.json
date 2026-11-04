@@ -32,12 +32,14 @@
   "scripts": {
     "minify-locales": "tsx ../../scripts/minify-locales.ts",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
     "tauri:build": "tsx ../../scripts/minify-locales.ts && tauri build",
-    "tauri:dev-renderer": "vite --config vite.tauri.config.ts",
     "tauri:build-renderer": "vite build --config vite.tauri.config.ts",
+    "tauri:dev": "tauri dev",
+    "tauri:dev-renderer": "vite --config vite.tauri.config.ts",
     "test": "vitest run",
     "test:unit": "vitest run test/unit",
+    "themes": "node scripts/themes/build.mjs",
+    "themes:check": "node scripts/themes/build.mjs --check && node scripts/themes/tokens.mjs --check",
     "typecheck": "pnpm --filter @muyajs/core build:types && vue-tsc --noEmit -p tsconfig.json",
     "typecheck:watch": "pnpm --filter @muyajs/core build:types && vue-tsc --noEmit -p tsconfig.json --watch"
   },

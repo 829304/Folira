@@ -1,6 +1,11 @@
 export const PATH_SEPARATOR: string = window.path.sep
 
 export const THEME_STYLE_ID = 'ag-theme'
+// One <style> per axis. Keeping them separate is what lets the chrome and the
+// body move independently: each element holds exactly one theme's variables.
+export const UI_THEME_STYLE_ID = 'ag-theme-ui'
+export const MD_THEME_STYLE_ID = 'ag-theme-md'
+export const PRISM_STYLE_ID = 'ag-theme-prism'
 export const COMMON_STYLE_ID = 'ag-common-style'
 
 export const DEFAULT_EDITOR_FONT_FAMILY =

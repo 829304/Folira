@@ -82,8 +82,10 @@ export interface PreferencesState {
   sequenceTheme: SequenceTheme | string
   plantumlServer: string
 
-  // ----- Theme -----
   theme: string
+  // Empty string follows `theme`, so pre-split preferences keep working.
+  uiTheme: string
+  mdTheme: string
   followSystemTheme: boolean
   lightModeTheme: string
   darkModeTheme: string
@@ -199,6 +201,10 @@ export const usePreferencesStore = defineStore('preferences', {
     plantumlServer: 'https://www.plantuml.com/plantuml',
 
     theme: 'light',
+    // Per-axis overrides; empty falls back to the single theme setting.
+    // The interface above explains why both axes resolve through it.
+    uiTheme: '',
+    mdTheme: '',
     followSystemTheme: true,
     lightModeTheme: 'light',
     darkModeTheme: 'dark',

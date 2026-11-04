@@ -96,6 +96,7 @@ import { markStartup, markNetworkTimings } from './util/startupTrace'
 import { armSplashSafetyNet } from './util/splash'
 import { usePreferencesStore } from './store/preferences'
 
+import './assets/themes/base.css'
 import './assets/styles/index.css'
 import './assets/styles/printService.css'
 

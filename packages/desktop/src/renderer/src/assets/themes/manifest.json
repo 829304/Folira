@@ -1,0 +1,200 @@
+[
+  {
+    "id": "ayu-dark",
+    "label": "AYU Dark",
+    "appearance": "dark",
+    "prism": "ayu-dark"
+  },
+  {
+    "id": "ayu-light",
+    "label": "AYU Light",
+    "appearance": "light",
+    "prism": "ayu-light"
+  },
+  {
+    "id": "ayu-mirage",
+    "label": "AYU Mirage",
+    "appearance": "dark",
+    "prism": "ayu-mirage"
+  },
+  {
+    "id": "catppuccin-latte",
+    "label": "Catppuccin Latte",
+    "appearance": "light",
+    "prism": "catppuccin-latte"
+  },
+  {
+    "id": "catppuccin-mocha",
+    "label": "Catppuccin Mocha",
+    "appearance": "dark",
+    "prism": "catppuccin-mocha"
+  },
+  {
+    "id": "cyberdream",
+    "label": "Cyberdream",
+    "appearance": "dark",
+    "prism": "cyberdream"
+  },
+  {
+    "id": "dark",
+    "label": "Dark",
+    "appearance": "dark",
+    "prism": "dark"
+  },
+  {
+    "id": "dracula",
+    "label": "Dracula",
+    "appearance": "dark",
+    "prism": "dracula"
+  },
+  {
+    "id": "everforest-dark",
+    "label": "Everforest Dark",
+    "appearance": "dark",
+    "prism": "everforest-dark"
+  },
+  {
+    "id": "everforest-light",
+    "label": "Everforest Light",
+    "appearance": "light",
+    "prism": "everforest-light"
+  },
+  {
+    "id": "graphite",
+    "label": "Graphite",
+    "appearance": "light",
+    "prism": "graphite"
+  },
+  {
+    "id": "gruvbox-dark",
+    "label": "Gruvbox Dark",
+    "appearance": "dark",
+    "prism": "gruvbox-dark"
+  },
+  {
+    "id": "gruvbox-light",
+    "label": "Gruvbox Light",
+    "appearance": "light",
+    "prism": "gruvbox-light"
+  },
+  {
+    "id": "horizon-dark",
+    "label": "Horizon Dark",
+    "appearance": "dark",
+    "prism": "horizon-dark"
+  },
+  {
+    "id": "kanagawa",
+    "label": "Kanagawa",
+    "appearance": "dark",
+    "prism": "kanagawa"
+  },
+  {
+    "id": "light",
+    "label": "Light",
+    "appearance": "dark",
+    "prism": null
+  },
+  {
+    "id": "material-dark",
+    "label": "Material Dark",
+    "appearance": "dark",
+    "prism": "dark"
+  },
+  {
+    "id": "monokai-pro",
+    "label": "Monokai PRO",
+    "appearance": "dark",
+    "prism": "monokai-pro"
+  },
+  {
+    "id": "nightfox",
+    "label": "Nightfox",
+    "appearance": "dark",
+    "prism": "nightfox"
+  },
+  {
+    "id": "nord",
+    "label": "Nord",
+    "appearance": "dark",
+    "prism": "nord"
+  },
+  {
+    "id": "one-dark",
+    "label": "ONE Dark",
+    "appearance": "dark",
+    "prism": "one-dark"
+  },
+  {
+    "id": "oxocarbon-dark",
+    "label": "Oxocarbon Dark",
+    "appearance": "dark",
+    "prism": "oxocarbon-dark"
+  },
+  {
+    "id": "palenight",
+    "label": "Palenight",
+    "appearance": "dark",
+    "prism": "palenight"
+  },
+  {
+    "id": "rose-pine",
+    "label": "Rose Pine",
+    "appearance": "dark",
+    "prism": "rose-pine"
+  },
+  {
+    "id": "rose-pine-dawn",
+    "label": "Rose Pine Dawn",
+    "appearance": "light",
+    "prism": "rose-pine-dawn"
+  },
+  {
+    "id": "rose-pine-moon",
+    "label": "Rose Pine Moon",
+    "appearance": "dark",
+    "prism": "rose-pine-moon"
+  },
+  {
+    "id": "solarized-dark",
+    "label": "Solarized Dark",
+    "appearance": "dark",
+    "prism": "solarized-dark"
+  },
+  {
+    "id": "solarized-light",
+    "label": "Solarized Light",
+    "appearance": "light",
+    "prism": "solarized-light"
+  },
+  {
+    "id": "synthwave-84",
+    "label": "Synthwave 84",
+    "appearance": "dark",
+    "prism": "synthwave-84"
+  },
+  {
+    "id": "tokyo-night",
+    "label": "Tokyo Night",
+    "appearance": "dark",
+    "prism": "tokyo-night"
+  },
+  {
+    "id": "tokyo-night-light",
+    "label": "Tokyo Night Light",
+    "appearance": "light",
+    "prism": "tokyo-night-light"
+  },
+  {
+    "id": "tokyo-night-storm",
+    "label": "Tokyo Night Storm",
+    "appearance": "dark",
+    "prism": "tokyo-night-storm"
+  },
+  {
+    "id": "ulysses",
+    "label": "Ulysses",
+    "appearance": "light",
+    "prism": "ulysses"
+  }
+]

@@ -15,7 +15,10 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const RENDERER = resolve(__dirname, '../../../src/renderer/src')
 const THEME_DIR = resolve(RENDERER, 'assets/themes')
-const BASE_CSS = resolve(RENDERER, 'assets/styles/index.css')
+// Themes are split per axis: the chrome palette lives in ui/, and base.css
+// republishes it under the names the components read.
+const UI_DIR = resolve(THEME_DIR, 'ui')
+const BASE_CSS = resolve(THEME_DIR, 'base.css')
 
 type Rgb = [number, number, number]
 type Rgba = [number, number, number, number]
@@ -138,8 +141,11 @@ const extractButtonVars = (
   throw new Error(`no .is-text.is-has-bg colour rule found in ${componentPath}`)
 }
 
-const baseVars = parseVars(readFileSync(BASE_CSS, 'utf8'))
-const themeFiles = readdirSync(THEME_DIR).filter((f) => f.endsWith('.theme.css'))
+// Only the :root half of base.css matters here: the .editor-wrapper block
+// re-binds the same names to the Markdown theme.
+const baseSource = readFileSync(BASE_CSS, 'utf8')
+const baseVars = parseVars(baseSource.slice(0, baseSource.indexOf('.editor-wrapper')))
+const themeFiles = readdirSync(UI_DIR).filter((f) => f.endsWith('.css'))
 
 const COMPONENTS = [
   {
@@ -174,7 +180,7 @@ describe('empty-state button readability (#4774)', () => {
       for (const file of themeFiles) {
         const vars = {
           ...baseVars,
-          ...parseVars(readFileSync(resolve(THEME_DIR, file), 'utf8'))
+          ...parseVars(readFileSync(resolve(UI_DIR, file), 'utf8'))
         }
         const buttonContrast = pairContrast(fgVar, bgVar, component.surfaceVar, vars)
         const primaryContrast = pairContrast(
@@ -187,7 +193,7 @@ describe('empty-state button readability (#4774)', () => {
         // strictly-worse contrast than the standard primary button fails.
         if (buttonContrast < primaryContrast - 0.01) {
           failures.push(
-            `${file.replace('.theme.css', '')}: button ${buttonContrast.toFixed(2)} < primary ${primaryContrast.toFixed(2)}`
+            `${file.replace('.css', '')}: button ${buttonContrast.toFixed(2)} < primary ${primaryContrast.toFixed(2)}`
           )
         }
       }
