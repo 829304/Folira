@@ -15,7 +15,8 @@ use std::error::Error;
 
 use serde::{Deserialize, Serialize};
 use tauri::{
-    App, AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindowBuilder,
+    App, AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder,
 };
 
 use crate::paths::DataRoot;
@@ -152,13 +153,37 @@ pub async fn open_settings_window(app: AppHandle, url: String) -> Result<(), Str
     };
 
     let data = app.state::<DataRoot>();
-    WebviewWindowBuilder::new(&app, "settings", target)
+    let window = WebviewWindowBuilder::new(&app, "settings", target)
         .title("Folira")
         .inner_size(950.0, 650.0)
         .min_inner_size(800.0, 500.0)
         .decorations(false)
         .data_directory(data.dir.clone())
         .build()
-        .map(|_| ())
-        .map_err(|error| error.to_string())
+        .map_err(|error| error.to_string())?;
+
+    // Centring is cosmetic: a window placed by the OS default is still usable,
+    // so a failure here must not report the settings page as unopenable.
+    if let Some(editor) = app.get_webview_window("main") {
+        let _ = center_over(&editor, &window);
+    }
+
+    Ok(())
+}
+
+/// Places `child` in the middle of `parent`.
+///
+/// Left alone, the OS cascades a new window off the last one it placed, which
+/// put the preferences window over a corner of the editor regardless of where
+/// the editor was. The editor is what the user is looking at, so it is the
+/// reference point and the child stays on the same monitor.
+fn center_over(parent: &WebviewWindow, child: &WebviewWindow) -> tauri::Result<()> {
+    let origin = parent.outer_position()?;
+    let parent_size = parent.outer_size()?;
+    let child_size = child.outer_size()?;
+
+    let x = origin.x + (parent_size.width as i32 - child_size.width as i32) / 2;
+    let y = origin.y + (parent_size.height as i32 - child_size.height as i32) / 2;
+
+    child.set_position(PhysicalPosition::new(x, y))
 }
