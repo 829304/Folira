@@ -272,6 +272,7 @@ export interface IpcMainEventChannels {
   'mt::spelling-show-switch-language': []
   'mt::switch-tab-by-file_path': [filePath: string]
   'mt::switch-tab-by-index': [index: number]
+  'mt::stored-user-preference': [stored: unknown]
   'mt::tab-save-failure': [tabId: string, message: string]
   'mt::tab-saved': [tabId: string]
   'mt::tabs-cycle-left': []

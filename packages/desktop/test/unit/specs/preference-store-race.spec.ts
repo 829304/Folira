@@ -83,6 +83,6 @@ describe('preference store', () => {
     ])
 
     expect(invoke.mock.calls.filter(([command]) => command === 'read_file')).toHaveLength(1)
-    expect(dispatch).toHaveBeenCalledWith('mt::user-preference', [STORED])
+    expect(dispatch).toHaveBeenCalledWith('mt::stored-user-preference', [STORED])
   })
 })

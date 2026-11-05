@@ -435,7 +435,12 @@ function aggregate () {
   const onlyUi = uiIds.filter(id => !mdIds.includes(id))
   const onlyMd = mdIds.filter(id => !uiIds.includes(id))
   if (onlyUi.length || onlyMd.length) {
-    throw new Error(`ui/md theme lists differ — ui only: [${onlyUi}], md only: [${onlyMd}]`)
+    // A theme is a pair for now: the picker lists one id per card and the
+    // preview needs both stylesheets to render it. Per-axis registries would
+    // let a file exist alone; that is a Phase 3 change, not a silent fallback.
+    throw new Error(
+      `themes are pairs — every id needs ui/<id>.css and md/<id>.css (ui only: [${onlyUi}], md only: [${onlyMd}])`
+    )
   }
 
   const prismDir = path.join(THEMES, 'prismjs')

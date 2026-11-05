@@ -125,16 +125,18 @@ export const announcePreferences = (patch: Record<string, unknown> | undefined):
 }
 
 /**
- * Answer `mt::ask-for-user-preference` / `mt::ask-for-user-data`. Upstream
- * replies to both on the single `mt::user-preference` channel, and the store
- * merges each payload, so sending the two bags separately is correct.
+ * Answer `mt::ask-for-user-preference` / `mt::ask-for-user-data`.
+ *
+ * These are the files as stored, which is the only payload that may predate the
+ * two-axis split, so they travel on their own channel: the store migrates them
+ * on arrival and must never do that to a patch from `announcePreferences`.
  */
 export const sendStoredPreferences = async(dispatchLocal: DispatchLocal): Promise<void> => {
-  dispatchLocal('mt::user-preference', [await read(preferences)])
+  dispatchLocal('mt::stored-user-preference', [await read(preferences)])
 }
 
 export const sendStoredUserData = async(dispatchLocal: DispatchLocal): Promise<void> => {
-  dispatchLocal('mt::user-preference', [await read(userData)])
+  dispatchLocal('mt::stored-user-preference', [await read(userData)])
 }
 
 export const setStoredPreferences = (patch: unknown): Promise<void> => merge(preferences, patch)

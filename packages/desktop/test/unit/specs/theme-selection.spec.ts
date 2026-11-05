@@ -91,6 +91,17 @@ describe('theme selection', () => {
       expect(theme.swatches.md.editorBgColor).toBeTruthy()
     }
   })
+
+  it('only names themes the manifest ships', () => {
+    // Fixtures below spell ids out; a rename must fail here rather than turn
+    // those tests into fallback tests that pass for the wrong reason.
+    const fixtures = ['graphite', 'ulysses', 'one-dark', 'ayu-light', 'dracula']
+
+    for (const id of fixtures) {
+      expect(getTheme(id), `${id} is missing from manifest.json`).toBeDefined()
+    }
+    expect(getTheme('gone'), 'the unknown-id case needs an id that stays unknown').toBeUndefined()
+  })
 })
 
 describe('theme assets on disk', () => {

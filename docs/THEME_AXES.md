@@ -102,7 +102,7 @@ rather than repointed, because one entry point cannot show two axes.
 | D1 | Following the system stores four fields: `lightUiTheme`, `lightMdTheme`, `darkUiTheme`, `darkMdTheme`. | The system can flip the appearance under us; with one field per axis the pair would have to be re-derived, which either loses the user's per-axis choice or quietly resets it. Four fields keep both axes independent in system mode. |
 | D2 | The page has one section per axis; system mode replaces the two grids with two groups of two selects. | Four grids is a wall of cards. Selects are the honest control for "one theme per mode per axis". |
 | D3 | Card colours come from a generated `swatches` block in `manifest.json`. | The settings window must not load 66 stylesheets to colour 66 cards, and hand-written colours drift from the files they claim to describe. |
-| D4 | Hovering a card previews it by writing the candidate's `--fui-*` / `--fmd-*` as inline custom properties on the preview block. | Inline custom properties beat the same element's stylesheet declarations, so the preview re-renders without touching global state, preferences or `body.dark`. |
+| D4 | Hovering a card renders that pair into a shadow root instead of writing inline custom properties on the preview block. | A shadow root keeps the generated stylesheets (`:root` becomes `:host`, `.editor-wrapper` keeps its name) off the settings page without rewriting the cascade, so a hover can never repaint the window. |
 | D5 | The native "theme:system" item turns following on; "theme:<id>" sets both axes to that id and turns following off. | Keeps the pre-split meaning of picking one theme from the menu. |
 | D6 | The `localStorage` mirror becomes `{ ui, md }`, and the window URL carries `uith` / `mdth` for first paint. | The first frame renders before the preferences file has been read; with one value it can only paint one axis. |
 
@@ -147,10 +147,15 @@ rather than repointed, because one entry point cannot show two axes.
 - Cards are drawn from `swatches`: a UI card shows a title-bar strip, a side
   bar strip and an accent button; a Markdown card shows a background, an
   H1 bar, body lines, a quote and a code line.
-- The preview block is an `.editor-wrapper` (so the Markdown axis' public
-  names resolve there) containing a hand-written sample: headings,
-  emphasis, link, quote, list, table and a code block with `token` spans.
-  Hovering a card sets a local `preview` state; leaving clears it.
+- The preview renders into a shadow root: `:root` becomes `:host` and
+  `.editor-wrapper` keeps its name, so the interface names resolve on the host
+  and the Markdown names on the page inside it, exactly as in a window. Nothing
+  the preview loads reaches the settings page. A stylesheet that fails to load
+  keeps the pair already on screen and warns once.
+- The sample covers headings, emphasis, link, quote, list, table and a code
+  block with Prism `token` spans; the Prism stylesheet follows the Markdown
+  theme, as it does in the editor.
+- Hovering a card sets a local `preview` state; leaving clears it.
 - The hidden "import themes" block is removed.
 
 **D. Preferences surface**
@@ -165,10 +170,11 @@ rather than repointed, because one entry point cannot show two axes.
 
 - `theme-selection.spec.ts`: fixed pair, system light and dark, legacy
   fallback, unknown ids, empty strings.
-- `theme-preview.spec.ts`: the preview style only emits that axis' variables,
-  degrades to empty when a stylesheet cannot be loaded, and the variable
-  parser handles both the compact one-line legacy form and the generated
-  multi-line form.
+- `theme-preview.spec.ts`: the preview moves the document scope onto `:host`
+  and leaves every other selector alone; the cascade order is base → interface
+  → body → Prism → preview chrome; the component renders into a shadow root and
+  never touches `document.head`; a mixed pair (light chrome, dracula body)
+  resolves the page from `--fmd-*`; the sample carries Prism tokens.
 
 ### Acceptance
 
@@ -179,7 +185,10 @@ rather than repointed, because one entry point cannot show two axes.
 3. With following on, switching the OS appearance swaps the pair without a
    restart, and all four choices persist.
 4. A preferences file that predates this change renders exactly as before.
-5. A cold start paints the saved pair on the first frame.
+5. A cold start loads the cached pair, not the legacy single theme: the ids are
+   known before the preferences file arrives, and each stylesheet is fetched
+   asynchronously. Inlining critical CSS is out of scope, so this says nothing
+   about the very first painted pixels.
 6. `typecheck`, `themes:check`, `eslint` and `test:unit` pass.
 
 ### Failure modes
@@ -187,7 +196,9 @@ rather than repointed, because one entry point cannot show two axes.
 - No `matchMedia` (old WebView): treat the system as light.
 - An id that no longer exists: fall back on that axis only.
 - A theme stylesheet that fails to load while hovering: keep the saved pair
-  and warn once.
+  and warn once. The preview never falls back to a half-styled sample.
+- A preview stylesheet that fails to load: the preview keeps the pair already
+  rendered and warns once; the settings page itself is never restyled.
 - Two windows: the existing `mt::user-preference` broadcast keeps them in
   step; both resolve the pair from the same function.
 - Switching the OS appearance while following never writes preferences — the
@@ -198,6 +209,10 @@ rather than repointed, because one entry point cannot show two axes.
 - First-paint snapshot / critical CSS inlining.
 - `--ui-theme` / `--md-theme` command-line flags.
 - Export and print following the Markdown theme.
+- Per-axis theme registries. `build.mjs` requires `ui/<id>.css` and
+  `md/<id>.css` to exist together because the picker lists one card per id and
+  the preview reads both files; adding a stylesheet to one axis alone fails the
+  build with a message naming the unpaired ids.
 - A native theme menu, with a check mark on the current choice. The menu was
   removed in Phase 2; themes are chosen in Preferences.
 

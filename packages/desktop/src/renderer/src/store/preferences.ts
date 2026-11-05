@@ -274,9 +274,22 @@ export const usePreferencesStore = defineStore('preferences', {
   },
 
   actions: {
+    /**
+     * Apply the bag read from `preferences.json`.
+     *
+     * Only the stored file can predate the two-axis split; a broadcast patch
+     * carries one field the user just changed and must never be mistaken for a
+     * legacy file.
+     */
+    LOAD_STORED_PREFERENCES(preference: Partial<PreferencesState> | Record<string, unknown>): void {
+      const migrated = migrateLegacyThemeFields(preference as Record<string, unknown>)
+
+      this.SET_USER_PREFERENCE(migrated as Partial<PreferencesState>)
+    },
+
     SET_USER_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
       const oldLanguage = this.language
-      const incoming = migrateLegacyThemeFields(preference as Record<string, unknown>)
+      const incoming = preference as Record<string, unknown>
 
       Object.keys(incoming).forEach((key) => {
         const value = incoming[key]
@@ -307,6 +320,12 @@ export const usePreferencesStore = defineStore('preferences', {
     ASK_FOR_USER_PREFERENCE(): void {
       window.electron.ipcRenderer.send('mt::ask-for-user-preference')
       window.electron.ipcRenderer.send('mt::ask-for-user-data')
+
+      // Two channels on purpose: the stored file may need migrating, a patch
+      // from another window never does (see LOAD_STORED_PREFERENCES).
+      window.electron.ipcRenderer.on('mt::stored-user-preference', (_e, preferences) => {
+        this.LOAD_STORED_PREFERENCES(preferences as Partial<PreferencesState>)
+      })
 
       window.electron.ipcRenderer.on('mt::user-preference', (_e, preferences) => {
         this.SET_USER_PREFERENCE(preferences as Partial<PreferencesState>)

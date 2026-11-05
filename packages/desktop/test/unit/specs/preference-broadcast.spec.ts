@@ -104,7 +104,7 @@ describe('answering a question a window asked', () => {
     await sendStoredPreferences((channel, args) => dispatched.push([channel, args]))
     await settle()
 
-    expect(dispatched.map(([channel]) => channel)).toEqual(['mt::user-preference'])
+    expect(dispatched.map(([channel]) => channel)).toEqual(['mt::stored-user-preference'])
     expect(announced(), 'a reply must not be broadcast to every window').toEqual([])
   })
 })
