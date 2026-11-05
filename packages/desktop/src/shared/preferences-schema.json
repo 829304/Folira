@@ -307,22 +307,22 @@
     "default": "-"
   },
   "superSubScript": {
-    "description": "Markdown-Enable pandoc's markdown extension superscript and subscript.",
+    "description": "Markdown--Enable pandoc's markdown extension superscript and subscript.",
     "type": "boolean",
     "default": false
   },
   "footnote": {
-    "description": "Markdown-Enable pandoc's markdown extension footnote.",
+    "description": "Markdown--Enable pandoc's markdown extension footnote.",
     "type": "boolean",
     "default": false
   },
   "isHtmlEnabled": {
-    "description": "Markdown-Enable HTML rendering",
+    "description": "Markdown--Enable HTML rendering",
     "type": "boolean",
     "default": true
   },
   "isGitlabCompatibilityEnabled": {
-    "description": "Markdown-Enable GitLab compatibility mode.",
+    "description": "Markdown--Enable GitLab compatibility mode.",
     "type": "boolean",
     "default": false
   },
