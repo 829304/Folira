@@ -87,4 +87,20 @@ describe('theme custom properties', () => {
 
     expect([...new Set(undefinedUsages)].sort()).toEqual([])
   })
+
+  it('keeps the writing column a default rather than a theme decision', () => {
+    const index = readFileSync(join(RENDERER, 'assets/styles/index.css'), 'utf-8')
+    expect(index).toMatch(/--editorAreaWidth:\s*900px/)
+
+    // A theme may paint the column but must not resize it: the width is a
+    // structural value the reader controls, so it has to leave both axes alone.
+    // `base.css` is exempt — it only republishes the default under the name the
+    // engine reads.
+    const themed = [...walk(join(RENDERER, 'assets/themes/ui'), ['.css']),
+      ...walk(join(RENDERER, 'assets/themes/md'), ['.css'])]
+    const resized = themed
+      .filter((file) => /--editorAreaWidth:|--editor-area-width:/.test(readFileSync(file, 'utf-8')))
+      .map((file) => relative(DESKTOP_ROOT, file))
+    expect(resized).toEqual([])
+  })
 })

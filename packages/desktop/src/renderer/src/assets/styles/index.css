@@ -14,8 +14,10 @@
   --warningColor: var(--notificationWarningBg);
   --warningBgColor: rgba(255, 136, 0, 0.12);
 
-  /* Layout, set by the width preference; not part of either axis. */
-  --editorAreaWidth: 750px;
+  /* Layout, set by the width preference; not part of either axis. Typora's
+     writing area is a centred column with a cap of its own, so the default
+     leaves a wide window with margins instead of stretching the text. */
+  --editorAreaWidth: 900px;
 }
 
 ::-webkit-scrollbar,
