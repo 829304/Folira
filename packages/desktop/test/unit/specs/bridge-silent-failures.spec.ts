@@ -31,6 +31,8 @@ const DELIBERATELY_SILENT: Record<string, string> = {
     'window.print() does not reject in practice, and the print DOM is restored either way.',
   'save.ts:invalid end of line character':
     'A programming error in our own data, not something the user did.',
+  'window.ts:cannot write the pending preferences':
+    'The window is already closing; a toast would appear after it is gone, and the console keeps the message for the next report.',
   'index.ts:[renderer]': 'The console bridge itself.'
 }
 

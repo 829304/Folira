@@ -11,6 +11,7 @@
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
 import { clearTrackedOpenFiles } from './open-files'
+import { flushStoredPreferences } from './preferences'
 import {
   askAboutUnsavedFiles,
   saveDocument,
@@ -26,10 +27,21 @@ let closeConfirmed = false
  * Only the editor answers `mt::ask-for-close` — it is the editor store that
  * collects unsaved tabs and replies. Guarding any other window would veto its
  * close and wait for an answer that never comes, so the settings window closes
- * the ordinary way.
+ * the ordinary way — after writing the preferences it still owes to disk.
  */
 export const installCloseGuard = (dispatchLocal: DispatchLocal, windowType: string): void => {
-  if (windowType !== 'editor') return
+  if (windowType !== 'editor') {
+    getCurrentWindow()
+      .onCloseRequested(async(event) => {
+        if (closeConfirmed) return
+        closeConfirmed = true
+        event.preventDefault()
+        await writePendingPreferences()
+        await getCurrentWindow().destroy()
+      })
+      .catch((err) => console.warn('[tauri-bridge] cannot guard window close:', err))
+    return
+  }
 
   getCurrentWindow()
     .onCloseRequested((event) => {
@@ -40,9 +52,19 @@ export const installCloseGuard = (dispatchLocal: DispatchLocal, windowType: stri
     .catch((err) => console.warn('[tauri-bridge] cannot guard window close:', err))
 }
 
+/** Never let a failed write keep a window open: the close was the user's idea. */
+const writePendingPreferences = async(): Promise<void> => {
+  try {
+    await flushStoredPreferences()
+  } catch (err) {
+    console.error('[tauri-bridge] cannot write the pending preferences:', err)
+  }
+}
+
 export const closeWindow = async(): Promise<void> => {
   closeConfirmed = true
   clearTrackedOpenFiles()
+  await writePendingPreferences()
   await getCurrentWindow().destroy()
 }
 

@@ -14,15 +14,29 @@ use tauri::{Emitter, Manager};
 /// process: opening several documents means several tabs in the one window.
 /// Focus the existing window and hand it whatever file the new argv named,
 /// through the same `mt::open-new-tab` channel the menu's Open File uses.
+///
+/// The window may not be there. Closing the editor while the settings window is
+/// open leaves the process running with nothing to focus, so that case rebuilds
+/// the editor and lets it pick the files up through `boot_info` — the running
+/// process cannot answer for an argv it never saw.
 fn handle_second_instance(app: &tauri::AppHandle, argv: Vec<String>) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.unminimize();
-        let _ = window.set_focus();
-    }
-    for file in commands::boot::file_from_args(argv.into_iter().skip(1)) {
-        if let Err(err) = app.emit("mt::open-new-tab", serde_json::json!([file, null, true])) {
-            eprintln!("[single-instance] failed to emit mt::open-new-tab: {err}");
+    let paths = commands::boot::paths_from_args(argv.into_iter().skip(1));
+
+    if app.get_webview_window("main").is_some() {
+        if let Err(err) = window::focus_or_create_editor(app) {
+            eprintln!("[single-instance] cannot focus the editor: {err}");
         }
+        for file in commands::boot::file_from_args(paths.into_iter()) {
+            if let Err(err) = app.emit("mt::open-new-tab", serde_json::json!([file, null, true])) {
+                eprintln!("[single-instance] failed to emit mt::open-new-tab: {err}");
+            }
+        }
+        return;
+    }
+
+    commands::boot::hand_over_paths(paths);
+    if let Err(err) = window::focus_or_create_editor(app) {
+        eprintln!("[single-instance] cannot reopen the editor: {err}");
     }
 }
 
@@ -83,7 +97,7 @@ pub fn run() {
                 &data.window_state(),
             );
 
-            window::create(app, &data)?;
+            window::create(&handle, &data)?;
             startup::trace("window created");
             app.manage(data);
 

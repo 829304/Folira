@@ -113,7 +113,10 @@ pub fn output_file(path: String, data: FileWriteData) -> Result<(), String> {
 pub fn merge_json_file(path: String, patch: serde_json::Value) -> Result<(), String> {
     let path = Path::new(&path);
     let existing = match fs::read_to_string(path) {
-        Ok(text) => serde_json::from_str::<serde_json::Value>(&text)
+        // A UTF-8 BOM is legal text and illegal JSON, and editors that write a
+        // BOM are common on Windows. Treating such a file as unreadable would
+        // drop every key it held, which is exactly what the merge is for.
+        Ok(text) => serde_json::from_str::<serde_json::Value>(text.trim_start_matches('\u{feff}'))
             .ok()
             .and_then(|value| match value {
                 serde_json::Value::Object(map) => Some(map),
@@ -140,9 +143,7 @@ pub fn merge_json_file(path: String, patch: serde_json::Value) -> Result<(), Str
 #[tauri::command]
 pub fn ensure_dir(path: String) -> Result<(), String> {
     fs::create_dir_all(&path).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
+}#[tauri::command]
 pub fn empty_dir(path: String) -> Result<(), String> {
     let p = Path::new(&path);
     if p.exists() {
@@ -281,5 +282,56 @@ impl FileWriteData {
             FileWriteData::Text(s) => s.into_bytes(),
             FileWriteData::Binary(b) => b,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use std::path::PathBuf;
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("folira-fs-{label}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn merge_keeps_the_keys_of_a_bom_prefixed_file() {
+        let dir = temp_dir("merge-bom");
+        let path = dir.join("preferences.json");
+        // Windows editors write the byte-order mark more often than not, and a
+        // BOM makes the whole file unparseable as JSON.
+        fs::write(&path, b"\xef\xbb\xbf{\n  \"theme\": \"graphite\",\n  \"fontSize\": 15\n}\n")
+            .unwrap();
+
+        merge_json_file(
+            path.to_string_lossy().into_owned(),
+            json!({ "sideBarVisibility": true }),
+        )
+        .unwrap();
+
+        let merged: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(merged["theme"], "graphite");
+        assert_eq!(merged["fontSize"], 15);
+        assert_eq!(merged["sideBarVisibility"], true);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn merge_creates_the_file_and_rejects_a_patch_that_is_not_an_object() {
+        let dir = temp_dir("merge-create");
+        let path = dir.join("preferences.json");
+
+        merge_json_file(path.to_string_lossy().into_owned(), json!({ "autoSave": true })).unwrap();
+        let created: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(created, json!({ "autoSave": true }));
+
+        assert!(merge_json_file(path.to_string_lossy().into_owned(), json!([1, 2])).is_err());
+        let _ = fs::remove_dir_all(&dir);
     }
 }

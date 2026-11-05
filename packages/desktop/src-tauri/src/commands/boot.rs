@@ -5,6 +5,7 @@
 
 use serde::Serialize;
 use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
 use tauri::Manager;
 
 use super::markdown::MarkdownDocument;
@@ -38,10 +39,41 @@ pub struct BootInfo {
     locale: String,
 }
 
+/// Files a second launch named while there was no editor window to hand them to.
+///
+/// `initial_paths_from_args` can only read this process's argv, which describes
+/// the first launch. When the single-instance handler has to rebuild the editor,
+/// the files come from the *new* process instead, so they are parked here for
+/// the window that is about to ask.
+fn handed_over() -> &'static Mutex<Vec<String>> {
+    static HANDED_OVER: OnceLock<Mutex<Vec<String>>> = OnceLock::new();
+    HANDED_OVER.get_or_init(|| Mutex::new(Vec::new()))
+}
+
+/// Park the paths a second launch named, for the editor window it is rebuilding.
+pub fn hand_over_paths(paths: Vec<String>) {
+    if paths.is_empty() {
+        return;
+    }
+    if let Ok(mut pending) = handed_over().lock() {
+        pending.extend(paths);
+    }
+}
+
 /// Scan the process arguments for a readable file to open on launch (CLI use:
 /// `folira path/to/file.md`, and Windows/Linux file associations, which
 /// also pass the path as an argument).
+///
+/// Parked paths win and are consumed: they belong to a window that is only now
+/// starting and would otherwise open the file the *first* launch named.
 fn initial_paths_from_args() -> Vec<String> {
+    let handed: Vec<String> = handed_over()
+        .lock()
+        .map(|mut pending| std::mem::take(&mut *pending))
+        .unwrap_or_default();
+    if !handed.is_empty() {
+        return handed;
+    }
     paths_from_args(std::env::args().skip(1))
 }
 

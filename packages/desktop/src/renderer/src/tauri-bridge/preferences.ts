@@ -182,6 +182,16 @@ export const setStoredPreferences = (patch: unknown): Promise<void> =>
 
 export const setStoredUserData = (patch: unknown): Promise<void> => merge(userData, patch)
 
+/**
+ * Write whatever is still waiting out, for a window that is about to go away.
+ *
+ * Writes are debounced, and a window closed inside that window of time takes
+ * its timer with it — the change the user just made would never be stored.
+ */
+export const flushStoredPreferences = async(): Promise<void> => {
+  await Promise.all([flush(preferences), flush(userData)])
+}
+
 /** Read one preference without waiting for a round trip through the store. */
 export const getStoredPreference = async(key: string): Promise<unknown> =>
   (await read(preferences))[key]

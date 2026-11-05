@@ -16,7 +16,7 @@ use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::{
-    App, AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindow,
+    AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindow,
     WebviewWindowBuilder,
 };
 
@@ -60,7 +60,7 @@ pub struct Geometry(Mutex<WindowState>);
 /// The config entry carries the size, minimums, background colour and the
 /// frameless decorations; everything added here is what the config cannot
 /// express: the WebView2 data directory and the geometry from the last run.
-pub fn create(app: &App, data: &DataRoot) -> Result<(), Box<dyn Error>> {
+pub fn create(app: &AppHandle, data: &DataRoot) -> Result<(), Box<dyn Error>> {
     let config = app
         .config()
         .app
@@ -79,7 +79,7 @@ pub fn create(app: &App, data: &DataRoot) -> Result<(), Box<dyn Error>> {
     // WebView2 appends its own `EBWebView` segment, so the directory handed to
     // it is the data root itself — the profile lands at `<data>/EBWebView`.
     let mut builder =
-        WebviewWindowBuilder::from_config(app.handle(), &config)?.data_directory(data.dir.clone());
+        WebviewWindowBuilder::from_config(app, &config)?.data_directory(data.dir.clone());
 
     if let (Some(width), Some(height)) = (state.width, state.height) {
         builder = builder.inner_size(width, height);
@@ -100,8 +100,38 @@ pub fn create(app: &App, data: &DataRoot) -> Result<(), Box<dyn Error>> {
         let _ = window.maximize();
     }
 
-    app.manage(Geometry(Mutex::new(state)));
+    // The state is managed by the first build. When the editor is rebuilt after
+    // being closed — the settings window can keep the process alive — the
+    // managed copy has to describe the new window instead of being replaced,
+    // because `manage` panics on a second call.
+    match app.try_state::<Geometry>() {
+        Some(geometry) => {
+            if let Ok(mut current) = geometry.0.lock() {
+                *current = state;
+            }
+        }
+        None => {
+            app.manage(Geometry(Mutex::new(state)));
+        }
+    }
     Ok(())
+}
+
+/// Focus the editor, building it again if it was closed.
+///
+/// A second launch is usually answered by focusing the window that is already
+/// open. That fails once the editor has been closed while the settings window
+/// kept the process running: there is no window to focus, and the app looks
+/// dead. Rebuilding is what startup does, so it goes through `create`.
+pub fn focus_or_create_editor(app: &AppHandle) -> Result<(), Box<dyn Error>> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        return Ok(());
+    }
+
+    let data = app.state::<DataRoot>();
+    create(app, &data)
 }
 
 /// Whether a point given in logical pixels still falls on a monitor.
@@ -110,7 +140,7 @@ pub fn create(app: &App, data: &DataRoot) -> Result<(), Box<dyn Error>> {
 /// logical ones, so feeding the saved point to it would misjudge the corner on
 /// a scaled display. Converting each monitor into its own logical space avoids
 /// the question of which scale applies before a monitor has been picked.
-fn is_on_a_monitor(app: &App, x: f64, y: f64) -> bool {
+fn is_on_a_monitor(app: &AppHandle, x: f64, y: f64) -> bool {
     let Ok(monitors) = app.available_monitors() else {
         return false;
     };
@@ -241,7 +271,7 @@ fn fills_screen(window: &WebviewWindow, size: PhysicalSize<u32>) -> bool {
 /// Convert a file written in physical pixels to the logical ones it is now
 /// read as. The monitor under the saved corner supplies the scale; a window
 /// whose corner is gone falls back to the primary monitor's.
-fn from_physical(app: &App, state: WindowState) -> WindowState {
+fn from_physical(app: &AppHandle, state: WindowState) -> WindowState {
     let scale = state
         .x
         .zip(state.y)
