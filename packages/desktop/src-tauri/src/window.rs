@@ -88,7 +88,7 @@ pub fn create(app: &App, data: &DataRoot) -> Result<(), Box<dyn Error>> {
     // was unplugged since the last run must not strand the window off-screen
     // with no way to drag it back.
     if let (Some(x), Some(y)) = (state.x, state.y) {
-        if app.monitor_from_point(x, y)?.is_some() {
+        if is_on_a_monitor(app, x, y) {
             builder = builder.position(x, y);
         }
     }
@@ -102,6 +102,33 @@ pub fn create(app: &App, data: &DataRoot) -> Result<(), Box<dyn Error>> {
 
     app.manage(Geometry(Mutex::new(state)));
     Ok(())
+}
+
+/// Whether a point given in logical pixels still falls on a monitor.
+///
+/// `monitor_from_point` reads physical pixels, and the state file stores
+/// logical ones, so feeding the saved point to it would misjudge the corner on
+/// a scaled display. Converting each monitor into its own logical space avoids
+/// the question of which scale applies before a monitor has been picked.
+fn is_on_a_monitor(app: &App, x: f64, y: f64) -> bool {
+    let Ok(monitors) = app.available_monitors() else {
+        return false;
+    };
+
+    monitors.iter().any(|monitor| {
+        let scale = monitor.scale_factor();
+        if scale <= 0.0 {
+            return false;
+        }
+        let position = monitor.position();
+        let size = monitor.size();
+        let left = f64::from(position.x) / scale;
+        let top = f64::from(position.y) / scale;
+        let right = left + f64::from(size.width) / scale;
+        let bottom = top + f64::from(size.height) / scale;
+
+        x >= left && x < right && y >= top && y < bottom
+    })
 }
 
 /// Remember the rectangle a free-floating window has right now. Called on

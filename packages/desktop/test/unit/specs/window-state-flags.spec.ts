@@ -54,6 +54,9 @@ describe('window state', () => {
 
   it('only restores a position on a monitor that still exists', () => {
     // A state file can outlive the monitor it was written on.
+    expect(window).toContain('is_on_a_monitor(app, x, y)')
+    expect(window).toContain('fn is_on_a_monitor')
+    // The legacy conversion is the one place that reads a physical point.
     expect(window).toContain('monitor_from_point')
   })
 
@@ -87,6 +90,14 @@ describe('window state', () => {
   it('keeps the preferences window inside the work area', () => {
     expect(window).toContain('work_area()')
     expect(window).toContain('clamp(')
+  })
+
+  it('tests the saved corner in the unit the file stores', () => {
+    // `monitor_from_point` reads physical pixels; feeding it a logical corner
+    // misjudges the monitor on a scaled display and can drop the position.
+    const create = window.slice(window.indexOf('pub fn create('), window.indexOf('pub fn save('))
+    expect(create).not.toContain('monitor_from_point(')
+    expect(window).toContain('available_monitors()')
   })
 
   it('does not record the screen-sized rectangle a zoom reports first', () => {
