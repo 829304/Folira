@@ -10,6 +10,7 @@ use tauri::Manager;
 use super::markdown::MarkdownDocument;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BootPaths {
     resources: String,
     user_data: String,
@@ -111,9 +112,17 @@ pub fn boot_info(app: tauri::AppHandle) -> Result<BootInfo, String> {
         .resource_dir()
         .map(|p| p.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let user_data = resolver
-        .app_data_dir()
-        .map(|p| p.to_string_lossy().into_owned())
+    // The renderer writes preferences and its data centre under this path, so
+    // it follows the data root rather than the platform's per-user directory.
+    let user_data = app
+        .try_state::<crate::paths::DataRoot>()
+        .map(|root| root.dir.to_string_lossy().into_owned())
+        .or_else(|| {
+            resolver
+                .app_data_dir()
+                .ok()
+                .map(|p| p.to_string_lossy().into_owned())
+        })
         .unwrap_or_default();
     let cwd = std::env::current_dir()
         .map(|p| p.to_string_lossy().into_owned())

@@ -110,6 +110,19 @@ jobs:
         if: matrix.platform == 'linux'
         run: cargo test --release --manifest-path packages/desktop/src-tauri/Cargo.toml
 
+      # A green install: the exe keeps its data in `data/` beside itself, so the
+      # portable zip is just the binary plus the locale files the bundle would
+      # have installed next to it. Unzip anywhere writable and run.
+      - name: Package the portable zip
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $stage = "portable/Folira"
+          New-Item -ItemType Directory -Force -Path "$stage/locales" | Out-Null
+          Copy-Item "packages/desktop/src-tauri/target/release/folira.exe" "$stage/"
+          Copy-Item "packages/desktop/static/locales/*.json" "$stage/locales/"
+          Compress-Archive -Path $stage -DestinationPath "portable/Folira-windows-x64-portable.zip"
+
       - name: Upload installers
         uses: actions/upload-artifact@v4
         with:
@@ -124,6 +137,7 @@ jobs:
             packages/desktop/src-tauri/target/release/bundle/msi/*.msi
             packages/desktop/src-tauri/target/release/bundle/dmg/*.dmg
             packages/desktop/src-tauri/target/release/bundle/macos/*.app.tar.gz
+            portable/*.zip
 
   # GitHub *artifacts* are always downloaded as a .zip wrapper — there is no way
   # to disable that. To hand out the raw installer files, publish them as
@@ -152,7 +166,7 @@ jobs:
           find artifacts -type f \( \
             -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' \
             -o -name '*.exe' -o -name '*.msi' -o -name '*.dmg' \
-            -o -name '*.app.tar.gz' \) -exec cp -f {} release/ \;
+            -o -name '*.app.tar.gz' -o -name '*.zip' \) -exec cp -f {} release/ \;
           count=$(find release -type f | wc -l | tr -d ' ')
           echo "count=$count" >> "$GITHUB_OUTPUT"
           echo "Collected $count installers:"

@@ -1,62 +1,65 @@
-// Which parts of the window state get restored, and which must not be.
+// Where the window's geometry comes from now that the plugin is gone.
 //
-// `tauri-plugin-window-state` restores everything by default, and two of those
-// defaults break this window:
+// `tauri-plugin-window-state` restored everything it could: size, position,
+// decorations, visibility. Two of those break this window. It is
+// `decorations: false` and draws its own title bar, so a restored
+// `decorated: true` would put the OS frame back on top of ours; a restored
+// `visible: false` would start the app with nothing on screen and no way to ask
+// for it back. The plugin also wrote into the per-user config directory, which a
+// portable install must not touch.
 //
-//   DECORATIONS — the window is `decorations: false` and draws its own title
-//   bar. Restoring `decorated: true` from a state file written by any earlier
-//   build puts the OS frame back on top of ours.
-//
-//   VISIBLE — a state file that ever recorded a hidden window would start the
-//   app with nothing on screen and no way to ask for it back.
-//
-// Neither shows up in a test run or a screenshot of a fresh install; both need
-// a stale state file on someone's machine. So the guard is here: replacing the
-// explicit flags with `Builder::default()` looks like a simplification and is
-// not one.
+// So the app carries its own state file next to the data root. These assertions
+// keep that replacement honest: every one of them fails if the geometry handling
+// is swapped for the plugin's defaults.
 
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
-const lib = readFileSync(resolve(__dirname, '../../../src-tauri/src/lib.rs'), 'utf-8')
+const srcDir = resolve(__dirname, '../../../src-tauri/src')
+const read = (name: string): string => readFileSync(resolve(srcDir, name), 'utf-8')
 
-/** The plugin registration, from its builder to the `.build()` that ends it. */
-const registration = (): string => {
-  const start = lib.indexOf('tauri_plugin_window_state::Builder')
-  expect(start, 'the window-state plugin is no longer registered').toBeGreaterThan(-1)
-  return lib.slice(start, lib.indexOf('.build(),', start))
-}
+const lib = read('lib.rs')
+const window = read('window.rs')
+const paths = read('paths.rs')
 
-describe('window state restoration', () => {
-  it('restores size, position and the maximized/fullscreen state', () => {
-    const block = registration()
+describe('window state', () => {
+  it('no longer depends on the plugin that restored everything', () => {
+    expect(lib).not.toContain('tauri_plugin_window_state')
 
-    for (const flag of ['SIZE', 'POSITION', 'MAXIMIZED', 'FULLSCREEN']) {
-      expect(block, `StateFlags::${flag} should be restored`).toContain(`StateFlags::${flag}`)
-    }
+    const cargo = readFileSync(resolve(__dirname, '../../../src-tauri/Cargo.toml'), 'utf-8')
+    expect(cargo).not.toContain('tauri-plugin-window-state')
   })
 
-  it('never restores decorations or visibility', () => {
-    const block = registration()
-
-    expect(block, 'DECORATIONS would put the OS frame back over the custom title bar')
-      .not.toContain('DECORATIONS')
-    expect(block, 'VISIBLE could start the app with no window on screen')
-      .not.toContain('VISIBLE')
+  it('keeps its state next to the rest of the portable data', () => {
+    expect(paths).toContain('window_state')
+    expect(window).toContain('window-state.json')
   })
 
-  it('states the flags rather than taking the plugin default', () => {
-    // `Builder::default().build()` is every flag, including the two above.
-    expect(registration(), 'the flags have to be spelled out').toContain('with_state_flags')
+  it('restores size, position and the maximized state', () => {
+    expect(window).toContain('inner_size(')
+    expect(window).toContain('.position(')
+    expect(window).toContain('.maximize()')
+    expect(window).toContain('maximized')
   })
 
-  it('is registered before the window it configures', () => {
-    // The plugin restores state in `on_window_ready`. Registered after the
-    // window exists it would have nothing to act on.
-    const pluginAt = lib.indexOf('tauri_plugin_window_state::Builder')
-    const setupAt = lib.indexOf('.setup(|app|')
+  it('restores neither decorations nor visibility', () => {
+    // Only the editor window is restored from state; the settings window is
+    // built with fixed flags, and `.decorations(false)` there is a choice rather
+    // than something the state file can flip.
+    const editor = window.slice(window.indexOf('pub fn create('), window.indexOf('pub fn save('))
+    expect(editor).not.toContain('.decorations(')
+    expect(editor).not.toContain('.visible(')
+  })
 
-    expect(pluginAt).toBeLessThan(setupAt)
+  it('only restores a position on a monitor that still exists', () => {
+    // A state file can outlive the monitor it was written on.
+    expect(window).toContain('monitor_from_point')
+  })
+
+  it('saves while the window still exists, and again on exit', () => {
+    expect(lib).toContain('WindowEvent::CloseRequested')
+    expect(lib).toContain('RunEvent::Exit')
+    expect(lib).toContain('window::save')
   })
 })

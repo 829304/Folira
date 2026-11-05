@@ -20,7 +20,8 @@
         "resizable": true,
         "fullscreen": false,
         "backgroundColor": "#282828",
-        "decorations": false
+        "decorations": false,
+        "create": false
       }
     ],
     "security": {

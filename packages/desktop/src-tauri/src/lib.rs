@@ -4,7 +4,9 @@
 
 mod commands;
 mod menu;
+mod paths;
 mod startup;
+mod window;
 
 use tauri::{Emitter, Manager};
 
@@ -33,32 +35,6 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             handle_second_instance(app, argv);
         }))
-        // Size, position and maximized/fullscreen are restored from the last
-        // run — the `electron-window-state` the Electron build used. The flags
-        // are spelled out rather than left at their default, which is all of
-        // them, because two of the defaults would break this window:
-        //
-        //   DECORATIONS — the window is `decorations: false` and draws its own
-        //   title bar. Restoring `decorated: true` from a state file written by
-        //   some earlier build would put the OS frame back on top of ours.
-        //
-        //   VISIBLE — a state file that ever recorded a hidden window would
-        //   start the app with nothing on screen and no way to ask for it.
-        //
-        // Position is only restored onto a monitor that still exists: the
-        // plugin checks the saved rectangle against `available_monitors()` and
-        // leaves placement to the OS when none of them contains it, which is
-        // the same guard `ensureWindowPosition` gave the Electron build.
-        .plugin(
-            tauri_plugin_window_state::Builder::default()
-                .with_state_flags(
-                    tauri_plugin_window_state::StateFlags::SIZE
-                        | tauri_plugin_window_state::StateFlags::POSITION
-                        | tauri_plugin_window_state::StateFlags::MAXIMIZED
-                        | tauri_plugin_window_state::StateFlags::FULLSCREEN,
-                )
-                .build(),
-        )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
@@ -79,12 +55,37 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
-            // Resolve the log directory first, so everything recorded before
-            // now gets flushed and the rest is written as it happens.
-            if let Ok(dir) = app.path().app_log_dir().or_else(|_| app.path().app_data_dir()) {
-                startup::attach(dir);
-            }
-            startup::trace("setup entered");
+            // Resolve where this install keeps its data before anything writes
+            // a file: portable installs use `<exe>/data`, and the log itself
+            // lives there so the choice is visible in the first bug report.
+            let handle = app.handle().clone();
+            let data = paths::resolve(|| handle.path().app_data_dir().ok());
+            startup::attach(data.logs());
+            startup::trace(&format!(
+                "data root: {} ({})",
+                data.dir.display(),
+                data.origin.label()
+            ));
+
+            // A pre-green install kept its preferences in the per-user
+            // directory. Copy them across once — the original stays in place,
+            // so a downgrade still finds them.
+            paths::migrate_legacy_file(
+                handle.path().app_data_dir().ok().map(|dir| dir.join("preferences.json")),
+                &data.preferences(),
+            );
+            paths::migrate_legacy_window_state(
+                handle
+                    .path()
+                    .app_config_dir()
+                    .ok()
+                    .map(|dir| dir.join(".window-state.json")),
+                &data.window_state(),
+            );
+
+            window::create(app, &data)?;
+            startup::trace("window created");
+            app.manage(data);
 
             let menu = menu::build_menu(app.handle())?;
             app.set_menu(menu)?;
@@ -92,12 +93,22 @@ pub fn run() {
 
             Ok(())
         })
+        .on_window_event(|window, event| {
+            // Save while the window still exists: `RunEvent::Exit` fires after
+            // the window is gone, which would leave nothing to measure.
+            if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+                window::save(&window.app_handle().clone());
+            }
+        })
         .on_menu_event(|app, event| {
             menu::handle_menu_event(app, event.id().as_ref());
         })
         .invoke_handler(tauri::generate_handler![
             startup::startup_trace,
             startup::startup_log_path,
+            // The preferences window shares the editor's WebView2 data directory,
+            // so it has to be built on this side.
+            window::open_settings_window,
             // fs::* — mirror of the mt::fs:: channels
             commands::fs::is_file,
             commands::fs::is_directory,
@@ -139,6 +150,13 @@ pub fn run() {
             // custom top menu bar (frameless Windows/Linux)
             menu::dispatch_menu,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Folira");
+        .build(tauri::generate_context!())
+        .expect("error while building Folira")
+        .run(|app, event| {
+            // Written once, on the way out, while the window still reports the
+            // geometry the user last saw.
+            if matches!(event, tauri::RunEvent::Exit) {
+                window::save(app);
+            }
+        });
 }
