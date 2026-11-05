@@ -87,4 +87,14 @@ describe('closing a window', () => {
     expect(editorStore).toContain('takePendingOpenFiles')
     expect(editorStore).toContain("on('mt::pending-open'")
   })
+
+  it('hands the startup files out once and only to the editor', () => {
+    // The rebuild asks for boot info again; re-reading argv there reopened the
+    // files this launch started with, and the second launch's files then came
+    // from the queue, so both ended up open.
+    expect(boot).toContain('fn take_once(slot: &Mutex<Option<Vec<String>>>)')
+    expect(boot).toContain('window_type.as_deref().unwrap_or("editor") == "editor"')
+    const bridge = read('src/renderer/src/tauri-bridge/index.ts')
+    expect(bridge).toContain("invoke('boot_info', { windowType })")
+  })
 })

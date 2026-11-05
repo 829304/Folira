@@ -303,7 +303,7 @@ export const usePreferencesStore = defineStore('preferences', {
       // Only a stored bag means the file has been read; a broadcast patch from
       // another window must not count as the first load.
       this.preferencesLoaded = true
-      this.SET_USER_PREFERENCE(migrated as Partial<PreferencesState>)
+      this.APPLY_PREFERENCE(migrated as Partial<PreferencesState>)
 
       // Writing the migrated bag back is what lets the next launch skip the
       // migration. Without it the file keeps its old shape and is migrated
@@ -322,18 +322,22 @@ export const usePreferencesStore = defineStore('preferences', {
      * migration — that would read "no marker" as "pre-split file".
      */
     LOAD_STORED_USER_DATA(stored: Record<string, unknown>): void {
-      this.SET_USER_PREFERENCE(stored as Partial<PreferencesState>)
+      this.APPLY_PREFERENCE(stored as Partial<PreferencesState>)
     },
 
-    SET_USER_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
+    /**
+     * Apply one preference bag without touching the bridge's stored copy.
+     *
+     * Three sources feed the store and only one is a user change: the launch
+     * URL carries throwaway values (nulls, a default `hideScrollbar`), the
+     * stored files are the disk's own truth, and a broadcast patch is a real
+     * edit made in another window. Only the last must reach the copy the menu
+     * toggles read — syncing the others would let a launch default win over
+     * what is on disk when the two are merged.
+     */
+    APPLY_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
       const oldLanguage = this.language
       const incoming = preference as Record<string, unknown>
-
-      // Another window changed a preference. The bridge keeps its own copy of
-      // the stored values to answer `getStoredPreference` without a round trip,
-      // and a menu toggle reads the value it is about to flip: leaving that copy
-      // behind would flip the old value back on the first click.
-      rememberStoredPreferences(incoming)
 
       Object.keys(incoming).forEach((key) => {
         const value = incoming[key]
@@ -350,6 +354,28 @@ export const usePreferencesStore = defineStore('preferences', {
       if (lang && lang !== oldLanguage) {
         setLanguage(lang)
       }
+    },
+
+    /**
+     * Apply the values the window URL was opened with.
+     *
+     * They only exist to paint the first frame from the previous session's
+     * theme; the stored file replaces all of them moments later.
+     */
+    SEED_USER_PREFERENCE(startup: Partial<PreferencesState> | Record<string, unknown>): void {
+      this.APPLY_PREFERENCE(startup)
+    },
+
+    SET_USER_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
+      const incoming = preference as Record<string, unknown>
+
+      // Another window changed a preference. The bridge keeps its own copy of
+      // the stored values to answer `getStoredPreference` without a round trip,
+      // and a menu toggle reads the value it is about to flip: leaving that copy
+      // behind would flip the old value back on the first click.
+      rememberStoredPreferences(incoming)
+
+      this.APPLY_PREFERENCE(incoming)
     },
 
     SET_MODE({ type, checked }: ModeTogglePayload): void {

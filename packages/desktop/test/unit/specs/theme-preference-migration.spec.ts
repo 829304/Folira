@@ -110,4 +110,24 @@ describe('applying preferences from the three sources', () => {
       'migrateLegacyThemeFields('
     )
   })
+
+  it('syncs the stored copy only for a change a user made', () => {
+    // The launch URL carries throwaway values and the stored files are the
+    // disk's own truth; letting either into the bridge's copy makes the merge
+    // that follows read the launch defaults over what is on disk.
+    expect(actionBody('SET_USER_PREFERENCE', 'SET_MODE')).toContain(
+      'rememberStoredPreferences('
+    )
+    expect(actionBody('SEED_USER_PREFERENCE', 'SET_USER_PREFERENCE')).not.toContain(
+      'rememberStoredPreferences('
+    )
+    expect(actionBody('APPLY_PREFERENCE', 'SEED_USER_PREFERENCE')).not.toContain(
+      'rememberStoredPreferences('
+    )
+    const stored = source.slice(
+      source.indexOf('LOAD_STORED_PREFERENCES'),
+      source.indexOf('SEED_USER_PREFERENCE')
+    )
+    expect(stored).not.toContain('rememberStoredPreferences(')
+  })
 })

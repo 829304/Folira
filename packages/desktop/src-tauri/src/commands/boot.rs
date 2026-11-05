@@ -75,14 +75,33 @@ pub fn take_pending_open_files() -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Scan the process arguments for a readable file to open on launch (CLI use:
-/// `folira path/to/file.md`, and Windows/Linux file associations, which
-/// also pass the path as an argument).
+/// The files this process was started with, handed out once.
+///
+/// The editor window can be rebuilt while the process stays alive (the settings
+/// window keeps it running), and every rebuild asks for boot info again.
+/// Re-reading argv there would reopen the files this launch started with — a
+/// rebuild is not a new launch, and whatever it should open arrives through
+/// `take_pending_open_files` instead.
 fn initial_paths_from_args() -> Vec<String> {
+    static STARTUP_PATHS: OnceLock<Mutex<Option<Vec<String>>>> = OnceLock::new();
+
     // This launch's own argv is relative to this process's directory, which is
     // the shell's: resolving here keeps one shape of path on both launch paths.
     let cwd = std::env::current_dir().ok();
-    paths_from_args(std::env::args().skip(1), cwd.as_deref())
+    let slot = STARTUP_PATHS.get_or_init(|| {
+        Mutex::new(Some(paths_from_args(
+            std::env::args().skip(1),
+            cwd.as_deref(),
+        )))
+    });
+    take_once(slot)
+}
+
+/// Take the value out of a one-shot slot, leaving it empty for the next caller.
+fn take_once(slot: &Mutex<Option<Vec<String>>>) -> Vec<String> {
+    slot.lock()
+        .map(|mut slot| slot.take().unwrap_or_default())
+        .unwrap_or_default()
 }
 
 /// The argument scan itself, over an arbitrary argument list.
@@ -149,7 +168,7 @@ pub fn load_locale(app: tauri::AppHandle, lang: String) -> Option<serde_json::Va
 }
 
 #[tauri::command]
-pub fn boot_info(app: tauri::AppHandle) -> Result<BootInfo, String> {
+pub fn boot_info(app: tauri::AppHandle, window_type: Option<String>) -> Result<BootInfo, String> {
     // The renderer's first call into the shell: everything before this is
     // process spawn, plugin setup and WebView creation.
     crate::startup::trace("boot_info: entered");
@@ -196,12 +215,17 @@ pub fn boot_info(app: tauri::AppHandle) -> Result<BootInfo, String> {
         // Auto-update lands in phase 7 (tauri-plugin-updater).
         is_updatable: false,
         markdown_inclusions: MARKDOWN_EXTENSIONS.iter().map(|s| s.to_string()).collect(),
-        initial_paths: {
+        initial_paths: if window_type.as_deref().unwrap_or("editor") == "editor" {
             // Defer file reads until the renderer has mounted so a large startup
-            // document cannot block the first usable frame.
+            // document cannot block the first usable frame. Handed out once, so
+            // a rebuilt editor does not reopen this launch's files.
             let paths = initial_paths_from_args();
             crate::startup::trace("boot_info: initial paths collected");
             paths
+        } else {
+            // The settings window never opens documents, and taking them here
+            // would leave the editor to start blank.
+            Vec::new()
         },
         locale: crate::menu::i18n::resolve_locale().to_string(),
     })
@@ -272,5 +296,14 @@ mod tests {
         let first = take_pending_open_files();
         assert_eq!(first, vec!["a.md", "b.md", "c.md"]);
         assert!(take_pending_open_files().is_empty());
+    }
+
+    #[test]
+    fn hands_out_the_startup_files_once() {
+        // A rebuilt editor asks for boot info again; the files this process was
+        // started with belong to the first window only.
+        let slot = Mutex::new(Some(vec!["a.md".to_string()]));
+        assert_eq!(take_once(&slot), vec!["a.md"]);
+        assert!(take_once(&slot).is_empty());
     }
 }

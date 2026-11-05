@@ -152,7 +152,11 @@ describe('first frame', () => {
   })
 
   it('feeds the store only the initial state', () => {
-    expect(main).toContain('SET_USER_PREFERENCE(window.marktext.initialState)')
+    // Seeded, not applied: the URL bag holds launch defaults that must not
+    // reach the bridge's copy of the stored values, or reading the file would
+    // merge those defaults over what is on disk.
+    expect(main).toContain('SEED_USER_PREFERENCE(window.marktext.initialState)')
+    expect(main).not.toContain('SET_USER_PREFERENCE(window.marktext.initialState)')
     expect(main).not.toContain('initialThemePair')
   })
 

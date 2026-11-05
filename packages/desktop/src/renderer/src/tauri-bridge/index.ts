@@ -875,13 +875,15 @@ export async function installTauriBridge(): Promise<void> {
   if (installed) return
   installed = true
 
-  const boot = (await invoke('boot_info')) as BootInfo
+  // Read before boot info: only the editor takes the files this launch was
+  // started with, and the settings window must not consume them first.
+  const windowType = new URLSearchParams(window.location.search).get('type') ?? 'editor'
+  const boot = (await invoke('boot_info', { windowType })) as BootInfo
   synthesizeEditorUrlArgs(boot)
   applyGlobals(boot)
   initPreferenceStores(boot.paths?.userData ?? '')
   // `synthesizeEditorUrlArgs` has already defaulted this to `editor` for the
   // main window; the settings window carries its own `type`.
-  const windowType = new URLSearchParams(window.location.search).get('type') ?? 'editor'
   installCloseGuard(dispatchLocal, windowType)
   installContextMenuStyles()
 

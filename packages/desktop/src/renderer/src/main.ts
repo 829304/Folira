@@ -163,7 +163,7 @@ async function start(): Promise<void> {
   // thing left that the app controls. Setting them first means there is nothing
   // to re-render.
   if (window.marktext?.initialState) {
-    usePreferencesStore(pinia).SET_USER_PREFERENCE(window.marktext.initialState)
+    usePreferencesStore(pinia).SEED_USER_PREFERENCE(window.marktext.initialState)
   }
 
   // Mount the app

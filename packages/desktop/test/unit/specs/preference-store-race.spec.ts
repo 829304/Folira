@@ -196,4 +196,40 @@ describe('preference store', () => {
 
     await expect(getStoredPreference('autoSave')).resolves.toBe(true)
   })
+
+  it('does not let the launch values reach the stored copy', async() => {
+    // `main.ts` seeds the store from the window URL before mount: nulls for the
+    // theme fields and a default `hideScrollbar`. Those are throwaway values,
+    // and letting them into this copy would merge them over the file on read.
+    invoke.mockImplementation((command: string) => {
+      if (command === 'path_exists') return Promise.resolve(true)
+      if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
+      return Promise.resolve(undefined)
+    })
+
+    const bridge = await loadModule()
+    // The stored bag predates the version marker, so loading it writes the
+    // migrated copy back; the shell this test lacks only needs to swallow it.
+    ;(window as unknown as {
+      electron: { ipcRenderer: { send: () => void; on: () => void } }
+    }).electron = {
+      ipcRenderer: { send: () => undefined, on: () => undefined }
+    }
+    // After `resetModules`, the store and this test must share one Pinia
+    // instance, so it is imported fresh rather than at the top of the file.
+    const pinia = await import('pinia')
+    pinia.setActivePinia(pinia.createPinia())
+    const { usePreferencesStore } = await import('../../../src/renderer/src/store/preferences')
+    const store = usePreferencesStore()
+
+    store.SEED_USER_PREFERENCE({ theme: null, hideScrollbar: false })
+    await bridge.sendStoredPreferences((channel: string, args: unknown[]) => {
+      if (channel === 'mt::stored-user-preference') {
+        store.LOAD_STORED_PREFERENCES(args[0] as Record<string, unknown>)
+      }
+    })
+
+    expect(store.theme).toBe('dracula')
+    expect(store.fontSize).toBe(18)
+  })
 })
