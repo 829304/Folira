@@ -90,7 +90,7 @@ describe('theme custom properties', () => {
 
   it('keeps the writing column a default rather than a theme decision', () => {
     const index = readFileSync(join(RENDERER, 'assets/styles/index.css'), 'utf-8')
-    expect(index).toMatch(/--editorAreaWidth:\s*900px/)
+    expect(index).toMatch(/--editorAreaWidth:\s*1400px/)
 
     // A theme may paint the column but must not resize it: the width is a
     // structural value the reader controls, so it has to leave both axes alone.

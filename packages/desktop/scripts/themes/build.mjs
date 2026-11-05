@@ -611,9 +611,10 @@ function ensureStructuralDefault () {
   const end = closingBrace(source, open)
   const line =
     '\n  /* Layout, set by the width preference; not part of either axis. Typora\'s' +
-    '\n     writing area is a centred column with a cap of its own, so the default' +
-    '\n     leaves a wide window with margins instead of stretching the text. */' +
-    '\n  --editorAreaWidth: 900px;'
+    '\n     writing area is a centred column that a wider window only pads, and its' +
+    '\n     cap is generous, so the default matches it rather than hugging the' +
+    '\n     middle of a large screen. */' +
+    '\n  --editorAreaWidth: 1400px;'
   writeFile(INDEX_CSS, `${source.slice(0, end)}${line}\n${source.slice(end)}`)
 }
 

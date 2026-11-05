@@ -15,9 +15,10 @@
   --warningBgColor: rgba(255, 136, 0, 0.12);
 
   /* Layout, set by the width preference; not part of either axis. Typora's
-     writing area is a centred column with a cap of its own, so the default
-     leaves a wide window with margins instead of stretching the text. */
-  --editorAreaWidth: 900px;
+     writing area is a centred column that a wider window only pads, and its
+     cap is generous, so the default matches it rather than hugging the
+     middle of a large screen. */
+  --editorAreaWidth: 1400px;
 }
 
 ::-webkit-scrollbar,
