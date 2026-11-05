@@ -93,12 +93,17 @@ pub fn run() {
 
             Ok(())
         })
-        .on_window_event(|window, event| {
+        .on_window_event(|window, event| match event {
             // Save while the window still exists: `RunEvent::Exit` fires after
             // the window is gone, which would leave nothing to measure.
-            if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+            tauri::WindowEvent::CloseRequested { .. } => {
                 window::save(&window.app_handle().clone());
             }
+            // A window quit while maximized or full-screen reports the screen
+            // instead of the rectangle the user chose, so keep the last
+            // free-floating one current as it changes.
+            tauri::WindowEvent::Resized(_) | tauri::WindowEvent::Moved(_) => window::track(window),
+            _ => {}
         })
         .on_menu_event(|app, event| {
             menu::handle_menu_event(app, event.id().as_ref());

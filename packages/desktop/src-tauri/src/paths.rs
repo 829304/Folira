@@ -117,10 +117,26 @@ fn requested_dir() -> Option<PathBuf> {
 }
 
 /// `<exe>/data`, when the executable's own directory accepts writes.
+///
+/// A macOS `.app` is a directory the Finder presents as one file, and the
+/// executable lives at `Folira.app/Contents/MacOS/folira`. Writing next to it
+/// would put preferences and a WebView profile inside the bundle: an update
+/// replaces that tree, the signature no longer matches, and the next launch
+/// starts from scratch. Bundles therefore fall through to the per-user
+/// directory instead.
 fn portable_dir() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
+    if inside_app_bundle(&exe) {
+        return None;
+    }
     let dir = exe.parent()?.join("data");
     ensure_writable(&dir).then_some(dir)
+}
+
+/// Whether any ancestor of `path` is a macOS `.app` bundle.
+fn inside_app_bundle(path: &Path) -> bool {
+    path.ancestors()
+        .any(|part| part.extension().is_some_and(|ext| ext == "app"))
 }
 
 /// Create `dir` if needed and prove it accepts a file, so a read-only install

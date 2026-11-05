@@ -62,4 +62,45 @@ describe('window state', () => {
     expect(lib).toContain('RunEvent::Exit')
     expect(lib).toContain('window::save')
   })
+
+  it('stores the rectangle in the unit the builder reads it back in', () => {
+    // `inner_size` and `position` take logical pixels; `inner_size()` and
+    // `outer_position()` report physical ones. Mixing them restores a window
+    // that is the right size only at 100 % scaling.
+    expect(window).toContain('scale_factor()')
+    expect(window).toContain('logical')
+    expect(window).toContain('fn update_bounds')
+    expect(window).toContain('/ scale')
+  })
+
+  it('remembers fullscreen and the rectangle to come back to', () => {
+    expect(window).toContain('fullscreen')
+    expect(window).toContain('is_fullscreen')
+    expect(window).toContain('set_fullscreen(')
+    // The last free-floating rectangle is recorded as it changes, so quitting
+    // from a maximized window still restores what the user chose.
+    expect(lib).toContain('WindowEvent::Resized')
+    expect(lib).toContain('WindowEvent::Moved')
+    expect(lib).toContain('window::track')
+  })
+
+  it('keeps the preferences window inside the work area', () => {
+    expect(window).toContain('work_area()')
+    expect(window).toContain('clamp(')
+  })
+
+  it('does not record the screen-sized rectangle a zoom reports first', () => {
+    // The platform resizes the window before `is_maximized()` turns true, so
+    // the free-floating rectangle would be overwritten by the maximized one.
+    expect(window).toContain('fn fills_screen')
+    expect(window).toContain('work_area().size')
+    expect(window).toContain('if fills_screen(window, ')
+  })
+
+  it('does not put data inside a macOS application bundle', () => {
+    // `Folira.app/Contents/MacOS/folira` is writable, but writing there breaks
+    // the signature and loses the data on the next update.
+    expect(paths).toContain('inside_app_bundle')
+    expect(paths).toContain('extension().is_some_and(|ext| ext == "app")')
+  })
 })
