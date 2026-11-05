@@ -156,6 +156,10 @@ interface ModeTogglePayload {
  * user who never opened the theme page stores none of them.
  */
 export function migrateLegacyThemeFields(raw: Record<string, unknown>): Record<string, unknown> {
+  // A first run has no file; the bridge hands over an empty bag. Nothing there
+  // predates the split, and turning the system theme off would override the
+  // default for a user who has never stored a theme.
+  if (Object.keys(raw).length === 0) return raw
   if (raw[PREFERENCES_VERSION_KEY] === PREFERENCES_VERSION) return raw
 
   return { ...raw, followSystemTheme: false }
@@ -283,9 +287,18 @@ export const usePreferencesStore = defineStore('preferences', {
      * legacy file.
      */
     LOAD_STORED_PREFERENCES(preference: Partial<PreferencesState> | Record<string, unknown>): void {
-      const migrated = migrateLegacyThemeFields(preference as Record<string, unknown>)
+      const raw = (preference ?? {}) as Record<string, unknown>
+      const migrated = migrateLegacyThemeFields(raw)
 
       this.SET_USER_PREFERENCE(migrated as Partial<PreferencesState>)
+
+      // Writing the migrated bag back is what lets the next launch skip the
+      // migration. Without it the file keeps its old shape and is migrated
+      // again on every start, so the store and the disk disagree until the user
+      // happens to change something else.
+      if (migrated !== raw) {
+        window.electron.ipcRenderer.send('mt::set-user-preference', migrated)
+      }
     },
 
     /**

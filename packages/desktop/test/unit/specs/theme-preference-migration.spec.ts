@@ -52,6 +52,33 @@ describe('migrating a pre-split preferences file', () => {
 
     expect(stored).toEqual({ theme: 'dark' })
   })
+
+  it('leaves a first run alone', () => {
+    // No file yet: the bridge hands over an empty bag. Migrating it would turn
+    // the system theme off for someone who never stored a theme at all.
+    expect(migrateLegacyThemeFields({})).toEqual({})
+  })
+})
+
+// A migration the file never hears about runs again on every start: the store
+// and the disk keep disagreeing until the user happens to change something.
+describe('storing the migrated bag', () => {
+  const source = readFileSync(
+    resolve(__dirname, '../../../src/renderer/src/store/preferences.ts'),
+    'utf8'
+  )
+  const load = source.slice(
+    source.indexOf('LOAD_STORED_PREFERENCES('),
+    source.indexOf('LOAD_STORED_USER_DATA(')
+  )
+
+  it('writes the migrated file back', () => {
+    expect(load).toContain("send('mt::set-user-preference'")
+  })
+
+  it('writes only when the migration changed something', () => {
+    expect(load).toContain('migrated !== raw')
+  })
 })
 
 // Only the file read at startup can predate the split. A patch carries the one
