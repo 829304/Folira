@@ -262,6 +262,14 @@ function renderBaseCss (lightLiterals, lightDefaults) {
     ...themeNames.map(name => `  --${name}: ${rootValue(name)};`),
     ...[...aliasOf].map(([kebab, camel]) => `  --${kebab}: var(--${camel});`)
   ]
+  // The page itself follows the Markdown axis. `.editor-with-tabs` paints the
+  // background behind this element from :root, so leaving the wrapper
+  // transparent let a dark UI pack show through a light body (and the reverse)
+  // in a mixed pair.
+  const page = [
+    '  background-color: var(--editorBgColor);',
+    '  color: var(--editorColor);'
+  ]
   // Structural names are deliberately absent here: :root keeps the value
   // index.css declares, so `setEditorWidth` and user CSS reach the editor.
   const scope = [
@@ -298,6 +306,7 @@ function renderBaseCss (lightLiterals, lightDefaults) {
     '@layer folira-base {',
     `${MD_SCOPE} {`,
     scope.join('\n'),
+    page.join('\n'),
     '}',
     '}',
     ''

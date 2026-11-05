@@ -269,5 +269,7 @@
   --strong-color: var(--folira-user-strong-color, var(--strongColor));
   --table-border-color: var(--folira-user-table-border-color, var(--tableBorderColor));
   --theme-color: var(--folira-user-theme-color, var(--themeColor));
+  background-color: var(--editorBgColor);
+  color: var(--editorColor);
 }
 }
