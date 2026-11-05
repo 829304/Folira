@@ -53,6 +53,9 @@ function axisOfSource (file) {
   if (rel.startsWith('assets/themes/')) return null
   // editor.vue hosts both the chrome-facing wrapper and the Muya mount point.
   if (rel === 'components/editorWithTabs/editor.vue') return 'both'
+  // The settings preview re-uses body names to draw a sample; counting it would
+  // let a cosmetic component redefine the axis a palette belongs to.
+  if (rel === 'prefComponents/theme/preview.vue') return null
   if (/^util\/(exportHtml|pdf|markdownToHtml|export)\.ts$/.test(rel)) return 'md'
   if (/^(components|pages|prefComponents)\//.test(rel)) return 'ui'
   return 'other'

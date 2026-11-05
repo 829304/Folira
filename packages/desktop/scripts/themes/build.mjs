@@ -398,6 +398,28 @@ function restoreReferences (kind, file, defaults, literals) {
   }
   writeFile(file, css)
 }
+// The handful of colours a theme card draws. They are resolved here, from the
+// same literals the appearance flag uses, so the picker never has to load 66
+// stylesheets to paint 66 cards — and never drifts from the files it describes.
+const SWATCH_NAMES = {
+  ui: ['editorBgColor', 'editorColor', 'sideBarBgColor', 'themeColor', 'buttonPrimaryBgColor'],
+  md: ['editorBgColor', 'editorColor', 'h1Color', 'linkColor', 'codeBlockBgColor', 'blockquoteBorderColor']
+}
+
+function swatchesOf (literals, id) {
+  const pick = (names) => {
+    const picked = {}
+    for (const name of names) {
+      const value = resolveValue(literals, name)
+      if (value === null) throw new Error(`${id}: cannot resolve ${name} for the card swatches`)
+      picked[name] = value.trim()
+    }
+    return picked
+  }
+
+  return { ui: pick(SWATCH_NAMES.ui), md: pick(SWATCH_NAMES.md) }
+}
+
 function aggregate () {
   const uiIds = idsIn('ui')
   const mdIds = idsIn('md')
@@ -453,7 +475,13 @@ function aggregate () {
     const lum = background === null ? null : luminance(background.trim())
     if (lum === null) throw new Error(`${id}: cannot resolve editorBgColor for the appearance flag`)
     const prism = PRISM_ALIASES[id] ?? (prismIds.has(id) ? id : null)
-    return { id, label: titleCase(id), appearance: lum > 0.5 ? 'light' : 'dark', prism }
+    return {
+      id,
+      label: titleCase(id),
+      appearance: lum > 0.5 ? 'light' : 'dark',
+      prism,
+      swatches: swatchesOf(literals, id)
+    }
   })
 
   writeFile(path.join(THEMES, 'base.css'), renderBaseCss(lightLiterals, lightDefaults))

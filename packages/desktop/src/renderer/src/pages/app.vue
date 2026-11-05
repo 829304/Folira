@@ -65,6 +65,7 @@ import { markStartup } from '@/util/startupTrace'
 import { dismissSplash } from '@/util/splash'
 import { showEditorContextMenu } from '@/contextMenu/editor'
 import { DEFAULT_STYLE } from '@/config'
+import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
 import { useLayoutStore } from '@/store/layout'
 import { useListenForMainStore } from '@/store/listenForMain'
 import { usePreferencesStore } from '@/store/preferences'
@@ -88,11 +89,11 @@ const timer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const { windowActive, platform, init } = storeToRefs(mainStore)
 const { showTabBar } = storeToRefs(layoutStore)
-const { sourceCode, theme, uiTheme, mdTheme, customCss, textDirection, zoom } = storeToRefs(preferencesStore)
+const { sourceCode, customCss, textDirection, zoom } = storeToRefs(preferencesStore)
 
-// An empty axis preference follows theme, so a pre-split preferences file still works.
-const effectiveUiTheme = computed(() => uiTheme.value || theme.value)
-const effectiveMdTheme = computed(() => mdTheme.value || theme.value)
+// One resolver for both axes: it knows the pre-split fallback and how to pick
+// the pair that belongs to the current OS appearance while following it.
+const themePair = useResolvedThemePair()
 
 const { projectTree } = storeToRefs(projectStore)
 const { currentFile } = storeToRefs(editorStore)
@@ -117,11 +118,11 @@ const hasCurrentFile = computed<boolean>(() => {
 })
 
 // Watchers
-// The two axes move independently: re-apply both on either change so switching
-// one never resets the other.
-watch([effectiveUiTheme, effectiveMdTheme], ([ui, md], [oldUi, oldMd]) => {
-  if (ui !== oldUi || md !== oldMd) {
-    applyTheme({ ui, md })
+// The two axes move independently: re-apply both whenever either resolves to a
+// different theme, so switching one never resets the other.
+watch(themePair, (pair, previous) => {
+  if (pair.ui !== previous.ui || pair.md !== previous.md) {
+    applyTheme(pair)
   }
 })
 
@@ -274,14 +275,18 @@ onMounted(async () => {
     // `initialState` from bootstrap carries nullable URL params (string|null);
     // `addStyles` requires non-null `theme` / `codeFontFamily` strings.
     // Coalesce against DEFAULT_STYLE for every nullable field.
-    const init = window.marktext?.initialState
+    // The window URL carries the pair the previous session painted with, so the
+    // first frame matches what was on screen before the preferences file is read.
+    const init = window.marktext?.initialState as
+      | (typeof DEFAULT_STYLE & { uiTheme?: string | null; mdTheme?: string | null })
+      | undefined
     const style: AddStylesOptions = {
       theme: init?.theme ?? DEFAULT_STYLE.theme,
       codeFontFamily: init?.codeFontFamily ?? DEFAULT_STYLE.codeFontFamily,
       codeFontSize: init?.codeFontSize ?? DEFAULT_STYLE.codeFontSize,
       hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar,
-      uiTheme: effectiveUiTheme.value,
-      mdTheme: effectiveMdTheme.value
+      uiTheme: init?.uiTheme || themePair.value.ui,
+      mdTheme: init?.mdTheme || themePair.value.md
     }
     addStyles(style)
   })

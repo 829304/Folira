@@ -688,7 +688,15 @@
       "importCustomThemes": "Import custom themes",
       "importTheme": "Import Theme",
       "openFolder": "Open Folder",
-      "openThemesFolder": "Open themes folder"
+      "openThemesFolder": "Open themes folder",
+      "interfaceTheme": "Interface theme",
+      "markdownTheme": "Markdown theme",
+      "preview": "Preview",
+      "searchThemes": "Search themes",
+      "allThemes": "All",
+      "lightThemes": "Light",
+      "darkThemes": "Dark",
+      "noThemes": "No theme matches"
     },
     "keybindings": {
       "title": "Keybindings",

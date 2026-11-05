@@ -688,7 +688,15 @@
       "importCustomThemes": "导入自定义主题",
       "importTheme": "导入主题",
       "openFolder": "打开文件夹",
-      "openThemesFolder": "打开主题文件夹"
+      "openThemesFolder": "打开主题文件夹",
+      "interfaceTheme": "界面主题",
+      "markdownTheme": "正文主题",
+      "preview": "预览",
+      "searchThemes": "搜索主题",
+      "allThemes": "全部",
+      "lightThemes": "浅色",
+      "darkThemes": "深色",
+      "noThemes": "没有匹配的主题"
     },
     "keybindings": {
       "title": "快捷键",

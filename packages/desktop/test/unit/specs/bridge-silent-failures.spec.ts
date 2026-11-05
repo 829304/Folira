@@ -27,8 +27,6 @@ const DELIBERATELY_SILENT: Record<string, string> = {
     'A preferences file that does not exist yet on first run. Defaults apply.',
   'preferences.ts:cannot write':
     'A background write on every toggle; a toast per failure would be worse than the console.',
-  'settings.ts:cannot open the settings window':
-    'Raised from an event handler with no user gesture behind it.',
   'export.ts:cannot open the print dialog':
     'window.print() does not reject in practice, and the print DOM is restored either way.',
   'save.ts:invalid end of line character':

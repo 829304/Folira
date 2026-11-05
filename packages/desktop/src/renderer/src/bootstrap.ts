@@ -19,6 +19,8 @@ interface UrlArgs {
     codeFontSize: string | null
     hideScrollbar: boolean
     theme: string | null
+    uiTheme: string | null
+    mdTheme: string | null
     titleBarStyle: string | null
   }
 }
@@ -30,6 +32,8 @@ const parseUrlArgs = (): UrlArgs => {
   const debug = params.get('debug') === '1'
   const hideScrollbar = params.get('hsb') === '1'
   const theme = params.get('theme')
+  const uiTheme = params.get('uith')
+  const mdTheme = params.get('mdth')
   const titleBarStyle = params.get('tbs')
   const userDataPath = params.get('udp')
   const windowId = Number(params.get('wid'))
@@ -49,6 +53,8 @@ const parseUrlArgs = (): UrlArgs => {
       codeFontSize,
       hideScrollbar,
       theme,
+      uiTheme,
+      mdTheme,
       titleBarStyle
     }
   }

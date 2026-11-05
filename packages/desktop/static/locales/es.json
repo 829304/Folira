@@ -688,7 +688,15 @@
       "importCustomThemes": "Importar temas personalizados",
       "importTheme": "Importar Tema",
       "openFolder": "Abrir Carpeta",
-      "openThemesFolder": "Abrir carpeta de temas"
+      "openThemesFolder": "Abrir carpeta de temas",
+      "interfaceTheme": "Tema de la interfaz",
+      "markdownTheme": "Tema de Markdown",
+      "preview": "Vista previa",
+      "searchThemes": "Buscar temas",
+      "allThemes": "Todos",
+      "lightThemes": "Claro",
+      "darkThemes": "Oscuro",
+      "noThemes": "Ningún tema coincide"
     },
     "keybindings": {
       "title": "Atajos de Teclado",

@@ -8,6 +8,7 @@ import {
   railscastsThemes
 } from '../config'
 import { getTheme, loadMdCss, loadPrismCss, loadUiCss } from './themeColor'
+import { rememberThemePair } from '@/tauri-bridge/theme'
 import { isLinux } from './index'
 
 const patchTheme = (css: string): string => {
@@ -46,7 +47,12 @@ export interface ThemePair {
  * Apply a UI theme and a Markdown theme. The Prism sheet belongs to the
  * Markdown theme: syntax highlighting is part of the body, not the chrome.
  */
-export const applyTheme = ({ ui, md }: ThemePair): void => {
+export const applyTheme = (pair: ThemePair): void => {
+  const { ui, md } = pair
+  // Mirror the pair where first paint can read it synchronously; the
+  // preferences file is not available until well after the first frame.
+  rememberThemePair({ ui, md })
+
   const uiEl = ensureStyle(UI_THEME_STYLE_ID)
   const mdEl = ensureStyle(MD_THEME_STYLE_ID)
   const prismEl = ensureStyle(PRISM_STYLE_ID)

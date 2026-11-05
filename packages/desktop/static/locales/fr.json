@@ -688,7 +688,15 @@
       "importCustomThemes": "Importer des thèmes personnalisés",
       "importTheme": "Importer un thème",
       "openFolder": "Ouvrir le dossier",
-      "openThemesFolder": "Ouvrir le dossier des thèmes"
+      "openThemesFolder": "Ouvrir le dossier des thèmes",
+      "interfaceTheme": "Thème de l'interface",
+      "markdownTheme": "Thème Markdown",
+      "preview": "Aperçu",
+      "searchThemes": "Rechercher un thème",
+      "allThemes": "Tous",
+      "lightThemes": "Clair",
+      "darkThemes": "Sombre",
+      "noThemes": "Aucun thème ne correspond"
     },
     "keybindings": {
       "title": "Raccourcis clavier",

@@ -23,6 +23,7 @@ import TitleBar from '@/prefComponents/common/titlebar.vue'
 import SideBar from '@/prefComponents/sideBar/index.vue'
 import { applyTheme } from '@/util/theme'
 import { DEFAULT_STYLE } from '@/config'
+import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
 import { isOsx } from '@/util'
 import { registerSettingsComponents } from '@/prefComponents/settingsComponents'
 import { dismissSplash } from '@/util/splash'
@@ -36,15 +37,12 @@ registerSettingsComponents(getCurrentInstance()!.appContext.app)
 const preferencesStore = usePreferencesStore()
 
 // Computed properties
-const { theme, uiTheme, mdTheme, titleBarStyle } = storeToRefs(preferencesStore)
+const { titleBarStyle } = storeToRefs(preferencesStore)
 
-// The settings window is chrome, but it renders the editor preview and the
-// theme picker, so it must follow the same pair the editor resolved instead of
-// the legacy single `theme` field.
-const activeTheme = computed<{ ui: string; md: string }>(() => ({
-  ui: uiTheme.value || theme.value,
-  md: mdTheme.value || theme.value
-}))
+// This window is chrome, but it renders the editor preview and the theme
+// picker, so it resolves through the same function the editor uses — otherwise
+// the two windows could show different pairs for the same preferences.
+const activeTheme = useResolvedThemePair()
 
 const showCustomTitleBar = computed<boolean>(() => {
   // Always show the custom title bar on macOS to provide a close button
@@ -55,22 +53,26 @@ const showCustomTitleBar = computed<boolean>(() => {
 })
 
 // Watchers
-watch(
-  () => [activeTheme.value.ui, activeTheme.value.md] as const,
-  ([ui, md], [previousUi, previousMd]) => {
-    if (ui !== previousUi || md !== previousMd) {
-      applyTheme({ ui, md })
-    }
+watch(activeTheme, (pair, previous) => {
+  if (pair.ui !== previous.ui || pair.md !== previous.md) {
+    applyTheme(pair)
   }
-)
+})
 
 // Lifecycle
 onMounted(() => {
   nextTick(() => {
-    const state = window.marktext?.initialState ?? DEFAULT_STYLE
-    const initial = state as typeof DEFAULT_STYLE & { uiTheme?: string; mdTheme?: string }
-    const fallback = initial.theme ?? DEFAULT_STYLE.theme
-    applyTheme({ ui: initial.uiTheme || fallback, md: initial.mdTheme || fallback })
+    const state = window.marktext?.initialState
+    const initial = state as
+      | (typeof DEFAULT_STYLE & { uiTheme?: string | null; mdTheme?: string | null })
+      | undefined
+    // The URL pair is what the last frame showed; the resolved pair is what the
+    // preferences file asks for. Prefer the URL for this first paint and let the
+    // watcher converge once `mt::user-preference` arrives.
+    applyTheme({
+      ui: initial?.uiTheme || activeTheme.value.ui,
+      md: initial?.mdTheme || activeTheme.value.md
+    })
 
     preferencesStore.ASK_FOR_USER_PREFERENCE()
     // This window shares `index.html`, and therefore its loading screen, with

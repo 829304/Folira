@@ -1,54 +1,191 @@
 <template>
   <div class="pref-theme">
     <h4>{{ t('preferences.theme.title') }}</h4>
-    <section class="offcial-themes">
-      <div
-        v-for="themeItem of themes"
-        :key="themeItem.name"
-        class="theme"
-        :class="[
-          themeItem.name,
-          {
-            active: themeItem.name === theme,
-            disabled: followSystemTheme
-          }
-        ]"
-        @click="!followSystemTheme && onSelectChange('theme', themeItem.name)"
-      >
-        <!-- eslint-disable-next-line vue/no-v-html -->
-        <div v-html="themeItem.html" />
-      </div>
-    </section>
-    <separator />
 
     <Bool
       :description="t('preferences.theme.followSystemTheme')"
       :bool="followSystemTheme"
-      :on-change="(value) => onSelectChange('followSystemTheme', value)"
+      :on-change="setPreference('followSystemTheme')"
     />
 
-    <compound v-if="followSystemTheme">
-      <template #head>
-        <h6 class="title">
-          {{ t('preferences.theme.modeThemes') }}
-        </h6>
-      </template>
-      <template #children>
-        <cur-select
-          :description="t('preferences.theme.lightModeTheme')"
-          :value="lightModeTheme"
-          :options="themeOptions"
-          :on-change="(value) => onSelectChange('lightModeTheme', value)"
-        />
+    <section class="preview-section">
+      <h6 class="section-title">
+        {{ t('preferences.theme.preview') }}
+      </h6>
+      <theme-preview
+        :ui="previewPair.ui"
+        :md="previewPair.md"
+      />
+    </section>
 
-        <cur-select
-          :description="t('preferences.theme.darkModeTheme')"
-          :value="darkModeTheme"
-          :options="themeOptions"
-          :on-change="(value) => onSelectChange('darkModeTheme', value)"
-        />
-      </template>
-    </compound>
+    <template v-if="followSystemTheme">
+      <compound>
+        <template #head>
+          <h6 class="section-title">
+            {{ t('preferences.theme.interfaceTheme') }}
+          </h6>
+        </template>
+        <template #children>
+          <cur-select
+            :description="t('preferences.theme.lightModeTheme')"
+            :value="lightUiTheme || lightModeTheme"
+            :options="uiOptions"
+            :on-change="setPreference('lightUiTheme')"
+          />
+          <cur-select
+            :description="t('preferences.theme.darkModeTheme')"
+            :value="darkUiTheme || darkModeTheme"
+            :options="uiOptions"
+            :on-change="setPreference('darkUiTheme')"
+          />
+        </template>
+      </compound>
+
+      <compound>
+        <template #head>
+          <h6 class="section-title">
+            {{ t('preferences.theme.markdownTheme') }}
+          </h6>
+        </template>
+        <template #children>
+          <cur-select
+            :description="t('preferences.theme.lightModeTheme')"
+            :value="lightMdTheme || lightModeTheme"
+            :options="mdOptions"
+            :on-change="setPreference('lightMdTheme')"
+          />
+          <cur-select
+            :description="t('preferences.theme.darkModeTheme')"
+            :value="darkMdTheme || darkModeTheme"
+            :options="mdOptions"
+            :on-change="setPreference('darkMdTheme')"
+          />
+        </template>
+      </compound>
+    </template>
+
+    <template v-else>
+      <div class="filter-row">
+        <input
+          v-model="query"
+          class="search-input"
+          type="search"
+          :placeholder="t('preferences.theme.searchThemes')"
+        >
+        <div class="appearance-filter">
+          <button
+            v-for="option of APPEARANCE_FILTERS"
+            :key="option.value"
+            type="button"
+            class="filter-button"
+            :class="{ active: appearanceFilter === option.value }"
+            @click="appearanceFilter = option.value"
+          >
+            {{ t(option.label) }}
+          </button>
+        </div>
+      </div>
+
+      <section class="axis-section">
+        <h6 class="section-title">
+          {{ t('preferences.theme.interfaceTheme') }}
+        </h6>
+        <div class="theme-grid">
+          <button
+            v-for="entry of visibleUiThemes"
+            :key="entry.id"
+            type="button"
+            class="theme-card"
+            :class="{ active: entry.id === savedPair.ui }"
+            @click="setAxisTheme('uiTheme', entry.id)"
+            @mouseenter="hovered = { ...savedPair, ui: entry.id }"
+            @mouseleave="hovered = null"
+            @focus="hovered = { ...savedPair, ui: entry.id }"
+            @blur="hovered = null"
+          >
+            <span
+              class="ui-swatch"
+              :style="{ background: swatch(entry, 'ui', 'editorBgColor') }"
+            >
+              <span
+                class="ui-swatch-side"
+                :style="{ background: swatch(entry, 'ui', 'sideBarBgColor') }"
+              />
+              <span class="ui-swatch-body">
+                <span
+                  class="ui-swatch-heading"
+                  :style="{ background: swatch(entry, 'ui', 'editorColor') }"
+                />
+                <span
+                  class="ui-swatch-line"
+                  :style="{ background: swatch(entry, 'ui', 'editorColor') }"
+                />
+                <span
+                  class="ui-swatch-button"
+                  :style="{ background: swatch(entry, 'ui', 'buttonPrimaryBgColor') }"
+                />
+              </span>
+            </span>
+            <span class="theme-name">{{ entry.label }}</span>
+          </button>
+        </div>
+        <p
+          v-if="visibleUiThemes.length === 0"
+          class="empty"
+        >
+          {{ t('preferences.theme.noThemes') }}
+        </p>
+      </section>
+
+      <section class="axis-section">
+        <h6 class="section-title">
+          {{ t('preferences.theme.markdownTheme') }}
+        </h6>
+        <div class="theme-grid">
+          <button
+            v-for="entry of visibleMdThemes"
+            :key="entry.id"
+            type="button"
+            class="theme-card"
+            :class="{ active: entry.id === savedPair.md }"
+            @click="setAxisTheme('mdTheme', entry.id)"
+            @mouseenter="hovered = { ...savedPair, md: entry.id }"
+            @mouseleave="hovered = null"
+            @focus="hovered = { ...savedPair, md: entry.id }"
+            @blur="hovered = null"
+          >
+            <span
+              class="md-swatch"
+              :style="{ background: swatch(entry, 'md', 'editorBgColor') }"
+            >
+              <span
+                class="md-swatch-heading"
+                :style="{ background: swatch(entry, 'md', 'h1Color') }"
+              />
+              <span
+                class="md-swatch-line"
+                :style="{ background: swatch(entry, 'md', 'editorColor') }"
+              />
+              <span
+                class="md-swatch-link"
+                :style="{ background: swatch(entry, 'md', 'linkColor') }"
+              />
+              <span
+                class="md-swatch-code"
+                :style="{ background: swatch(entry, 'md', 'codeBlockBgColor') }"
+              />
+            </span>
+            <span class="theme-name">{{ entry.label }}</span>
+          </button>
+        </div>
+        <p
+          v-if="visibleMdThemes.length === 0"
+          class="empty"
+        >
+          {{ t('preferences.theme.noThemes') }}
+        </p>
+      </section>
+    </template>
 
     <div class="custom-css">
       <div class="description">
@@ -60,428 +197,304 @@
         :value="customCss"
         @change="
           (event: Event) =>
-            onSelectChange('customCss', (event.target as HTMLTextAreaElement).value)
+            setPreference('customCss')((event.target as HTMLTextAreaElement).value)
         "
       />
     </div>
-    <separator v-show="false" />
-    <section
-      v-show="false"
-      class="import-themes ag-underdevelop"
-    >
-      <div>
-        <span>{{ t('preferences.theme.openThemesFolder') }}</span>
-        <el-button size="small">
-          {{ t('preferences.theme.openFolder') }}
-        </el-button>
-      </div>
-
-      <div>
-        <span>{{ t('preferences.theme.importCustomThemes') }}</span>
-        <el-button size="small">
-          {{ t('preferences.theme.importTheme') }}
-        </el-button>
-      </div>
-    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { usePreferencesStore } from '@/store/preferences'
-import type { PreferencesState } from '@/store/preferences'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import themeMd from './theme.md?raw'
-import { themes as configThemes } from './config'
-import markdownToHtml from '@/util/markdownToHtml'
+
+import { usePreferencesStore } from '@/store/preferences'
+import type { PreferencesState } from '@/store/preferences'
+import { THEMES, type ThemeEntry } from '@/util/themeColor'
+import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
+import type { ThemePair } from '@/util/themeSelection'
 import Bool from '../common/bool/index.vue'
 import CurSelect from '../common/select/index.vue'
-import Separator from '../common/separator/index.vue'
 import Compound from '../common/compound/index.vue'
+import ThemePreview from './preview.vue'
 import type { PrefSelectOption } from '../common/types'
 
-interface ThemePreview {
-  name: string
-  html: string
-}
+type AppearanceFilter = 'all' | 'light' | 'dark'
 
-const themes = ref<ThemePreview[]>([])
+const APPEARANCE_FILTERS: ReadonlyArray<{ value: AppearanceFilter; label: string }> = [
+  { value: 'all', label: 'preferences.theme.allThemes' },
+  { value: 'light', label: 'preferences.theme.lightThemes' },
+  { value: 'dark', label: 'preferences.theme.darkThemes' }
+]
 
 const { t } = useI18n()
 const preferenceStore = usePreferencesStore()
+const {
+  followSystemTheme,
+  lightModeTheme,
+  darkModeTheme,
+  lightUiTheme,
+  lightMdTheme,
+  darkUiTheme,
+  darkMdTheme,
+  customCss
+} = storeToRefs(preferenceStore)
 
-const { followSystemTheme, lightModeTheme, darkModeTheme, theme, customCss } =
-  storeToRefs(preferenceStore)
+const savedPair = useResolvedThemePair()
+const hovered = ref<ThemePair | null>(null)
+// Hovering a card repaints the preview only; the saved pair comes back the
+// moment the pointer leaves, so a look never rewrites a preference.
+const previewPair = computed<ThemePair>(() => hovered.value ?? savedPair.value)
 
-// Generate dropdown options from configThemes
-const themeOptions: PrefSelectOption<string>[] = configThemes.map((theme) => ({
-  label: theme.name
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' '),
-  value: theme.name
-}))
+const query = ref('')
+const appearanceFilter = ref<AppearanceFilter>('all')
 
-onMounted(async () => {
-  const newThemes: ThemePreview[] = []
-  for (const theme of configThemes) {
-    const html = await markdownToHtml(themeMd.replace(/{theme}/, theme.name))
-    newThemes.push({
-      name: theme.name,
-      html
-    })
-  }
-  themes.value = newThemes
-})
+const optionsFor = (entries: ThemeEntry[]): PrefSelectOption<string>[] =>
+  entries.map(entry => ({ label: entry.label, value: entry.id }))
 
-const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
+const uiOptions = optionsFor(THEMES)
+const mdOptions = optionsFor(THEMES)
+
+const matching = (axis: 'ui' | 'md'): ThemeEntry[] => {
+  const needle = query.value.trim().toLowerCase()
+
+  return THEMES.filter(theme => {
+    if (appearanceFilter.value !== 'all' && theme.appearance !== appearanceFilter.value) return false
+    if (!needle) return true
+    // The axis list is the same set of ids; filter on what the card claims to
+    // draw so a search never offers a theme with a missing swatch.
+    const colour = theme.swatches[axis]?.editorBgColor ?? ''
+
+    return theme.id.includes(needle) || theme.label.toLowerCase().includes(needle) || colour.includes(needle)
+  })
+}
+
+const visibleUiThemes = computed(() => matching('ui'))
+const visibleMdThemes = computed(() => matching('md'))
+
+const swatch = (entry: ThemeEntry, axis: 'ui' | 'md', name: string): string =>
+  entry.swatches[axis]?.[name] ?? 'transparent'
+
+const setPreference = (type: keyof PreferencesState) => (value: unknown): void => {
   preferenceStore.SET_SINGLE_PREFERENCE({ type, value })
+}
+
+const setAxisTheme = (type: 'uiTheme' | 'mdTheme', id: string): void => {
+  preferenceStore.SET_SINGLE_PREFERENCE({ type, value: id })
 }
 </script>
 
 <style>
-.offcial-themes {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  & .theme {
-    cursor: pointer;
-    width: 100%;
-    height: 110px;
-    margin: 0;
-    padding: 16px 18px 16px 32px;
-    overflow: hidden;
-    background: var(--editorBgColor);
+.pref-theme {
+  max-width: 620px;
+
+  & .section-title {
+    margin: 22px 0 10px;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--editorColor);
-    box-sizing: border-box;
-    box-shadow: 0 9px 28px -9px rgba(0, 0, 0, 0.4);
-    border-radius: 5px;
-    transition: opacity 0.2s ease;
-
-    &.dark {
-      color: rgba(255, 255, 255, 0.7);
-      background: #282828;
-      & a {
-        color: #409eff;
-      }
-    }
-    &.light {
-      color: rgba(0, 0, 0, 0.7);
-      background: rgba(255, 255, 255, 1);
-      & a {
-        color: rgba(33, 181, 111, 1);
-      }
-    }
-    &.graphite {
-      color: rgba(43, 48, 50, 0.7);
-      background: #f7f7f7;
-      & a {
-        color: rgb(104, 134, 170);
-      }
-    }
-    &.material-dark {
-      color: rgba(171, 178, 191, 0.8);
-      background: #34393f;
-      & a {
-        color: #f48237;
-      }
-    }
-    &.one-dark {
-      color: #9da5b4;
-      background: #282c34;
-      & a {
-        color: rgba(226, 192, 141, 1);
-      }
-    }
-    &.ulysses {
-      color: rgba(101, 101, 101, 0.7);
-      background: #f3f3f3;
-      & a {
-        color: rgb(12, 139, 186);
-      }
-    }
-
-    /* New gogh themes - Dark */
-    &.dracula {
-      color: #f8f8f2;
-      background: #282a36;
-      & a {
-        color: #bd93f9;
-      }
-    }
-    &.nord {
-      color: #d8dee9;
-      background: #2e3440;
-      & a {
-        color: #81a1c1;
-      }
-    }
-    &.catppuccin-mocha {
-      color: #cdd6f4;
-      background: #1e1e2e;
-      & a {
-        color: #89b4fa;
-      }
-    }
-    &.gruvbox-dark {
-      color: #ebdbb2;
-      background: #282828;
-      & a {
-        color: #83a598;
-      }
-    }
-    &.tokyo-night {
-      color: #c0caf5;
-      background: #1a1b26;
-      & a {
-        color: #7aa2f7;
-      }
-    }
-    &.tokyo-night-storm {
-      color: #c0caf5;
-      background: #24283b;
-      & a {
-        color: #7aa2f7;
-      }
-    }
-    &.solarized-dark {
-      color: #839496;
-      background: #002b36;
-      & a {
-        color: #268bd2;
-      }
-    }
-    &.ayu-dark {
-      color: #b3b1ad;
-      background: #0a0e14;
-      & a {
-        color: #39bae6;
-      }
-    }
-    &.ayu-mirage {
-      color: #cbccc6;
-      background: #1f2430;
-      & a {
-        color: #ffcc66;
-      }
-    }
-    &.everforest-dark {
-      color: #d3c6aa;
-      background: #2d353b;
-      & a {
-        color: #a7c080;
-      }
-    }
-    &.rose-pine {
-      color: #e0def4;
-      background: #191724;
-      & a {
-        color: #c4a7e7;
-      }
-    }
-    &.rose-pine-moon {
-      color: #e0def4;
-      background: #232136;
-      & a {
-        color: #c4a7e7;
-      }
-    }
-    &.monokai-pro {
-      color: #fcfcfa;
-      background: #2d2a2e;
-      & a {
-        color: #ffd866;
-      }
-    }
-    &.synthwave-84 {
-      color: #ffffff;
-      background: #262335;
-      & a {
-        color: #ff7edb;
-      }
-    }
-    &.horizon-dark {
-      color: #d5d8da;
-      background: #1c1e26;
-      & a {
-        color: #e95678;
-      }
-    }
-    &.palenight {
-      color: #a6accd;
-      background: #292d3e;
-      & a {
-        color: #82aaff;
-      }
-    }
-    &.oxocarbon-dark {
-      color: #f2f4f8;
-      background: #161616;
-      & a {
-        color: #78a9ff;
-      }
-    }
-    &.kanagawa {
-      color: #dcd7ba;
-      background: #1f1f28;
-      & a {
-        color: #7e9cd8;
-      }
-    }
-    &.nightfox {
-      color: #cdcecf;
-      background: #192330;
-      & a {
-        color: #719cd6;
-      }
-    }
-    &.cyberdream {
-      color: #ffffff;
-      background: #16181a;
-      & a {
-        color: #5ea1ff;
-      }
-    }
-
-    /* New gogh themes - Light */
-    &.catppuccin-latte {
-      color: #4c4f69;
-      background: #eff1f5;
-      & a {
-        color: #1e66f5;
-      }
-    }
-    &.gruvbox-light {
-      color: #3c3836;
-      background: #fbf1c7;
-      & a {
-        color: #458588;
-      }
-    }
-    &.tokyo-night-light {
-      color: #343b58;
-      background: #d5d6db;
-      & a {
-        color: #34548a;
-      }
-    }
-    &.solarized-light {
-      color: #657b83;
-      background: #fdf6e3;
-      & a {
-        color: #268bd2;
-      }
-    }
-    &.ayu-light {
-      color: #575f66;
-      background: #fafafa;
-      & a {
-        color: #399ee6;
-      }
-    }
-    &.everforest-light {
-      color: #5c6a72;
-      background: #fdf6e3;
-      & a {
-        color: #8da101;
-      }
-    }
-    &.rose-pine-dawn {
-      color: #575279;
-      background: #faf4ed;
-      & a {
-        color: #907aa9;
-      }
-    }
-
-    /* Disabled state when followSystemTheme is on */
-    &.disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    /* Active theme - use outline instead of border to avoid layout shift? */
-    &.active {
-      box-shadow: var(--floatShadow);
-      outline: 2px solid var(--themeColor);
-      outline-offset: -2px;
-    }
-
-    /* Active + disabled: slightly more visible */
-    &.disabled.active {
-      opacity: 0.7;
-    }
   }
-  & h3 {
-    position: relative;
-    margin: 0;
-    font-size: 16px;
-    color: currentColor;
-    cursor: pointer;
-    &::before {
-      content: 'h3';
-      position: absolute;
-      top: 4px;
-      left: -20px;
-      display: block;
-      width: 10px;
-      height: 10px;
-      font-size: 12px;
-      opacity: 0.5;
-    }
-  }
-  & p {
-    margin: 6px 0 0;
-    font-size: 12px;
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
 
-.custom-css {
-  margin: 20px 0;
-  font-size: 14px;
-  color: var(--editorColor);
-  & .description {
-    margin-bottom: 10px;
+  & .preview-section {
+    margin-top: 6px;
   }
-  & .custom-css-input {
-    width: 100%;
-    background: transparent;
+
+  & .filter-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin: 22px 0 8px;
+  }
+
+  & .search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 10px;
+    font-size: 13px;
     color: var(--editorColor);
-    border: 1px solid var(--editorColor10);
-    border-radius: 4px;
-    padding: 8px 10px;
-    font-family: 'DejaVu Sans Mono', 'Source Code Pro', 'Droid Sans Mono', Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.5;
-    box-sizing: border-box;
-    resize: vertical;
-  }
-  & .custom-css-input:focus {
+    background: var(--inputBgColor);
+    border: 1px solid var(--buttonBorder);
+    border-radius: 6px;
     outline: none;
-    border-color: var(--themeColor);
-  }
-}
 
-.import-themes {
-  padding: 10px 0;
-  display: flex;
-  justify-content: space-around;
-  color: var(--editorColor);
-  & > div {
+    &:focus {
+      border-color: var(--themeColor);
+    }
+  }
+
+  & .appearance-filter {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 7px;
+    background: var(--inputBgColor);
+  }
+
+  & .filter-button {
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--editorColor80);
+    background: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+
+    &.active {
+      color: var(--buttonPrimaryFontColor);
+      background: var(--themeColor);
+    }
+  }
+
+  & .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: 12px;
+  }
+
+  & .theme-card {
     display: flex;
     flex-direction: column;
-    & > span {
-      display: inline-block;
-      margin-bottom: 20px;
+    gap: 7px;
+    padding: 6px;
+    text-align: left;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      border-color: var(--buttonBorderHover);
+      background: var(--itemBgColor);
+      outline: none;
     }
+
+    &.active {
+      border-color: var(--themeColor);
+      background: var(--itemBgColor);
+    }
+  }
+
+  & .theme-name {
+    padding: 0 2px;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--editorColor);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & .ui-swatch {
+    display: flex;
+    height: 74px;
+    overflow: hidden;
+    border: 1px solid var(--tableBorderColor);
+    border-radius: 6px;
+  }
+
+  & .ui-swatch-side {
+    width: 26%;
+  }
+
+  & .ui-swatch-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 10px;
+  }
+
+  & .ui-swatch-heading,
+  & .ui-swatch-line,
+  & .ui-swatch-button {
+    display: block;
+    border-radius: 3px;
+    opacity: 0.75;
+  }
+
+  & .ui-swatch-heading {
+    width: 46%;
+    height: 5px;
+  }
+
+  & .ui-swatch-line {
+    width: 72%;
+    height: 4px;
+    opacity: 0.35;
+  }
+
+  & .ui-swatch-button {
+    width: 34px;
+    height: 10px;
+    margin-top: auto;
+    border-radius: 5px;
+  }
+
+  & .md-swatch {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 74px;
+    padding: 12px 10px;
+    overflow: hidden;
+    border: 1px solid var(--tableBorderColor);
+    border-radius: 6px;
+  }
+
+  & .md-swatch-heading,
+  & .md-swatch-line,
+  & .md-swatch-link,
+  & .md-swatch-code {
+    display: block;
+    border-radius: 3px;
+  }
+
+  & .md-swatch-heading {
+    width: 52%;
+    height: 7px;
+  }
+
+  & .md-swatch-line {
+    width: 82%;
+    height: 4px;
+    opacity: 0.55;
+  }
+
+  & .md-swatch-link {
+    width: 34%;
+    height: 4px;
+    opacity: 0.8;
+  }
+
+  & .md-swatch-code {
+    width: 100%;
+    height: 14px;
+    margin-top: auto;
+    opacity: 0.9;
+  }
+
+  & .empty {
+    margin: 8px 2px;
+    font-size: 12.5px;
+    color: var(--editorColor50);
+  }
+
+  & .custom-css {
+    margin-top: 26px;
+  }
+
+  & .custom-css-input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px 10px;
+    font-family: ui-monospace, monospace;
+    font-size: 12.5px;
+    color: var(--editorColor);
+    background: var(--inputBgColor);
+    border: 1px solid var(--buttonBorder);
+    border-radius: 6px;
+    resize: vertical;
   }
 }
 </style>

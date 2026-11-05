@@ -16,6 +16,7 @@ import { wordCount as getWordCount } from '@muyajs/core'
 import { adjustCursor } from '../../util'
 import bus from '../../bus'
 import { oneDarkThemes, railscastsThemes } from '@/config'
+import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
 
 // CodeMirror 5 ships no first-party types; the wrapper in src/renderer/src/
 // codeMirror/index.ts also keeps the surface intentionally loose.
@@ -43,10 +44,11 @@ const commitTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const viewDestroyed = ref(false)
 const tabId = ref<string | null>(null)
 
-const { theme, sourceCode } = storeToRefs(preferencesStore)
-// Source mode renders Markdown, so its CodeMirror palette follows the
-// Markdown axis; `theme` is only the fallback when no Markdown theme is set.
-const mdTheme = computed<string>(() => preferencesStore.mdTheme || theme.value)
+const { sourceCode } = storeToRefs(preferencesStore)
+// Source mode renders Markdown, so its CodeMirror palette follows the Markdown
+// axis — including the pair the system appearance picks while following it.
+const themePair = useResolvedThemePair()
+const mdTheme = computed<string>(() => themePair.value.md)
 const { currentFile: currentTab } = storeToRefs(editorStore)
 
 const isValidMuyaIndexCursor = (cursor: unknown): cursor is MuyaIndexCursorLike => {

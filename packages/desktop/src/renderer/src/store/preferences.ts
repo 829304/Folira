@@ -89,6 +89,12 @@ export interface PreferencesState {
   followSystemTheme: boolean
   lightModeTheme: string
   darkModeTheme: string
+  // Following the system keeps one pair per appearance; an empty axis falls
+  // back to the matching `lightModeTheme` / `darkModeTheme`.
+  lightUiTheme: string
+  lightMdTheme: string
+  darkUiTheme: string
+  darkMdTheme: string
   customCss: string
 
   // ----- Spellchecker -----
@@ -137,6 +143,21 @@ interface SetUserDataPayload {
 interface ModeTogglePayload {
   type: keyof PreferencesState | 'typewriter' | 'focus' | 'sourceCode'
   checked: boolean
+}
+
+/**
+ * Bring a stored preferences bag up to the two-axis shape.
+ *
+ * A file written before the split only knows `theme`. Turning on "follow the
+ * system" for it would repaint those users on a dark OS before they ever saw the
+ * new setting, so the single theme stays until the user saves a pair of its own.
+ * The marker is the newest field: a bag carrying `lightUiTheme` was written by
+ * this shape and is taken as-is.
+ */
+export function migrateLegacyThemeFields(raw: Record<string, unknown>): Record<string, unknown> {
+  if ('lightUiTheme' in raw) return raw
+
+  return { ...raw, followSystemTheme: false }
 }
 
 export const usePreferencesStore = defineStore('preferences', {
@@ -208,6 +229,11 @@ export const usePreferencesStore = defineStore('preferences', {
     followSystemTheme: true,
     lightModeTheme: 'light',
     darkModeTheme: 'dark',
+    // Empty: resolve to `lightModeTheme` / `darkModeTheme` on that appearance.
+    lightUiTheme: '',
+    lightMdTheme: '',
+    darkUiTheme: '',
+    darkMdTheme: '',
     customCss: '',
 
     spellcheckerEnabled: false,
@@ -250,19 +276,20 @@ export const usePreferencesStore = defineStore('preferences', {
   actions: {
     SET_USER_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
       const oldLanguage = this.language
+      const incoming = migrateLegacyThemeFields(preference as Record<string, unknown>)
 
-      Object.keys(preference).forEach((key) => {
-        const incoming = (preference as Record<string, unknown>)[key]
+      Object.keys(incoming).forEach((key) => {
+        const value = incoming[key]
         if (
-          typeof incoming !== 'undefined' &&
+          typeof value !== 'undefined' &&
           typeof (this as unknown as Record<string, unknown>)[key] !== 'undefined'
         ) {
-          ;(this as unknown as Record<string, unknown>)[key] = incoming
+          ;(this as unknown as Record<string, unknown>)[key] = value
         }
       })
 
       // Update i18n language if language preference changed
-      const lang = (preference as { language?: string }).language
+      const lang = typeof incoming.language === 'string' ? incoming.language : undefined
       if (lang && lang !== oldLanguage) {
         setLanguage(lang)
       }
@@ -284,6 +311,19 @@ export const usePreferencesStore = defineStore('preferences', {
       window.electron.ipcRenderer.on('mt::user-preference', (_e, preferences) => {
         this.SET_USER_PREFERENCE(preferences as Partial<PreferencesState>)
       })
+    },
+
+    SET_THEME_CHOICE(choice: string): void {
+      // The native menu offers one theme at a time. 'system' means "follow the
+      // OS"; anything else is a whole-theme choice, so both axes move together
+      // and the legacy `theme` field keeps the value old readers expect.
+      const patch =
+        choice === 'system'
+          ? { followSystemTheme: true }
+          : { followSystemTheme: false, theme: choice, uiTheme: choice, mdTheme: choice }
+
+      Object.assign(this, patch)
+      window.electron.ipcRenderer.send('mt::set-user-preference', patch)
     },
 
     SET_SINGLE_PREFERENCE({ type, value }: SingleSetPreferencePayload): void {

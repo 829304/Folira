@@ -688,7 +688,15 @@
       "importCustomThemes": "匯入自訂主題",
       "importTheme": "匯入主題",
       "openFolder": "開啟資料夾",
-      "openThemesFolder": "開啟主題資料夾"
+      "openThemesFolder": "開啟主題資料夾",
+      "interfaceTheme": "介面主題",
+      "markdownTheme": "內文主題",
+      "preview": "預覽",
+      "searchThemes": "搜尋主題",
+      "allThemes": "全部",
+      "lightThemes": "淺色",
+      "darkThemes": "深色",
+      "noThemes": "沒有符合的主題"
     },
     "keybindings": {
       "title": "按鍵綁定",

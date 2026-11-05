@@ -147,6 +147,40 @@ for (const entry of manifest) {
   }
 }
 
+/* 4b. Card swatches exist and agree with the scope they claim to describe. */
+/*     The picker paints 66 cards from this block; a stale value here is a */
+/*     wrong-coloured card rather than a broken theme, so the generator is the */
+/*     only place allowed to compute them. */
+
+const SWATCH_KEYS = {
+  ui: ['editorBgColor', 'editorColor', 'sideBarBgColor', 'themeColor', 'buttonPrimaryBgColor'],
+  md: ['editorBgColor', 'editorColor', 'h1Color', 'linkColor', 'codeBlockBgColor', 'blockquoteBorderColor']
+}
+
+for (const entry of manifest) {
+  const swatches = entry.swatches
+  if (!swatches?.ui || !swatches?.md) {
+    fail(`${entry.id}: manifest has no card swatches`)
+    continue
+  }
+  for (const [axis, keys] of Object.entries(SWATCH_KEYS)) {
+    for (const key of keys) {
+      const value = swatches[axis][key]
+      if (typeof value !== 'string' || !value.trim()) {
+        fail(`${entry.id}: swatch ${axis}.${key} is missing`)
+      }
+    }
+  }
+  const rootBackground = String(resolve(rootScope(entry.id), 'editorBgColor') ?? '').trim()
+  if (String(swatches.ui.editorBgColor ?? '').trim() !== rootBackground) {
+    fail(`${entry.id}: ui swatch background is ${swatches.ui.editorBgColor}, the chrome resolves to ${rootBackground}`)
+  }
+  const bodyBackground = String(resolve(editorScope(entry.id, entry.id), 'editorBgColor') ?? '').trim()
+  if (String(swatches.md.editorBgColor ?? '').trim() !== bodyBackground) {
+    fail(`${entry.id}: md swatch background is ${swatches.md.editorBgColor}, the body resolves to ${bodyBackground}`)
+  }
+}
+
 /* 5. Derived accents keep following the theme that owns them. */
 /*    A default declared as `var(--themeColor)` before the split must still be a */
 /*    reference: resolving it to the built-in literal made dark themes green. */

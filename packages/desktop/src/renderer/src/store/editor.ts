@@ -959,8 +959,9 @@ export const useEditorStore = defineStore('editor', {
         for (const pathname of initialPaths) {
           window.electron.ipcRenderer.send('mt::open-file', pathname, {})
         }
-        // Keep the theme in sync with the OS and the native Theme menu.
-        initThemeController((theme) => preferencesStore.SET_USER_PREFERENCE({ theme }))
+        // The native Theme menu speaks in whole themes; the store turns that
+        // into a pair (or into following the system again).
+        initThemeController((choice) => preferencesStore.SET_THEME_CHOICE(choice))
       }
     },
 

@@ -7,17 +7,19 @@
 // opens a second Tauri window onto the same `index.html` with `type=settings`,
 // exactly as the Electron build built its URL.
 
+import { invoke } from '@tauri-apps/api/core'
 import { emit } from '@tauri-apps/api/event'
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 
 import type { DispatchLocal } from './save'
 import { getStoredPreference } from './preferences'
-import { resolveInitialTheme } from './theme'
-
-const SETTINGS_LABEL = 'settings'
+import { resolveInitialPair } from './theme'
 
 /**
  * Open the preferences window, or focus it and switch tabs if it is already up.
+ *
+ * The window is built in Rust (`window::open_settings_window`) rather than from
+ * here, because it has to share the editor's WebView2 data directory; see that
+ * command for what a default one does to a green install.
  *
  * `category` selects a tab; the Electron build encoded it as `type=settings/x`
  * and pushed `settings::change-tab` at an existing window, and both paths are
@@ -27,38 +29,21 @@ export const openSettingsWindow = async(
   category: string | null,
   userDataPath: string
 ): Promise<void> => {
-  const existing = await WebviewWindow.getByLabel(SETTINGS_LABEL)
-  if (existing) {
-    await existing.setFocus()
-    // A cross-window push: the bridge's local bus only reaches this window.
-    await emit('settings::change-tab', category)
-    return
-  }
-
+  const pair = resolveInitialPair()
   const params = new URLSearchParams({
     type: category ? `settings/${category}` : 'settings',
     wid: '2',
     udp: userDataPath || '/tmp',
-    theme: resolveInitialTheme(),
+    uith: pair.ui,
+    mdth: pair.md,
     debug: '0',
     hsb: '0',
     tbs: 'custom'
   })
 
-  const settings = new WebviewWindow(SETTINGS_LABEL, {
-    url: `index.html?${params.toString()}`,
-    title: 'Folira',
-    width: 950,
-    height: 650,
-    minWidth: 800,
-    minHeight: 500,
-    decorations: false,
-    resizable: true
-  })
-
-  settings.once('tauri://error', (event) => {
-    console.error('[tauri-bridge] cannot open the settings window:', event.payload)
-  })
+  await invoke('open_settings_window', { url: `index.html?${params.toString()}` })
+  // A cross-window push: the bridge's local bus only reaches this window.
+  await emit('settings::change-tab', category)
 }
 
 /**

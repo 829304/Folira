@@ -688,7 +688,15 @@
       "importCustomThemes": "사용자 정의 테마 가져오기",
       "importTheme": "테마 가져오기",
       "openFolder": "폴더 열기",
-      "openThemesFolder": "테마 폴더 열기"
+      "openThemesFolder": "테마 폴더 열기",
+      "interfaceTheme": "인터페이스 테마",
+      "markdownTheme": "본문 테마",
+      "preview": "미리보기",
+      "searchThemes": "테마 검색",
+      "allThemes": "전체",
+      "lightThemes": "라이트",
+      "darkThemes": "다크",
+      "noThemes": "일치하는 테마가 없습니다"
     },
     "keybindings": {
       "title": "키 바인딩",

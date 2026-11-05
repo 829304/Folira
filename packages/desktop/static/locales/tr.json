@@ -688,7 +688,15 @@
       "importCustomThemes": "Özel temaları içe aktar",
       "importTheme": "Temayı İçe Aktar",
       "openFolder": "Klasör Aç",
-      "openThemesFolder": "Temalar klasörünü aç"
+      "openThemesFolder": "Temalar klasörünü aç",
+      "interfaceTheme": "Arayüz teması",
+      "markdownTheme": "Markdown teması",
+      "preview": "Önizleme",
+      "searchThemes": "Tema ara",
+      "allThemes": "Tümü",
+      "lightThemes": "Açık",
+      "darkThemes": "Koyu",
+      "noThemes": "Eşleşen tema yok"
     },
     "keybindings": {
       "title": "Kısayol Tuşları",

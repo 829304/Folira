@@ -3,198 +3,759 @@
     "id": "ayu-dark",
     "label": "AYU Dark",
     "appearance": "dark",
-    "prism": "ayu-dark"
+    "prism": "ayu-dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#0a0e14",
+        "editorColor": "#b3b1ad",
+        "sideBarBgColor": "#070a0e",
+        "themeColor": "#39bae6",
+        "buttonPrimaryBgColor": "#39bae6"
+      },
+      "md": {
+        "editorBgColor": "#0a0e14",
+        "editorColor": "#b3b1ad",
+        "h1Color": "#ff8f40",
+        "linkColor": "#39bae6",
+        "codeBlockBgColor": "#131721",
+        "blockquoteBorderColor": "#4d5566"
+      }
+    }
   },
   {
     "id": "ayu-light",
     "label": "AYU Light",
     "appearance": "light",
-    "prism": "ayu-light"
+    "prism": "ayu-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#fafafa",
+        "editorColor": "#575f66",
+        "sideBarBgColor": "#f5f5f5",
+        "themeColor": "#399ee6",
+        "buttonPrimaryBgColor": "#399ee6"
+      },
+      "md": {
+        "editorBgColor": "#fafafa",
+        "editorColor": "#575f66",
+        "h1Color": "#fa8d3e",
+        "linkColor": "#399ee6",
+        "codeBlockBgColor": "#f0f0f0",
+        "blockquoteBorderColor": "#abb0b6"
+      }
+    }
   },
   {
     "id": "ayu-mirage",
     "label": "AYU Mirage",
     "appearance": "dark",
-    "prism": "ayu-mirage"
+    "prism": "ayu-mirage",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#1f2430",
+        "editorColor": "#cbccc6",
+        "sideBarBgColor": "#1b1f2a",
+        "themeColor": "#ffcc66",
+        "buttonPrimaryBgColor": "#ffcc66"
+      },
+      "md": {
+        "editorBgColor": "#1f2430",
+        "editorColor": "#cbccc6",
+        "h1Color": "#ffcc66",
+        "linkColor": "#73d0ff",
+        "codeBlockBgColor": "#272d38",
+        "blockquoteBorderColor": "#5c6773"
+      }
+    }
   },
   {
     "id": "catppuccin-latte",
     "label": "Catppuccin Latte",
     "appearance": "light",
-    "prism": "catppuccin-latte"
+    "prism": "catppuccin-latte",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#eff1f5",
+        "editorColor": "#4c4f69",
+        "sideBarBgColor": "#eaedf2",
+        "themeColor": "#1e66f5",
+        "buttonPrimaryBgColor": "#1e66f5"
+      },
+      "md": {
+        "editorBgColor": "#eff1f5",
+        "editorColor": "#4c4f69",
+        "h1Color": "#d20f39",
+        "linkColor": "#1e66f5",
+        "codeBlockBgColor": "#e6e9ef",
+        "blockquoteBorderColor": "#9ca0b0"
+      }
+    }
   },
   {
     "id": "catppuccin-mocha",
     "label": "Catppuccin Mocha",
     "appearance": "dark",
-    "prism": "catppuccin-mocha"
+    "prism": "catppuccin-mocha",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#1e1e2e",
+        "editorColor": "#cdd6f4",
+        "sideBarBgColor": "#1b1b29",
+        "themeColor": "#89b4fa",
+        "buttonPrimaryBgColor": "#89b4fa"
+      },
+      "md": {
+        "editorBgColor": "#1e1e2e",
+        "editorColor": "#cdd6f4",
+        "h1Color": "#cba6f7",
+        "linkColor": "#89dceb",
+        "codeBlockBgColor": "#313244",
+        "blockquoteBorderColor": "#585b70"
+      }
+    }
   },
   {
     "id": "cyberdream",
     "label": "Cyberdream",
     "appearance": "dark",
-    "prism": "cyberdream"
+    "prism": "cyberdream",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#16181a",
+        "editorColor": "#ffffff",
+        "sideBarBgColor": "#121416",
+        "themeColor": "#5ea1ff",
+        "buttonPrimaryBgColor": "#5ea1ff"
+      },
+      "md": {
+        "editorBgColor": "#16181a",
+        "editorColor": "#ffffff",
+        "h1Color": "#ff6e5e",
+        "linkColor": "#5ea1ff",
+        "codeBlockBgColor": "#1e2124",
+        "blockquoteBorderColor": "#3c4048"
+      }
+    }
   },
   {
     "id": "dark",
     "label": "Dark",
     "appearance": "dark",
-    "prism": "dark"
+    "prism": "dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#282828",
+        "editorColor": "rgba(255, 255, 255, 0.7)",
+        "sideBarBgColor": "#232323",
+        "themeColor": "#409eff",
+        "buttonPrimaryBgColor": "#409eff"
+      },
+      "md": {
+        "editorBgColor": "#282828",
+        "editorColor": "rgba(255, 255, 255, 0.7)",
+        "h1Color": "rgba(255, 255, 255, 0.8)",
+        "linkColor": "#409eff",
+        "codeBlockBgColor": "#424344",
+        "blockquoteBorderColor": "#409eff"
+      }
+    }
   },
   {
     "id": "dracula",
     "label": "Dracula",
     "appearance": "dark",
-    "prism": "dracula"
+    "prism": "dracula",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#282a36",
+        "editorColor": "#f8f8f2",
+        "sideBarBgColor": "#242631",
+        "themeColor": "#bd93f9",
+        "buttonPrimaryBgColor": "#bd93f9"
+      },
+      "md": {
+        "editorBgColor": "#282a36",
+        "editorColor": "#f8f8f2",
+        "h1Color": "#ff79c6",
+        "linkColor": "#8be9fd",
+        "codeBlockBgColor": "#44475a",
+        "blockquoteBorderColor": "#6272a4"
+      }
+    }
   },
   {
     "id": "everforest-dark",
     "label": "Everforest Dark",
     "appearance": "dark",
-    "prism": "everforest-dark"
+    "prism": "everforest-dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#2d353b",
+        "editorColor": "#d3c6aa",
+        "sideBarBgColor": "#2a3137",
+        "themeColor": "#a7c080",
+        "buttonPrimaryBgColor": "#a7c080"
+      },
+      "md": {
+        "editorBgColor": "#2d353b",
+        "editorColor": "#d3c6aa",
+        "h1Color": "#e67e80",
+        "linkColor": "#7fbbb3",
+        "codeBlockBgColor": "#343f44",
+        "blockquoteBorderColor": "#475258"
+      }
+    }
   },
   {
     "id": "everforest-light",
     "label": "Everforest Light",
     "appearance": "light",
-    "prism": "everforest-light"
+    "prism": "everforest-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#fdf6e3",
+        "editorColor": "#5c6a72",
+        "sideBarBgColor": "#f8f3de",
+        "themeColor": "#8da101",
+        "buttonPrimaryBgColor": "#8da101"
+      },
+      "md": {
+        "editorBgColor": "#fdf6e3",
+        "editorColor": "#5c6a72",
+        "h1Color": "#f85552",
+        "linkColor": "#3a94c5",
+        "codeBlockBgColor": "#f4f0d9",
+        "blockquoteBorderColor": "#939f91"
+      }
+    }
   },
   {
     "id": "graphite",
     "label": "Graphite",
     "appearance": "light",
-    "prism": "graphite"
+    "prism": "graphite",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#f7f7f7",
+        "editorColor": "rgba(43, 48, 50, 0.7)",
+        "sideBarBgColor": "#ececec",
+        "themeColor": "rgb(104, 134, 170)",
+        "buttonPrimaryBgColor": "rgb(104, 134, 170)"
+      },
+      "md": {
+        "editorBgColor": "#f7f7f7",
+        "editorColor": "rgba(43, 48, 50, 0.7)",
+        "h1Color": "#6886aa",
+        "linkColor": "rgb(104, 134, 170)",
+        "codeBlockBgColor": "rgba(104, 134, 170, 0.05)",
+        "blockquoteBorderColor": "rgb(104, 134, 170)"
+      }
+    }
   },
   {
     "id": "gruvbox-dark",
     "label": "Gruvbox Dark",
     "appearance": "dark",
-    "prism": "gruvbox-dark"
+    "prism": "gruvbox-dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#282828",
+        "editorColor": "#ebdbb2",
+        "sideBarBgColor": "#222424",
+        "themeColor": "#83a598",
+        "buttonPrimaryBgColor": "#83a598"
+      },
+      "md": {
+        "editorBgColor": "#282828",
+        "editorColor": "#ebdbb2",
+        "h1Color": "#fb4934",
+        "linkColor": "#83a598",
+        "codeBlockBgColor": "#3c3836",
+        "blockquoteBorderColor": "#665c54"
+      }
+    }
   },
   {
     "id": "gruvbox-light",
     "label": "Gruvbox Light",
     "appearance": "light",
-    "prism": "gruvbox-light"
+    "prism": "gruvbox-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#fbf1c7",
+        "editorColor": "#3c3836",
+        "sideBarBgColor": "#f3e6bc",
+        "themeColor": "#458588",
+        "buttonPrimaryBgColor": "#458588"
+      },
+      "md": {
+        "editorBgColor": "#fbf1c7",
+        "editorColor": "#3c3836",
+        "h1Color": "#cc241d",
+        "linkColor": "#458588",
+        "codeBlockBgColor": "#ebdbb2",
+        "blockquoteBorderColor": "#928374"
+      }
+    }
   },
   {
     "id": "horizon-dark",
     "label": "Horizon Dark",
     "appearance": "dark",
-    "prism": "horizon-dark"
+    "prism": "horizon-dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#1c1e26",
+        "editorColor": "#d5d8da",
+        "sideBarBgColor": "#191b22",
+        "themeColor": "#e95678",
+        "buttonPrimaryBgColor": "#e95678"
+      },
+      "md": {
+        "editorBgColor": "#1c1e26",
+        "editorColor": "#d5d8da",
+        "h1Color": "#e95678",
+        "linkColor": "#26bbd9",
+        "codeBlockBgColor": "#232530",
+        "blockquoteBorderColor": "#3b3e4a"
+      }
+    }
   },
   {
     "id": "kanagawa",
     "label": "Kanagawa",
     "appearance": "dark",
-    "prism": "kanagawa"
+    "prism": "kanagawa",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#1f1f28",
+        "editorColor": "#dcd7ba",
+        "sideBarBgColor": "#1a1a22",
+        "themeColor": "#7e9cd8",
+        "buttonPrimaryBgColor": "#7e9cd8"
+      },
+      "md": {
+        "editorBgColor": "#1f1f28",
+        "editorColor": "#dcd7ba",
+        "h1Color": "#c34043",
+        "linkColor": "#7e9cd8",
+        "codeBlockBgColor": "#2a2a37",
+        "blockquoteBorderColor": "#54546d"
+      }
+    }
   },
   {
     "id": "light",
     "label": "Light",
     "appearance": "light",
-    "prism": null
+    "prism": null,
+    "swatches": {
+      "ui": {
+        "editorBgColor": "rgba(255, 255, 255, 1)",
+        "editorColor": "#4d4d4d",
+        "sideBarBgColor": "rgba(242, 242, 242, 0.9)",
+        "themeColor": "rgba(33, 181, 111, 1)",
+        "buttonPrimaryBgColor": "rgba(33, 181, 111, 1)"
+      },
+      "md": {
+        "editorBgColor": "rgba(255, 255, 255, 1)",
+        "editorColor": "#4d4d4d",
+        "h1Color": "#333333",
+        "linkColor": "rgba(33, 181, 111, 1)",
+        "codeBlockBgColor": "rgba(0, 0, 0, 0.03)",
+        "blockquoteBorderColor": "rgba(33, 181, 111, 1)"
+      }
+    }
   },
   {
     "id": "material-dark",
     "label": "Material Dark",
     "appearance": "dark",
-    "prism": "dark"
+    "prism": "dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#34393f",
+        "editorColor": "rgba(171, 178, 191, 0.8)",
+        "sideBarBgColor": "rgba(39, 45, 52, 0.95)",
+        "themeColor": "#f48237",
+        "buttonPrimaryBgColor": "#f48237"
+      },
+      "md": {
+        "editorBgColor": "#34393f",
+        "editorColor": "rgba(171, 178, 191, 0.8)",
+        "h1Color": "#f48237",
+        "linkColor": "#61afef",
+        "codeBlockBgColor": "#3f454c",
+        "blockquoteBorderColor": "#f48237"
+      }
+    }
   },
   {
     "id": "monokai-pro",
     "label": "Monokai PRO",
     "appearance": "dark",
-    "prism": "monokai-pro"
+    "prism": "monokai-pro",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#2d2a2e",
+        "editorColor": "#fcfcfa",
+        "sideBarBgColor": "#272428",
+        "themeColor": "#ffd866",
+        "buttonPrimaryBgColor": "#ffd866"
+      },
+      "md": {
+        "editorBgColor": "#2d2a2e",
+        "editorColor": "#fcfcfa",
+        "h1Color": "#ff6188",
+        "linkColor": "#78dce8",
+        "codeBlockBgColor": "#403e41",
+        "blockquoteBorderColor": "#727072"
+      }
+    }
   },
   {
     "id": "nightfox",
     "label": "Nightfox",
     "appearance": "dark",
-    "prism": "nightfox"
+    "prism": "nightfox",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#192330",
+        "editorColor": "#cdcecf",
+        "sideBarBgColor": "#161e2a",
+        "themeColor": "#719cd6",
+        "buttonPrimaryBgColor": "#719cd6"
+      },
+      "md": {
+        "editorBgColor": "#192330",
+        "editorColor": "#cdcecf",
+        "h1Color": "#c94f6d",
+        "linkColor": "#719cd6",
+        "codeBlockBgColor": "#212e3f",
+        "blockquoteBorderColor": "#39506d"
+      }
+    }
   },
   {
     "id": "nord",
     "label": "Nord",
     "appearance": "dark",
-    "prism": "nord"
+    "prism": "nord",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#2e3440",
+        "editorColor": "#d8dee9",
+        "sideBarBgColor": "#2b313c",
+        "themeColor": "#81a1c1",
+        "buttonPrimaryBgColor": "#81a1c1"
+      },
+      "md": {
+        "editorBgColor": "#2e3440",
+        "editorColor": "#d8dee9",
+        "h1Color": "#88c0d0",
+        "linkColor": "#88c0d0",
+        "codeBlockBgColor": "#3b4252",
+        "blockquoteBorderColor": "#5e81ac"
+      }
+    }
   },
   {
     "id": "one-dark",
     "label": "ONE Dark",
     "appearance": "dark",
-    "prism": "one-dark"
+    "prism": "one-dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#282c34",
+        "editorColor": "#9da5b4",
+        "sideBarBgColor": "#24282f",
+        "themeColor": "rgba(77, 120, 204, 1)",
+        "buttonPrimaryBgColor": "linear-gradient(#557ecf, #4d78cc)"
+      },
+      "md": {
+        "editorBgColor": "#282c34",
+        "editorColor": "#9da5b4",
+        "h1Color": "#e06c75",
+        "linkColor": "#61afef",
+        "codeBlockBgColor": "#3a3f4b",
+        "blockquoteBorderColor": "#e2c08d"
+      }
+    }
   },
   {
     "id": "oxocarbon-dark",
     "label": "Oxocarbon Dark",
     "appearance": "dark",
-    "prism": "oxocarbon-dark"
+    "prism": "oxocarbon-dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#161616",
+        "editorColor": "#f2f4f8",
+        "sideBarBgColor": "#111111",
+        "themeColor": "#78a9ff",
+        "buttonPrimaryBgColor": "#78a9ff"
+      },
+      "md": {
+        "editorBgColor": "#161616",
+        "editorColor": "#f2f4f8",
+        "h1Color": "#ee5396",
+        "linkColor": "#78a9ff",
+        "codeBlockBgColor": "#262626",
+        "blockquoteBorderColor": "#525252"
+      }
+    }
   },
   {
     "id": "palenight",
     "label": "Palenight",
     "appearance": "dark",
-    "prism": "palenight"
+    "prism": "palenight",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#292d3e",
+        "editorColor": "#a6accd",
+        "sideBarBgColor": "#252939",
+        "themeColor": "#82aaff",
+        "buttonPrimaryBgColor": "#82aaff"
+      },
+      "md": {
+        "editorBgColor": "#292d3e",
+        "editorColor": "#a6accd",
+        "h1Color": "#c792ea",
+        "linkColor": "#82aaff",
+        "codeBlockBgColor": "#32374d",
+        "blockquoteBorderColor": "#4e5579"
+      }
+    }
   },
   {
     "id": "rose-pine",
     "label": "Rose Pine",
     "appearance": "dark",
-    "prism": "rose-pine"
+    "prism": "rose-pine",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#191724",
+        "editorColor": "#e0def4",
+        "sideBarBgColor": "#161421",
+        "themeColor": "#c4a7e7",
+        "buttonPrimaryBgColor": "#c4a7e7"
+      },
+      "md": {
+        "editorBgColor": "#191724",
+        "editorColor": "#e0def4",
+        "h1Color": "#c4a7e7",
+        "linkColor": "#9ccfd8",
+        "codeBlockBgColor": "#1f1d2e",
+        "blockquoteBorderColor": "#403d52"
+      }
+    }
   },
   {
     "id": "rose-pine-dawn",
     "label": "Rose Pine Dawn",
     "appearance": "light",
-    "prism": "rose-pine-dawn"
+    "prism": "rose-pine-dawn",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#faf4ed",
+        "editorColor": "#575279",
+        "sideBarBgColor": "#f6eee7",
+        "themeColor": "#907aa9",
+        "buttonPrimaryBgColor": "#907aa9"
+      },
+      "md": {
+        "editorBgColor": "#faf4ed",
+        "editorColor": "#575279",
+        "h1Color": "#907aa9",
+        "linkColor": "#286983",
+        "codeBlockBgColor": "#f2e9e1",
+        "blockquoteBorderColor": "#9893a5"
+      }
+    }
   },
   {
     "id": "rose-pine-moon",
     "label": "Rose Pine Moon",
     "appearance": "dark",
-    "prism": "rose-pine-moon"
+    "prism": "rose-pine-moon",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#232136",
+        "editorColor": "#e0def4",
+        "sideBarBgColor": "#1f1d2f",
+        "themeColor": "#c4a7e7",
+        "buttonPrimaryBgColor": "#c4a7e7"
+      },
+      "md": {
+        "editorBgColor": "#232136",
+        "editorColor": "#e0def4",
+        "h1Color": "#c4a7e7",
+        "linkColor": "#9ccfd8",
+        "codeBlockBgColor": "#2a273f",
+        "blockquoteBorderColor": "#44415a"
+      }
+    }
   },
   {
     "id": "solarized-dark",
     "label": "Solarized Dark",
     "appearance": "dark",
-    "prism": "solarized-dark"
+    "prism": "solarized-dark",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#002b36",
+        "editorColor": "#839496",
+        "sideBarBgColor": "#00242e",
+        "themeColor": "#268bd2",
+        "buttonPrimaryBgColor": "#268bd2"
+      },
+      "md": {
+        "editorBgColor": "#002b36",
+        "editorColor": "#839496",
+        "h1Color": "#dc322f",
+        "linkColor": "#268bd2",
+        "codeBlockBgColor": "#073642",
+        "blockquoteBorderColor": "#586e75"
+      }
+    }
   },
   {
     "id": "solarized-light",
     "label": "Solarized Light",
     "appearance": "light",
-    "prism": "solarized-light"
+    "prism": "solarized-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#fdf6e3",
+        "editorColor": "#657b83",
+        "sideBarBgColor": "#f5efdc",
+        "themeColor": "#268bd2",
+        "buttonPrimaryBgColor": "#268bd2"
+      },
+      "md": {
+        "editorBgColor": "#fdf6e3",
+        "editorColor": "#657b83",
+        "h1Color": "#dc322f",
+        "linkColor": "#268bd2",
+        "codeBlockBgColor": "#eee8d5",
+        "blockquoteBorderColor": "#93a1a1"
+      }
+    }
   },
   {
     "id": "synthwave-84",
     "label": "Synthwave 84",
     "appearance": "dark",
-    "prism": "synthwave-84"
+    "prism": "synthwave-84",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#262335",
+        "editorColor": "#ffffff",
+        "sideBarBgColor": "#221e2f",
+        "themeColor": "#ff7edb",
+        "buttonPrimaryBgColor": "#ff7edb"
+      },
+      "md": {
+        "editorBgColor": "#262335",
+        "editorColor": "#ffffff",
+        "h1Color": "#ff7edb",
+        "linkColor": "#36f9f6",
+        "codeBlockBgColor": "#34294a",
+        "blockquoteBorderColor": "#614d85"
+      }
+    }
   },
   {
     "id": "tokyo-night",
     "label": "Tokyo Night",
     "appearance": "dark",
-    "prism": "tokyo-night"
+    "prism": "tokyo-night",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#1a1b26",
+        "editorColor": "#c0caf5",
+        "sideBarBgColor": "#181822",
+        "themeColor": "#7aa2f7",
+        "buttonPrimaryBgColor": "#7aa2f7"
+      },
+      "md": {
+        "editorBgColor": "#1a1b26",
+        "editorColor": "#c0caf5",
+        "h1Color": "#bb9af7",
+        "linkColor": "#7dcfff",
+        "codeBlockBgColor": "#24283b",
+        "blockquoteBorderColor": "#414868"
+      }
+    }
   },
   {
     "id": "tokyo-night-light",
     "label": "Tokyo Night Light",
     "appearance": "light",
-    "prism": "tokyo-night-light"
+    "prism": "tokyo-night-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#d5d6db",
+        "editorColor": "#343b58",
+        "sideBarBgColor": "#d0d1d6",
+        "themeColor": "#34548a",
+        "buttonPrimaryBgColor": "#34548a"
+      },
+      "md": {
+        "editorBgColor": "#d5d6db",
+        "editorColor": "#343b58",
+        "h1Color": "#965027",
+        "linkColor": "#34548a",
+        "codeBlockBgColor": "#c8c9ce",
+        "blockquoteBorderColor": "#9699a3"
+      }
+    }
   },
   {
     "id": "tokyo-night-storm",
     "label": "Tokyo Night Storm",
     "appearance": "dark",
-    "prism": "tokyo-night-storm"
+    "prism": "tokyo-night-storm",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#24283b",
+        "editorColor": "#c0caf5",
+        "sideBarBgColor": "#1f2130",
+        "themeColor": "#7aa2f7",
+        "buttonPrimaryBgColor": "#7aa2f7"
+      },
+      "md": {
+        "editorBgColor": "#24283b",
+        "editorColor": "#c0caf5",
+        "h1Color": "#bb9af7",
+        "linkColor": "#7dcfff",
+        "codeBlockBgColor": "#1f2335",
+        "blockquoteBorderColor": "#414868"
+      }
+    }
   },
   {
     "id": "ulysses",
     "label": "Ulysses",
     "appearance": "light",
-    "prism": "ulysses"
+    "prism": "ulysses",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#f3f3f3",
+        "editorColor": "rgba(101, 101, 101, 0.7)",
+        "sideBarBgColor": "rgba(245, 245, 245, 0.95)",
+        "themeColor": "rgb(12, 139, 186)",
+        "buttonPrimaryBgColor": "rgb(12, 139, 186)"
+      },
+      "md": {
+        "editorBgColor": "#f3f3f3",
+        "editorColor": "rgba(101, 101, 101, 0.7)",
+        "h1Color": "rgb(12, 139, 186)",
+        "linkColor": "rgb(12, 139, 186)",
+        "codeBlockBgColor": "rgba(12, 139, 186, 0.05)",
+        "blockquoteBorderColor": "rgb(12, 139, 186)"
+      }
+    }
   }
 ]

@@ -128,6 +128,7 @@ import { guessClipboardFilePath } from '@/util/clipboard'
 import { getCssForOptions, getHtmlToc, type PdfCssOptions, type HtmlTocOptions } from '@/util/pdf'
 import { resolveTocHeadingElement } from '@/util/tocNavigation'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
+import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
 import { getTheme } from '@/util/themeColor'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
@@ -241,8 +242,6 @@ const {
   imageRelativeDirectoryBase,
   imageRelativeDirectoryName,
   imageFolderPath,
-  theme,
-  mdTheme,
   sequenceTheme,
   hideScrollbar,
   spellcheckerEnabled,
@@ -256,12 +255,15 @@ const {
   sourceCode
 } = storeToRefs(preferencesStore)
 
-// The diagram palette follows the Markdown theme: it is part of the document.
-const diagramTheme = computed(() => mdTheme.value || theme.value)
+// The diagram palette follows the Markdown axis: charts are part of the
+// document, not of the chrome. The pair comes from the same resolver the shell
+// and the settings window use, so following the system reaches the charts too.
+const themePair = useResolvedThemePair()
+const diagramTheme = computed(() => themePair.value.md)
 
-// The diagram palette follows the Markdown axis. Ask the manifest for the
-// appearance: chart ids such as `graphite` or `ayu-mirage` carry no `dark`
-// in their name, so matching the id would paint a chart on the wrong base.
+// Ask the manifest for the appearance: chart ids such as `graphite` or
+// `ayu-mirage` carry no `dark` in their name, so matching the id would paint a
+// chart on the wrong base.
 const diagramsOnDark = (id: string): boolean => getTheme(id)?.appearance === 'dark'
 
 // Editor store refs

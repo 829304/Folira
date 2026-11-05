@@ -688,7 +688,15 @@
       "importCustomThemes": "カスタムテーマをインポート",
       "importTheme": "テーマをインポート",
       "openFolder": "フォルダを開く",
-      "openThemesFolder": "テーマフォルダを開く"
+      "openThemesFolder": "テーマフォルダを開く",
+      "interfaceTheme": "インターフェーステーマ",
+      "markdownTheme": "本文テーマ",
+      "preview": "プレビュー",
+      "searchThemes": "テーマを検索",
+      "allThemes": "すべて",
+      "lightThemes": "ライト",
+      "darkThemes": "ダーク",
+      "noThemes": "一致するテーマがありません"
     },
     "keybindings": {
       "title": "キーバインド",

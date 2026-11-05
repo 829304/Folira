@@ -11,11 +11,18 @@
 
 import manifest from '../assets/themes/manifest.json'
 
+export interface ThemeSwatches {
+  ui: Record<string, string>
+  md: Record<string, string>
+}
+
 export interface ThemeEntry {
   id: string
   label: string
   appearance: 'light' | 'dark'
   prism: string | null
+  /** The colours a theme card draws; generated, never hand-written. */
+  swatches: ThemeSwatches
 }
 
 export const THEMES: ThemeEntry[] = manifest as ThemeEntry[]

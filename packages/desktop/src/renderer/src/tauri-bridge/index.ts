@@ -52,7 +52,7 @@ import { broadcastLanguage, openSettingsWindow, sendCurrentLanguage } from './se
 import { installTabShortcuts } from './shortcuts'
 import { closeWindow, closeWindowConfirm, installCloseGuard } from './window'
 import { installFileDrop, installWindowEvents } from './window-events'
-import { resolveInitialTheme, rememberThemeChoice } from './theme'
+import { resolveInitialPair } from './theme'
 import { setLanguage, t } from '@/i18n'
 
 // -----------------------------------------------------------------------------
@@ -312,9 +312,6 @@ const handleSend = (channel: string, args: unknown[]): void => {
       return
     case 'mt::set-user-preference': {
       const patch = args[0] as Record<string, unknown> | undefined
-      // The settings window writes the theme through this channel; mirror it to
-      // the sync store `resolveInitialTheme` reads on the next launch.
-      if (typeof patch?.theme === 'string') rememberThemeChoice(patch.theme)
       // Language is changed in the settings window but has to reach the editor.
       if (typeof patch?.language === 'string') broadcastLanguage(patch.language)
       fire(setStoredPreferences(patch).then(() => announcePreferences(patch)))
@@ -797,8 +794,11 @@ function synthesizeEditorUrlArgs(boot: BootInfo): void {
   params.set('type', 'editor')
   params.set('wid', '1')
   params.set('udp', boot.paths?.userData || '/tmp')
-  // Honor a saved theme choice / the OS light-dark preference on first paint.
-  params.set('theme', resolveInitialTheme())
+  // Honor the saved pair on first paint; each axis is resolved separately, so
+  // a mixed pair survives a restart.
+  const pair = resolveInitialPair()
+  params.set('uith', pair.ui)
+  params.set('mdth', pair.md)
   params.set('debug', '0')
   params.set('hsb', '0')
   params.set('tbs', 'custom')

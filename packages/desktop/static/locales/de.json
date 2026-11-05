@@ -688,7 +688,15 @@
       "importCustomThemes": "Benutzerdefinierte Designs importieren",
       "importTheme": "Design importieren",
       "openFolder": "Ordner öffnen",
-      "openThemesFolder": "Design-Ordner öffnen"
+      "openThemesFolder": "Design-Ordner öffnen",
+      "interfaceTheme": "Oberflächen-Theme",
+      "markdownTheme": "Markdown-Theme",
+      "preview": "Vorschau",
+      "searchThemes": "Themes durchsuchen",
+      "allThemes": "Alle",
+      "lightThemes": "Hell",
+      "darkThemes": "Dunkel",
+      "noThemes": "Kein Theme gefunden"
     },
     "keybindings": {
       "title": "Tastenkürzel",
