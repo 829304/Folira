@@ -12,31 +12,26 @@ use tauri::{Emitter, Manager};
 
 /// A second launch (CLI, file association, dock/taskbar) must not start another
 /// process: opening several documents means several tabs in the one window.
-/// Focus the existing window and hand it whatever file the new argv named,
-/// through the same `mt::open-new-tab` channel the menu's Open File uses.
 ///
-/// The window may not be there. Closing the editor while the settings window is
-/// open leaves the process running with nothing to focus, so that case rebuilds
-/// the editor and lets it pick the files up through `boot_info` — the running
-/// process cannot answer for an argv it never saw.
-fn handle_second_instance(app: &tauri::AppHandle, argv: Vec<String>) {
-    let paths = commands::boot::paths_from_args(argv.into_iter().skip(1));
+/// The files go to the queue rather than being pushed straight at the editor.
+/// A window existing does not mean its renderer is listening — a rebuild has
+/// the native window up well before `mt::open-new-tab` has a listener, and
+/// Tauri does not replay an event to one registered later — so the renderer
+/// pulls the queue instead (`take_pending_open_files`). The emit below is only
+/// a nudge for an editor that is already listening; losing it costs nothing
+/// because the next pull finds the queue.
+fn handle_second_instance(app: &tauri::AppHandle, argv: Vec<String>, cwd: &str) {
+    // Relative arguments belong to the caller's directory, not this process's:
+    // `folira note.md` typed in another folder names that folder's file.
+    let paths =
+        commands::boot::paths_from_args(argv.into_iter().skip(1), Some(std::path::Path::new(cwd)));
+    commands::boot::queue_open_files(paths);
 
-    if app.get_webview_window("main").is_some() {
-        if let Err(err) = window::focus_or_create_editor(app) {
-            eprintln!("[single-instance] cannot focus the editor: {err}");
-        }
-        for file in commands::boot::file_from_args(paths.into_iter()) {
-            if let Err(err) = app.emit("mt::open-new-tab", serde_json::json!([file, null, true])) {
-                eprintln!("[single-instance] failed to emit mt::open-new-tab: {err}");
-            }
-        }
-        return;
-    }
-
-    commands::boot::hand_over_paths(paths);
     if let Err(err) = window::focus_or_create_editor(app) {
-        eprintln!("[single-instance] cannot reopen the editor: {err}");
+        eprintln!("[single-instance] cannot focus the editor: {err}");
+    }
+    if let Err(err) = app.emit("mt::pending-open", ()) {
+        eprintln!("[single-instance] failed to announce queued files: {err}");
     }
 }
 
@@ -46,8 +41,8 @@ pub fn run() {
     tauri::Builder::default()
         // Must be registered first — plugins run in registration order and this
         // one decides whether the process survives at all.
-        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            handle_second_instance(app, argv);
+        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            handle_second_instance(app, argv, &cwd);
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -129,6 +124,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             startup::startup_trace,
             startup::startup_log_path,
+            // Files another launch queued; the editor pulls them once its
+            // listeners are registered, which a pushed event cannot guarantee.
+            commands::boot::take_pending_open_files,
             // The preferences window shares the editor's WebView2 data directory,
             // so it has to be built on this side.
             window::open_settings_window,

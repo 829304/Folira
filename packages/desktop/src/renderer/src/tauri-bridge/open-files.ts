@@ -10,6 +10,7 @@ import { invoke } from '@tauri-apps/api/core'
 
 import { loadMarkdownFile, type LoadedMarkdown } from './markdown-file'
 import type { DispatchLocal } from './save'
+import { isTauri } from '@/util/isTauri'
 
 /** Paths behind open tabs. The Rust watch is re-armed whenever this changes. */
 const openPaths = new Set<string>()
@@ -34,6 +35,26 @@ export const trackOpenFile = (pathname: string | null | undefined): void => {
   if (!pathname || openPaths.has(pathname)) return
   openPaths.add(pathname)
   syncWatch()
+}
+
+/**
+ * Take the files another launch queued, newest batch first.
+ *
+ * Rust cannot push them: the editor window may exist while its renderer is
+ * still booting, and an event delivered before `mt::open-new-tab` has a
+ * listener is dropped, not replayed. Pulling after the listeners are in place
+ * is the only delivery that survives that window, and it collapses a burst of
+ * double-clicks into one batch.
+ */
+export const takePendingOpenFiles = async(): Promise<string[]> => {
+  if (!isTauri()) return []
+  try {
+    const paths = await invoke<string[]>('take_pending_open_files')
+    return Array.isArray(paths) ? paths.filter((path) => typeof path === 'string') : []
+  } catch (err) {
+    console.warn('[tauri-bridge] cannot take the queued files:', err)
+    return []
+  }
 }
 
 export const untrackOpenFile = (pathname: string | null | undefined): void => {

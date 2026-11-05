@@ -32,7 +32,7 @@ import type {
   BootstrapEditorConfig
 } from '@shared/types/files'
 import { isTauri } from '@/tauri-bridge'
-import { trackOpenFile } from '@/tauri-bridge/open-files'
+import { trackOpenFile, takePendingOpenFiles } from '@/tauri-bridge/open-files'
 
 // ----------------------------------------------------------------------------
 // Local helper types
@@ -646,7 +646,6 @@ export const useEditorStore = defineStore('editor', {
 
     LISTEN_FOR_CLOSE(): void {
       const projectStore = useProjectStore()
-      const preferencesStore = usePreferencesStore()
       window.electron.ipcRenderer.on('mt::ask-for-close', () => {
         // Both the snapshot below and the `isSaved` test after it read the
         // applied document. An edit still queued in the engine's frame batch is
@@ -675,8 +674,12 @@ export const useEditorStore = defineStore('editor', {
                 }
               })
 
-            if (unsavedFiles.length && preferencesStore.startUpAction !== 'restoreAll') {
-              // Ignore unsaved files when user has chosen to restore all on startup, as they will be restored anyway.
+            // Every unsaved tab gets asked about, whatever the startup setting
+            // says. This build leaves `update-buffer-state` unimplemented (see
+            // tauri-bridge/index.ts), so nothing is restored on the next launch
+            // — and treating `restoreAll` as "already saved somewhere" would
+            // close the window with the edits gone and no prompt.
+            if (unsavedFiles.length > 0) {
               window.electron.ipcRenderer.send('mt::close-window-confirm', deepClone(unsavedFiles))
             } else {
               window.electron.ipcRenderer.send('mt::close-window')
@@ -989,6 +992,25 @@ export const useEditorStore = defineStore('editor', {
           (payload as { selected?: boolean; markdown?: string } | undefined) ?? {}
         this.NEW_UNTITLED_TAB({ markdown, selected })
       })
+
+      // A launch that named files while this window was booting pokes the
+      // renderer once it is up; the queue itself is pulled by OPEN_QUEUED_FILES.
+      window.electron.ipcRenderer.on('mt::pending-open', () => this.OPEN_QUEUED_FILES())
+    },
+
+    // Rust queues what another launch named instead of pushing it: the window
+    // exists well before every listener does, and an event that arrives early
+    // is dropped rather than replayed. Pulling is what makes a second launch
+    // during a rebuild end with both documents open. Called once the renderer
+    // has registered all of its listeners (app.vue), and on each poke.
+    OPEN_QUEUED_FILES(): void {
+      takePendingOpenFiles()
+        .then((paths) => {
+          for (const pathname of paths) {
+            window.electron.ipcRenderer.send('mt::open-file', pathname, {})
+          }
+        })
+        .catch((err) => console.warn('[editor] cannot open the queued files:', err))
     },
 
     CLOSE_TAB(file: IFileState | null = null): void {

@@ -8,8 +8,6 @@ use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 use tauri::Manager;
 
-use super::markdown::MarkdownDocument;
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BootPaths {
@@ -39,61 +37,79 @@ pub struct BootInfo {
     locale: String,
 }
 
-/// Files a second launch named while there was no editor window to hand them to.
+/// Files a second launch named, waiting for an editor that can open them.
 ///
-/// `initial_paths_from_args` can only read this process's argv, which describes
-/// the first launch. When the single-instance handler has to rebuild the editor,
-/// the files come from the *new* process instead, so they are parked here for
-/// the window that is about to ask.
-fn handed_over() -> &'static Mutex<Vec<String>> {
-    static HANDED_OVER: OnceLock<Mutex<Vec<String>>> = OnceLock::new();
-    HANDED_OVER.get_or_init(|| Mutex::new(Vec::new()))
+/// A window existing is not the same as its renderer listening: right after the
+/// editor is rebuilt the native window is up while `mt::open-new-tab` has no
+/// listener yet, and Tauri does not replay an event to a listener registered
+/// afterwards. Requests therefore wait here and the renderer pulls them with
+/// `take_pending_open_files` once it has registered — which also makes a burst
+/// of double-clicks end with every document open instead of only the first.
+fn pending_open() -> &'static Mutex<Vec<String>> {
+    static PENDING_OPEN: OnceLock<Mutex<Vec<String>>> = OnceLock::new();
+    PENDING_OPEN.get_or_init(|| Mutex::new(Vec::new()))
 }
 
-/// Park the paths a second launch named, for the editor window it is rebuilding.
-pub fn hand_over_paths(paths: Vec<String>) {
+/// Queue the files another launch named. The renderer is told they are there,
+/// but the queue is the record: the event is only a nudge.
+pub fn queue_open_files(paths: Vec<String>) {
     if paths.is_empty() {
         return;
     }
-    if let Ok(mut pending) = handed_over().lock() {
-        pending.extend(paths);
+    if let Ok(mut pending) = pending_open().lock() {
+        for path in paths {
+            if !pending.contains(&path) {
+                pending.push(path);
+            }
+        }
     }
+}
+
+/// Hand the queued files to the caller and clear them. Draining rather than
+/// peeking keeps a burst idempotent: whoever pulls gets each path exactly once.
+#[tauri::command]
+pub fn take_pending_open_files() -> Vec<String> {
+    pending_open()
+        .lock()
+        .map(|mut pending| std::mem::take(&mut *pending))
+        .unwrap_or_default()
 }
 
 /// Scan the process arguments for a readable file to open on launch (CLI use:
 /// `folira path/to/file.md`, and Windows/Linux file associations, which
 /// also pass the path as an argument).
-///
-/// Parked paths win and are consumed: they belong to a window that is only now
-/// starting and would otherwise open the file the *first* launch named.
 fn initial_paths_from_args() -> Vec<String> {
-    let handed: Vec<String> = handed_over()
-        .lock()
-        .map(|mut pending| std::mem::take(&mut *pending))
-        .unwrap_or_default();
-    if !handed.is_empty() {
-        return handed;
-    }
-    paths_from_args(std::env::args().skip(1))
+    // This launch's own argv is relative to this process's directory, which is
+    // the shell's: resolving here keeps one shape of path on both launch paths.
+    let cwd = std::env::current_dir().ok();
+    paths_from_args(std::env::args().skip(1), cwd.as_deref())
 }
 
-/// The argument scan itself, over an arbitrary argument list. A second launch
-/// is funnelled into the running instance rather than starting a new process,
-/// so the single-instance handler needs to run this over *that* process's argv
-/// (already stripped of argv[0]) instead of this one's.
-pub fn paths_from_args(args: impl Iterator<Item = String>) -> Vec<String> {
+/// The argument scan itself, over an arbitrary argument list.
+///
+/// A second launch is funnelled into the running instance rather than starting
+/// a new process, so the single-instance handler runs this over *that*
+/// process's argv (already stripped of argv[0]). Its relative arguments belong
+/// to *its* working directory: `folira note.md` typed in another folder must
+/// open that folder's `note.md`, not the one beside the running instance, so
+/// the caller passes the directory to resolve against. Paths come back absolute
+/// for the same reason — the renderer cannot know where the request came from.
+pub fn paths_from_args(
+    args: impl Iterator<Item = String>,
+    cwd: Option<&std::path::Path>,
+) -> Vec<String> {
     args.filter(|arg| !arg.starts_with('-'))
-        .filter(|arg| std::path::Path::new(arg).is_file())
+        .filter_map(|arg| {
+            let path = std::path::Path::new(&arg);
+            let resolved = match cwd {
+                Some(dir) if path.is_relative() => dir.join(path),
+                _ => path.to_path_buf(),
+            };
+            resolved
+                .is_file()
+                .then(|| resolved.to_string_lossy().into_owned())
+        })
         .collect()
-}
-
-pub fn file_from_args(args: impl Iterator<Item = String>) -> Vec<MarkdownDocument> {
-    paths_from_args(args).into_iter().filter_map(|arg| {
-        // Use the same decoder as normal file opens so second-instance launches
-        // support BOMs and legacy encodings too.
-        let preferred_eol = if cfg!(windows) { "crlf" } else { "lf" };
-        super::markdown::load_markdown(&arg, preferred_eol, false).ok()
-    }).collect()
 }
 
 const MARKDOWN_EXTENSIONS: [&str; 11] = [
@@ -198,42 +214,63 @@ mod tests {
     use std::path::PathBuf;
 
     fn temp_path(label: &str) -> PathBuf {
-        std::env::temp_dir().join(format!(
-            "folira-boot-{label}-{}",
-            std::process::id()
-        ))
+        std::env::temp_dir().join(format!("folira-boot-{label}-{}", std::process::id()))
+    }
+
+    struct Caller {
+        dir: PathBuf,
+    }
+
+    impl Caller {
+        fn new(label: &str) -> Self {
+            let dir = temp_path(label);
+            fs::create_dir_all(&dir).unwrap();
+            Caller { dir }
+        }
+
+        fn file(&self, name: &str) -> PathBuf {
+            let path = self.dir.join(name);
+            fs::write(&path, b"# Doc\n").unwrap();
+            path
+        }
+    }
+
+    impl Drop for Caller {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.dir);
+        }
     }
 
     #[test]
-    fn loads_all_readable_startup_files() {
-        let first = temp_path("first.md");
-        let second = temp_path("second.md");
-        fs::write(&first, b"# First\n").unwrap();
-        fs::write(&second, b"# Second\n").unwrap();
+    fn resolves_a_relative_argument_against_the_directory_it_was_typed_in() {
+        let launching = Caller::new("caller");
+        let running = Caller::new("running");
+        let target = launching.file("note.md");
+        running.file("note.md");
 
-        let files = file_from_args(vec![
-            first.to_string_lossy().into_owned(),
-            second.to_string_lossy().into_owned(),
-        ]
-        .into_iter());
+        // The second process ran in `launching`, the process answering ran in
+        // `running`: the argument names the caller's file, not a namesake.
+        let files = paths_from_args(
+            vec!["note.md".to_string()].into_iter(),
+            Some(&launching.dir),
+        );
+        assert_eq!(files, vec![target.to_string_lossy().into_owned()]);
 
-        assert_eq!(files.len(), 2);
-        assert_eq!(files[0].markdown, "# First\n");
-        assert_eq!(files[1].markdown, "# Second\n");
-        let _ = fs::remove_file(first);
-        let _ = fs::remove_file(second);
+        let wrong = paths_from_args(vec!["note.md".to_string()].into_iter(), Some(&running.dir));
+        assert_ne!(wrong, files);
     }
 
     #[test]
-    fn startup_loader_strips_utf8_bom() {
-        let path = temp_path("bom.md");
-        fs::write(&path, [0xef, 0xbb, 0xbf, b'#', b' ', b'T', b'\n']).unwrap();
+    fn hands_out_queued_files_once() {
+        queue_open_files(vec![
+            "a.md".to_string(),
+            "b.md".to_string(),
+            "a.md".to_string(),
+        ]);
+        queue_open_files(vec!["b.md".to_string(), "c.md".to_string()]);
 
-        let files = file_from_args(vec![path.to_string_lossy().into_owned()].into_iter());
-
-        assert_eq!(files.len(), 1);
-        assert_eq!(files[0].markdown, "# T\n");
-        assert!(files[0].encoding.is_bom);
-        let _ = fs::remove_file(path);
+        let first = take_pending_open_files();
+        assert_eq!(first, vec!["a.md", "b.md", "c.md"]);
+        assert!(take_pending_open_files().is_empty());
     }
 }

@@ -252,6 +252,9 @@ export interface IpcMainEventChannels {
     options?: TabOptions,
     selected?: boolean
   ]
+  // A second launch queued files in Rust; the renderer pulls them with
+  // `take_pending_open_files` instead of receiving them as an event.
+  'mt::pending-open': []
   'mt::pandoc-not-exists': [opts: Record<string, unknown>]
   'mt::print-service-clearup': []
   'mt::rg::cancelled': [payload: unknown]

@@ -285,6 +285,10 @@ onMounted(async () => {
   setupDragDropHandler()
   markStartup('listeners registered')
 
+  // Every listener is in place, so this is the moment a queued document can be
+  // handed to the tab machinery without a window existing yet meaning nothing.
+  editorStore.OPEN_QUEUED_FILES()
+
   nextTick(() => {
     // `initialState` from bootstrap carries nullable URL params (string|null);
     // `addStyles` requires non-null `theme` / `codeFontFamily` strings.

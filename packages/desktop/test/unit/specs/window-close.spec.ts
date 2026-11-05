@@ -18,6 +18,7 @@ const bridgePreferences = read('src/renderer/src/tauri-bridge/preferences.ts')
 const lib = read('src-tauri/src/lib.rs')
 const rustWindow = read('src-tauri/src/window.rs')
 const boot = read('src-tauri/src/commands/boot.rs')
+const editorStore = read('src/renderer/src/store/editor.ts')
 
 describe('closing a window', () => {
   it('writes the pending preferences before an auxiliary window goes away', () => {
@@ -63,11 +64,27 @@ describe('closing a window', () => {
     expect(lib).toContain('window::focus_or_create_editor(app)')
   })
 
-  it('hands the new launch its files through boot info', () => {
+  it('queues the new launch files instead of pushing them', () => {
     // The running process cannot answer for argv it never saw, and the rebuilt
-    // window would otherwise open the file the first launch named.
-    expect(lib).toContain('commands::boot::hand_over_paths(paths)')
-    expect(boot).toContain('pub fn hand_over_paths')
+    // window has no listener yet: the queue is what survives both, because the
+    // renderer pulls it once it has registered.
+    expect(lib).toContain('commands::boot::queue_open_files(paths)')
+    expect(lib).toContain('commands::boot::take_pending_open_files')
+    expect(boot).toContain('pub fn queue_open_files')
+    expect(boot).toContain('pub fn take_pending_open_files')
     expect(boot).toContain('std::mem::take(&mut *pending)')
+  })
+
+  it('pulls the queue only after every listener is registered', () => {
+    // A pull before `mt::open-new-tab` is registered would dispatch into
+    // nothing and drop the documents the queue was holding, so the pull sits
+    // next to the startup mark that says exactly that.
+    const app = read('src/renderer/src/pages/app.vue')
+    const marked = app.indexOf("markStartup('listeners registered')")
+    const pull = app.indexOf('editorStore.OPEN_QUEUED_FILES()', marked)
+    expect(marked).toBeGreaterThan(-1)
+    expect(pull).toBeGreaterThan(marked)
+    expect(editorStore).toContain('takePendingOpenFiles')
+    expect(editorStore).toContain("on('mt::pending-open'")
   })
 })
