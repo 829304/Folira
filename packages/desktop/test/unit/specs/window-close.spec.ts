@@ -35,8 +35,24 @@ describe('closing a window', () => {
 
   it('flushes both stores, not just the preferences one', () => {
     expect(bridgePreferences).toContain('export const flushStoredPreferences')
-    expect(bridgePreferences).toContain('flush(preferences)')
-    expect(bridgePreferences).toContain('flush(userData)')
+    expect(bridgePreferences).toContain('drain(preferences)')
+    expect(bridgePreferences).toContain('drain(userData)')
+    // A second pass covers an edit that arrived while the first write was on
+    // the wire; the close cannot be the moment the edit is lost.
+    const drain = bridgePreferences.slice(bridgePreferences.indexOf('const drain ='))
+    expect(drain).toContain('await flush(store)')
+    expect(drain).toContain('if (Object.keys(store.pending).length > 0)')
+  })
+
+  it('stores the window rectangle before destroying the editor', () => {
+    // `destroy()` raises no close request, so the Rust hook that saves on the
+    // way out never runs: the flags and the rectangle have to be read while the
+    // window still exists.
+    const save = bridgeWindow.indexOf('await rememberWindowState()')
+    const destroy = bridgeWindow.indexOf('await getCurrentWindow().destroy()', save)
+    expect(save).toBeGreaterThan(-1)
+    expect(destroy).toBeGreaterThan(save)
+    expect(bridgeWindow).toContain("invoke('remember_window_state')")
   })
 
   it('rebuilds the editor when a second launch finds it closed', () => {

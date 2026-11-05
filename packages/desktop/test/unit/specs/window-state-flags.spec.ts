@@ -38,7 +38,7 @@ describe('window state', () => {
 
   it('restores size, position and the maximized state', () => {
     expect(window).toContain('inner_size(')
-    expect(window).toContain('.position(')
+    expect(window).toContain('set_position(')
     expect(window).toContain('.maximize()')
     expect(window).toContain('maximized')
   })
@@ -67,13 +67,52 @@ describe('window state', () => {
   })
 
   it('stores the rectangle in the unit the builder reads it back in', () => {
-    // `inner_size` and `position` take logical pixels; `inner_size()` and
-    // `outer_position()` report physical ones. Mixing them restores a window
-    // that is the right size only at 100 % scaling.
+    // `inner_size` takes logical pixels and `inner_size()` reports physical
+    // ones. Mixing them restores a window that is the right size only at 100 %
+    // scaling.
     expect(window).toContain('scale_factor()')
     expect(window).toContain('logical')
     expect(window).toContain('fn update_bounds')
     expect(window).toContain('/ scale')
+  })
+
+  it('stores the position in physical pixels', () => {
+    // A global logical position names two different points across displays with
+    // different scale factors, so a window saved on a 200 % monitor came back on
+    // the 100 % one. Physical coordinates identify the point itself.
+    const update = window.slice(window.indexOf('fn update_bounds'), window.indexOf('fn fills_screen'))
+    expect(update).toContain('state.x = Some(f64::from(x))')
+    expect(update).not.toContain('f64::from(x) / scale')
+
+    // The builder only takes logical coordinates, so the saved point is applied
+    // after the window exists.
+    expect(window).toContain('PhysicalPosition::new(x.round() as i32, y.round() as i32)')
+    expect(window).toContain('fn normalize')
+    expect(window).toContain('STATE_VERSION')
+  })
+
+  it('saves while the renderer can still measure the window', () => {
+    // The editor closes through `destroy()`, which raises no close request;
+    // `RunEvent::Exit` then finds nothing to measure. The renderer asks for the
+    // save first, and quitting from the menu gets a measurement at
+    // `ExitRequested`.
+    expect(window).toContain('fn remember_window_state')
+    expect(lib).toContain('window::remember_window_state')
+    expect(lib).toContain('RunEvent::ExitRequested')
+
+    const bridge = readFileSync(
+      resolve(__dirname, '../../../src/renderer/src/tauri-bridge/window.ts'),
+      'utf-8'
+    )
+    expect(bridge).toContain("invoke('remember_window_state')")
+  })
+
+  it('records the zoom flags even when the rectangle is not recorded', () => {
+    // A window destroyed by the menu close leaves only the cache behind, so the
+    // maximized/fullscreen flags have to be written on the resize that follows.
+    const track = window.slice(window.indexOf('pub fn track('), window.indexOf('pub fn save('))
+    expect(track).toContain('state.maximized = maximized')
+    expect(track).toContain('state.fullscreen = fullscreen')
   })
 
   it('remembers fullscreen and the rectangle to come back to', () => {

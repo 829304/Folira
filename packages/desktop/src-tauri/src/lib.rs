@@ -85,7 +85,11 @@ pub fn run() {
             // directory. Copy them across once — the original stays in place,
             // so a downgrade still finds them.
             paths::migrate_legacy_file(
-                handle.path().app_data_dir().ok().map(|dir| dir.join("preferences.json")),
+                handle
+                    .path()
+                    .app_data_dir()
+                    .ok()
+                    .map(|dir| dir.join("preferences.json")),
                 &data.preferences(),
             );
             paths::migrate_legacy_window_state(
@@ -128,6 +132,9 @@ pub fn run() {
             // The preferences window shares the editor's WebView2 data directory,
             // so it has to be built on this side.
             window::open_settings_window,
+            // Geometry is written before the editor destroys itself; the exit
+            // hook alone is too late once the window is gone.
+            window::remember_window_state,
             // fs::* — mirror of the mt::fs:: channels
             commands::fs::is_file,
             commands::fs::is_directory,
@@ -176,9 +183,12 @@ pub fn run() {
         .expect("error while building Folira")
         .run(|app, event| {
             // Written once, on the way out, while the window still reports the
-            // geometry the user last saw.
-            if matches!(event, tauri::RunEvent::Exit) {
-                window::save(app);
+            // geometry the user last saw. `ExitRequested` runs before the
+            // windows are torn down, so a quit from the menu — which destroys
+            // them without a close request — still gets one measurement.
+            match event {
+                tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => window::save(app),
+                _ => {}
             }
         });
 }

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { PREFERENCES_VERSION, PREFERENCES_VERSION_KEY } from '@shared/types/preferences'
 import bus from '../bus'
 import { setLanguage } from '../i18n'
+import { rememberStoredPreferences } from '../tauri-bridge/preferences'
 
 // Finite-value unions where the runtime currently constrains the field.
 // We keep these as plain strings everywhere else to avoid forcing prematurely
@@ -38,6 +39,13 @@ export interface PreferencesState {
   lastOpenedFolder: string
   treePathExcludePatterns: string[]
   language: string
+  /**
+   * Set once the stored bag has arrived, so a window can tell the pair it
+   * resolved from real preferences apart from the one it painted from the URL
+   * cache. Never persisted: `main.ts` seeds the store from a URL subset, and a
+   * write carries one key at a time.
+   */
+  preferencesLoaded: boolean
 
   // ----- Editor / typography -----
   editorFontFamily: string
@@ -183,6 +191,8 @@ export const usePreferencesStore = defineStore('preferences', {
     lastOpenedFolder: '',
     treePathExcludePatterns: [],
     language: 'en',
+    // Flipped by the first stored bag; see the field's note.
+    preferencesLoaded: false,
 
     editorFontFamily: 'Open Sans',
     fontSize: 16,
@@ -290,6 +300,9 @@ export const usePreferencesStore = defineStore('preferences', {
       const raw = (preference ?? {}) as Record<string, unknown>
       const migrated = migrateLegacyThemeFields(raw)
 
+      // Only a stored bag means the file has been read; a broadcast patch from
+      // another window must not count as the first load.
+      this.preferencesLoaded = true
       this.SET_USER_PREFERENCE(migrated as Partial<PreferencesState>)
 
       // Writing the migrated bag back is what lets the next launch skip the
@@ -315,6 +328,12 @@ export const usePreferencesStore = defineStore('preferences', {
     SET_USER_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
       const oldLanguage = this.language
       const incoming = preference as Record<string, unknown>
+
+      // Another window changed a preference. The bridge keeps its own copy of
+      // the stored values to answer `getStoredPreference` without a round trip,
+      // and a menu toggle reads the value it is about to flip: leaving that copy
+      // behind would flip the old value back on the first click.
+      rememberStoredPreferences(incoming)
 
       Object.keys(incoming).forEach((key) => {
         const value = incoming[key]

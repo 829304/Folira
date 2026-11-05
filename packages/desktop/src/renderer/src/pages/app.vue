@@ -66,6 +66,7 @@ import { dismissSplash } from '@/util/splash'
 import { showEditorContextMenu } from '@/contextMenu/editor'
 import { DEFAULT_STYLE } from '@/config'
 import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
+import type { ThemePair } from '@/util/themeSelection'
 import { useLayoutStore } from '@/store/layout'
 import { useListenForMainStore } from '@/store/listenForMain'
 import { usePreferencesStore } from '@/store/preferences'
@@ -121,16 +122,23 @@ const hasCurrentFile = computed<boolean>(() => {
 // The two axes move independently: re-apply both whenever either resolves to a
 // different theme, so switching one never resets the other.
 //
-// `pairApplied` records that the store has already spoken. The URL pair is the
-// previous session's paint and may only stand in until then; applying it after
-// this watcher ran would repaint the cached theme over the stored one.
-let pairApplied = false
-watch(themePair, (pair, previous) => {
-  if (pair.ui !== previous.ui || pair.md !== previous.md) {
-    pairApplied = true
+// The URL pair is the previous session's paint and may only stand in until the
+// store has spoken. Waiting on `preferencesLoaded` rather than on the pair
+// changing matters: a resolution that happens to equal the cached one — the
+// default on a fresh launch — never changes the pair, so a change-only watcher
+// would leave the cached theme on screen for the whole session.
+const { preferencesLoaded } = storeToRefs(preferencesStore)
+let paintedPair: ThemePair | null = null
+watch(
+  [themePair, preferencesLoaded],
+  ([pair, loaded]) => {
+    if (!loaded) return
+    if (paintedPair && paintedPair.ui === pair.ui && paintedPair.md === pair.md) return
+    paintedPair = { ui: pair.ui, md: pair.md }
     applyTheme(pair)
-  }
-})
+  },
+  { immediate: true }
+)
 
 watch(customCss, (value, oldValue) => {
   if (value !== oldValue) {
@@ -284,18 +292,18 @@ onMounted(async () => {
     // The window URL carries the pair the previous session painted with, so the
     // first frame matches what was on screen before the preferences file is read.
     // That pair is a cache for this frame only: it is deliberately not part of
-    // `initialState`, which `main.ts` feeds into the preferences store.
+    // `initialState`, which `main.ts` feeds into the preferences store. Once the
+    // store's file has arrived its resolution is the real one.
     const init = window.marktext?.initialState as typeof DEFAULT_STYLE | undefined
     const initialPair = window.marktext?.initialThemePair
-    // The store wins once it has a pair of its own; see `pairApplied`.
     const pair = themePair.value
     const style: AddStylesOptions = {
       theme: init?.theme ?? DEFAULT_STYLE.theme,
       codeFontFamily: init?.codeFontFamily ?? DEFAULT_STYLE.codeFontFamily,
       codeFontSize: init?.codeFontSize ?? DEFAULT_STYLE.codeFontSize,
       hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar,
-      uiTheme: pairApplied ? pair.ui : initialPair?.ui || pair.ui,
-      mdTheme: pairApplied ? pair.md : initialPair?.md || pair.md
+      uiTheme: preferencesLoaded.value ? pair.ui : initialPair?.ui || pair.ui,
+      mdTheme: preferencesLoaded.value ? pair.md : initialPair?.md || pair.md
     }
     addStyles(style)
   })

@@ -24,10 +24,16 @@ use crate::paths::DataRoot;
 
 /// What `window-state.json` holds.
 ///
-/// Geometry is in logical pixels, the unit both `inner_size` and `position`
-/// take on the builder. Physical pixels would restore a different size on a
-/// display whose scale factor has changed since the file was written.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+/// The size is in logical pixels, because `inner_size` takes those on the
+/// builder: a physical size would come back wrong on a display whose scale
+/// factor changed since the file was written.
+///
+/// The position is in **physical** pixels. A global logical position is
+/// ambiguous across displays with different scale factors — on a 100% primary
+/// and a 200% secondary, logical 1200 names two different points — and the
+/// window had been landing on the wrong screen for it. Physical coordinates are
+/// the ones the window system uses, so they identify a point on one display.
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct WindowState {
     #[serde(default)]
     width: Option<f64>,
@@ -37,14 +43,37 @@ struct WindowState {
     x: Option<f64>,
     #[serde(default)]
     y: Option<f64>,
-    /// `false` marks a file written before the unit was fixed: those numbers
-    /// are physical pixels and have to be divided by the monitor's scale.
+    /// `0` is a file written before the position was made physical. Those
+    /// numbers are converted once, on load.
+    #[serde(default)]
+    version: u32,
+    /// Only meaningful for `version == 0`: the whole file (size and position)
+    /// was written in logical pixels. The field stays in the struct so an old
+    /// file still deserialises.
     #[serde(default)]
     logical: bool,
     #[serde(default)]
     maximized: bool,
     #[serde(default)]
     fullscreen: bool,
+}
+
+/// The shape this build writes.
+const STATE_VERSION: u32 = 1;
+
+impl Default for WindowState {
+    fn default() -> Self {
+        Self {
+            width: None,
+            height: None,
+            x: None,
+            y: None,
+            version: STATE_VERSION,
+            logical: false,
+            maximized: false,
+            fullscreen: false,
+        }
+    }
 }
 
 /// Geometry as the app currently sees it.
@@ -70,11 +99,7 @@ pub fn create(app: &AppHandle, data: &DataRoot) -> Result<(), Box<dyn Error>> {
         .ok_or("tauri.conf.json has no window to build")?;
 
     let saved = load(&data.window_state()).unwrap_or_default();
-    let state = if saved.logical {
-        saved
-    } else {
-        from_physical(app, saved)
-    };
+    let state = normalize(app, saved);
 
     // WebView2 appends its own `EBWebView` segment, so the directory handed to
     // it is the data root itself — the profile lands at `<data>/EBWebView`.
@@ -84,16 +109,20 @@ pub fn create(app: &AppHandle, data: &DataRoot) -> Result<(), Box<dyn Error>> {
     if let (Some(width), Some(height)) = (state.width, state.height) {
         builder = builder.inner_size(width, height);
     }
+
+    let window = builder.build()?;
+
     // Place the window only where the user can still reach it: a monitor that
     // was unplugged since the last run must not strand the window off-screen
-    // with no way to drag it back.
+    // with no way to drag it back. The saved point is physical, so it is applied
+    // as one — the builder only takes logical coordinates, which is the
+    // ambiguity this file no longer has to guess at.
     if let (Some(x), Some(y)) = (state.x, state.y) {
         if is_on_a_monitor(app, x, y) {
-            builder = builder.position(x, y);
+            let _ = window.set_position(PhysicalPosition::new(x.round() as i32, y.round() as i32));
         }
     }
 
-    let window = builder.build()?;
     if state.fullscreen {
         let _ = window.set_fullscreen(true);
     } else if state.maximized {
@@ -134,28 +163,22 @@ pub fn focus_or_create_editor(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     create(app, &data)
 }
 
-/// Whether a point given in logical pixels still falls on a monitor.
+/// Whether a point given in physical pixels still falls on a monitor.
 ///
-/// `monitor_from_point` reads physical pixels, and the state file stores
-/// logical ones, so feeding the saved point to it would misjudge the corner on
-/// a scaled display. Converting each monitor into its own logical space avoids
-/// the question of which scale applies before a monitor has been picked.
+/// The state file stores the position in physical pixels, the same unit
+/// `monitor_from_point` reads, so the saved corner can be tested directly.
 fn is_on_a_monitor(app: &AppHandle, x: f64, y: f64) -> bool {
     let Ok(monitors) = app.available_monitors() else {
         return false;
     };
 
     monitors.iter().any(|monitor| {
-        let scale = monitor.scale_factor();
-        if scale <= 0.0 {
-            return false;
-        }
         let position = monitor.position();
         let size = monitor.size();
-        let left = f64::from(position.x) / scale;
-        let top = f64::from(position.y) / scale;
-        let right = left + f64::from(size.width) / scale;
-        let bottom = top + f64::from(size.height) / scale;
+        let left = f64::from(position.x);
+        let top = f64::from(position.y);
+        let right = left + f64::from(size.width);
+        let bottom = top + f64::from(size.height);
 
         x >= left && x < right && y >= top && y < bottom
     })
@@ -176,16 +199,29 @@ pub fn track(window: &tauri::Window) {
     else {
         return;
     };
-    if editor.is_maximized().unwrap_or(false)
-        || editor.is_fullscreen().unwrap_or(false)
-        || editor.is_minimized().unwrap_or(false)
-    {
+    // A minimised window reports a rectangle that is not where the user left
+    // it, and nothing about the minimised state is worth restoring.
+    if editor.is_minimized().unwrap_or(false) {
         return;
     }
+
+    let maximized = editor.is_maximized().unwrap_or(false);
+    let fullscreen = editor.is_fullscreen().unwrap_or(false);
 
     let Ok(mut state) = geometry.0.lock() else {
         return;
     };
+    // Record the flags on every resize and move, not only when the window
+    // quits with one: a window closed from the menu is destroyed before the
+    // exit hook runs, and the flags in the cache are then all that is left.
+    // Zooming reports a resize before `is_maximized()` turns true, so this can
+    // lag by one event; the next one, or `save` while the window still exists,
+    // catches up.
+    state.maximized = maximized;
+    state.fullscreen = fullscreen;
+    if maximized || fullscreen {
+        return;
+    }
     update_bounds(&editor, &mut state);
 }
 
@@ -207,13 +243,17 @@ pub fn save(app: &AppHandle) {
         return;
     };
     if let Some(window) = app.get_webview_window("main") {
+        // The flags are read here even when the window cannot be measured: a
+        // zoomed window is destroyed before the exit hook runs, and
+        // `is_maximized` is the only place the state is still visible then.
         state.maximized = window.is_maximized().unwrap_or(state.maximized);
         state.fullscreen = window.is_fullscreen().unwrap_or(state.fullscreen);
         if !state.maximized && !state.fullscreen && !window.is_minimized().unwrap_or(false) {
             update_bounds(&window, &mut state);
         }
     }
-    state.logical = true;
+    state.version = STATE_VERSION;
+    state.logical = false;
 
     let path = data.window_state();
     match serde_json::to_vec_pretty(&*state) {
@@ -226,7 +266,8 @@ pub fn save(app: &AppHandle) {
     }
 }
 
-/// Read the window rectangle into `state`, in logical pixels.
+/// Read the window rectangle into `state`: size in logical pixels, position in
+/// physical ones.
 fn update_bounds(window: &WebviewWindow, state: &mut WindowState) {
     let Ok(scale) = window.scale_factor() else {
         return;
@@ -246,10 +287,11 @@ fn update_bounds(window: &WebviewWindow, state: &mut WindowState) {
         state.height = Some(f64::from(height) / scale);
     }
     if let Ok(PhysicalPosition { x, y }) = window.outer_position() {
-        state.x = Some(f64::from(x) / scale);
-        state.y = Some(f64::from(y) / scale);
+        state.x = Some(f64::from(x));
+        state.y = Some(f64::from(y));
     }
-    state.logical = true;
+    state.version = STATE_VERSION;
+    state.logical = false;
 }
 
 /// Whether `size` is as large as the screen the window sits on.
@@ -268,34 +310,60 @@ fn fills_screen(window: &WebviewWindow, size: PhysicalSize<u32>) -> bool {
         || (size.width >= full.width && size.height >= full.height)
 }
 
-/// Convert a file written in physical pixels to the logical ones it is now
-/// read as. The monitor under the saved corner supplies the scale; a window
-/// whose corner is gone falls back to the primary monitor's.
-fn from_physical(app: &AppHandle, state: WindowState) -> WindowState {
+/// Bring a file written by an older build up to the current shape.
+///
+/// Version 0 stored size and position in one unit, named by `logical`. The
+/// current file stores a logical size and a physical position, so a legacy
+/// position has to be turned into physical pixels exactly once — using the
+/// monitor under the saved point, which is the only scale the old file gives
+/// any clue about.
+fn normalize(app: &AppHandle, state: WindowState) -> WindowState {
+    if state.version >= STATE_VERSION {
+        return state;
+    }
+
+    let mut state = state;
+    // `monitor_from_point` reads physical pixels; on a legacy physical file the
+    // saved point already is one, and on a logical file this is the best guess
+    // the file allows.
     let scale = state
         .x
         .zip(state.y)
         .and_then(|(x, y)| app.monitor_from_point(x, y).ok().flatten())
         .or_else(|| app.primary_monitor().ok().flatten())
         .map(|monitor| monitor.scale_factor())
+        .filter(|scale| *scale > 0.0)
         .unwrap_or(1.0);
-    if scale <= 0.0 {
-        return state;
+
+    if state.logical {
+        // Everything was logical: the size already is, the position is not.
+        state.x = state.x.map(|value| value * scale);
+        state.y = state.y.map(|value| value * scale);
+    } else {
+        // Everything was physical: the position already is, the size is not.
+        state.width = state.width.map(|value| value / scale);
+        state.height = state.height.map(|value| value / scale);
     }
 
-    WindowState {
-        width: state.width.map(|value| value / scale),
-        height: state.height.map(|value| value / scale),
-        x: state.x.map(|value| value / scale),
-        y: state.y.map(|value| value / scale),
-        logical: true,
-        ..state
-    }
+    state.version = STATE_VERSION;
+    state.logical = false;
+    state
 }
 
 fn load(path: &std::path::Path) -> Option<WindowState> {
     let text = std::fs::read_to_string(path).ok()?;
     serde_json::from_str(&text).ok()
+}
+
+/// Save the geometry while the window is still alive.
+///
+/// The editor closes through `destroy()` once the user agrees, which skips
+/// `CloseRequested` — and with it the save that hook performs. The renderer
+/// calls this first, so flags the exit hook can no longer read still reach the
+/// file.
+#[tauri::command]
+pub fn remember_window_state(app: AppHandle) {
+    save(&app);
 }
 
 /// Open the preferences window, or focus it if it is already up.

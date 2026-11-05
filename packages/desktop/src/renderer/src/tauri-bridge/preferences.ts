@@ -25,6 +25,8 @@ interface Store {
   /** The in-flight read, shared by every caller so the file is read once. */
   loading: Promise<Bag> | null
   writeTimer: ReturnType<typeof setTimeout> | null
+  /** The write in flight, so a close waits for it instead of racing it. */
+  writing: Promise<void> | null
 }
 
 const createStore = (): Store => ({
@@ -32,7 +34,8 @@ const createStore = (): Store => ({
   values: {},
   pending: {},
   loading: null,
-  writeTimer: null
+  writeTimer: null,
+  writing: null
 })
 
 const preferences = createStore()
@@ -104,26 +107,57 @@ const scheduleWrite = (store: Store): void => {
  * writes `sideBarVisibility` at startup while the settings window is writing a
  * theme, and one of them used to lose. `merge_json_file` applies the patch to
  * what is on disk, so both land.
+ *
+ * Writes are chained: `flushStoredPreferences` is called from a close handler
+ * and must wait for the write already on the wire, or the window goes away
+ * underneath it.
  */
 const flush = async(store: Store): Promise<void> => {
+  if (!store.path) return
+  // A write from a moment ago is still in flight: let it land, then look at
+  // whatever is pending now.
+  if (store.writing) await store.writing
+
   const patch = store.pending
-  if (!store.path || Object.keys(patch).length === 0) return
+  if (Object.keys(patch).length === 0) return
   store.pending = {}
+
+  const write = invoke('merge_json_file', { path: store.path, patch })
+  const settled = write.then(
+    () => undefined,
+    () => undefined
+  )
+  store.writing = settled
   try {
-    await invoke('merge_json_file', { path: store.path, patch })
+    await write
   } catch (err) {
     // Keep the keys so the next edit retries them rather than dropping them.
     store.pending = { ...patch, ...store.pending }
     throw err
+  } finally {
+    if (store.writing === settled) store.writing = null
   }
 }
 
+/**
+ * Record a patch without waiting for the file.
+ *
+ * The debounced write fires 300 ms later, but the keys count as pending the
+ * moment they are merged: a window closed inside that delay still has to write
+ * them, and `flushStoredPreferences` looks at `pending`. Registering before the
+ * `await` is what makes the close safe — waiting for the read first left the
+ * keys in flight while the close handler saw an empty bag and destroyed the
+ * webview.
+ */
 const merge = async(store: Store, patch: unknown): Promise<void> => {
   if (!patch || typeof patch !== 'object') return
-  await read(store)
-  Object.assign(store.values, patch as Bag)
-  Object.assign(store.pending, patch as Bag)
+  const bag = patch as Bag
+  Object.assign(store.values, bag)
+  Object.assign(store.pending, bag)
   scheduleWrite(store)
+  // The read fills in the keys this window has not touched; anything merged
+  // above wins, because `loadFromDisk` spreads the stored file under `values`.
+  await read(store)
 }
 
 type DispatchLocal = (channel: string, args: unknown[]) => void
@@ -186,10 +220,30 @@ export const setStoredUserData = (patch: unknown): Promise<void> => merge(userDa
  * Write whatever is still waiting out, for a window that is about to go away.
  *
  * Writes are debounced, and a window closed inside that window of time takes
- * its timer with it — the change the user just made would never be stored.
+ * its timer with it — the change the user just made would never be stored. A
+ * second pass covers the edit that arrived while the first write was in flight.
  */
 export const flushStoredPreferences = async(): Promise<void> => {
-  await Promise.all([flush(preferences), flush(userData)])
+  await Promise.all([drain(preferences), drain(userData)])
+}
+
+const drain = async(store: Store): Promise<void> => {
+  await flush(store)
+  if (Object.keys(store.pending).length > 0) await flush(store)
+}
+
+/**
+ * Record values another window announced.
+ *
+ * `getStoredPreference` answers from this window's copy of the file, which only
+ * knows the keys this window wrote. A menu toggle asks for the current value
+ * and then flips it, so without this an editor that started with `autoSave:
+ * false` kept answering `false` after the settings window turned it on — and
+ * the first click wrote `true` again instead of turning it off.
+ */
+export const rememberStoredPreferences = (patch: unknown): void => {
+  if (!patch || typeof patch !== 'object') return
+  Object.assign(preferences.values, patch as Bag)
 }
 
 /** Read one preference without waiting for a round trip through the store. */

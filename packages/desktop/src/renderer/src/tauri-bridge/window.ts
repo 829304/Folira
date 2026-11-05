@@ -8,6 +8,7 @@
 // `mt::ask-for-close`, and let it come back with `mt::close-window` (nothing
 // unsaved) or `mt::close-window-confirm` (a list of documents to deal with).
 
+import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
 import { clearTrackedOpenFiles } from './open-files'
@@ -61,10 +62,27 @@ const writePendingPreferences = async(): Promise<void> => {
   }
 }
 
+/**
+ * Store the window rectangle before it goes away.
+ *
+ * `destroy()` does not raise `CloseRequested`, so the Rust hook that saves on
+ * the way out is skipped; by the time `RunEvent::Exit` runs there is nothing
+ * left to measure and a maximised window would come back as the last
+ * free-floating rectangle. Best-effort: a failed save is cosmetic.
+ */
+const rememberWindowState = async(): Promise<void> => {
+  try {
+    await invoke('remember_window_state')
+  } catch (err) {
+    console.warn('[tauri-bridge] cannot save the window state:', err)
+  }
+}
+
 export const closeWindow = async(): Promise<void> => {
   closeConfirmed = true
   clearTrackedOpenFiles()
   await writePendingPreferences()
+  await rememberWindowState()
   await getCurrentWindow().destroy()
 }
 

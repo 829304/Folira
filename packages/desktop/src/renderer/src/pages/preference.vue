@@ -52,22 +52,32 @@ const showCustomTitleBar = computed<boolean>(() => {
 })
 
 // Watchers
-watch(activeTheme, (pair, previous) => {
-  if (pair.ui !== previous.ui || pair.md !== previous.md) {
+// Same shape as the editor: the URL pair paints the first frame, and the store
+// replaces it once its file has been read — including when the stored pair
+// happens to equal the cached one, which never changes the computed value.
+const { preferencesLoaded } = storeToRefs(preferencesStore)
+let paintedPair: { ui: string; md: string } | null = null
+watch(
+  [activeTheme, preferencesLoaded],
+  ([pair, loaded]) => {
+    if (!loaded) return
+    if (paintedPair && paintedPair.ui === pair.ui && paintedPair.md === pair.md) return
+    paintedPair = { ui: pair.ui, md: pair.md }
     applyTheme(pair)
-  }
-})
+  },
+  { immediate: true }
+)
 
 // Lifecycle
 onMounted(() => {
   nextTick(() => {
     const initialPair = window.marktext?.initialThemePair
     // The URL pair is what the last frame showed; the resolved pair is what the
-    // preferences file asks for. Prefer the URL for this first paint and let the
-    // watcher converge once `mt::user-preference` arrives.
+    // preferences file asks for. Prefer the stored one when it has already been
+    // read, and keep the URL pair only for the first paint.
     applyTheme({
-      ui: initialPair?.ui || activeTheme.value.ui,
-      md: initialPair?.md || activeTheme.value.md
+      ui: preferencesLoaded.value ? activeTheme.value.ui : initialPair?.ui || activeTheme.value.ui,
+      md: preferencesLoaded.value ? activeTheme.value.md : initialPair?.md || activeTheme.value.md
     })
 
     preferencesStore.ASK_FOR_USER_PREFERENCE()
