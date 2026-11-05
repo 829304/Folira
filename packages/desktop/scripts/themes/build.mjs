@@ -35,6 +35,7 @@ const RENDERER = path.join(ROOT, 'packages/desktop/src/renderer/src')
 const THEMES = path.join(RENDERER, 'assets/themes')
 const INDEX_CSS = path.join(RENDERER, 'assets/styles/index.css')
 const TOKENS_FILE = path.join(ROOT, 'packages/desktop/scripts/themes/tokens.json')
+const DEFAULTS_FILE = path.join(ROOT, 'packages/desktop/scripts/themes/light-defaults.json')
 
 const PREFIX = { ui: 'fui-', md: 'fmd-' }
 
@@ -48,7 +49,7 @@ const aliasOf = new Map(Object.entries(aliases))
 
 /** Chrome-only selectors; every other selector styles the Markdown surface. */
 const CHROME_SELECTOR =
-  /^(:root|::-webkit-scrollbar|::selection|body|html|\.title-bar|\.side-bar|\.open-project|\.editor-tabs|\.tabs-container|\.recent-files-projects|\.el-|\.notification)/
+  /^(:root|::-webkit-scrollbar|::selection|body|html|\.title-bar|\.side-bar|\.open-project|\.editor-tabs|\.tabs-container|\.recent-files-projects|\.el-|\.notification|\.input-wrapper|\.left-column|\.search|\.command-palette|\.rename)/
 
 /** Prism themes that ship under a different name than the editor theme. */
 const PRISM_ALIASES = { 'material-dark': 'dark' }
@@ -61,19 +62,15 @@ const PRISM_ALIASES = { 'material-dark': 'dark' }
  */
 const STRUCTURAL = new Set(['editorAreaWidth'])
 
-/** Names declared inside a theme file, without the axis prefix. */
-const declaredNames = css => {
-  const names = new Set()
-  for (const match of css.matchAll(/--(?:fui-|fmd-)([A-Za-z0-9_-]+)\s*:/g)) names.add(match[1])
-  return names
-}
-
 const referencedNames = css => [...new Set([...css.matchAll(/var\(\s*--(?:fui-|fmd-)([A-Za-z0-9_-]+)/g)].map(m => m[1]))]
 
 const rewrite = (value, kind) =>
   value.replace(/var\(\s*--([A-Za-z0-9_-]+)/g, (match, name) => {
     // Aliases stay public: base.css declares them in both scopes.
     if (aliasOf.has(name)) return `var(--${name}`
+    // Same-axis and shared references keep responding to public overrides.
+    // Cross-axis references stay private so each palette is independent.
+    if (axis[name] === 'dual' || axis[name] === kind) return `var(--${name}`
     return axis[name] ? `var(--${PREFIX[kind]}${name}` : match
   })
 
@@ -221,23 +218,45 @@ const titleCase = id =>
     )
     .join(' ')
 
-function renderBaseCss (lightLiterals) {
+function renderBaseCss (lightLiterals, lightDefaults) {
   const themeNames = Object.keys(axis)
     .filter(name => !aliasOf.has(name))
     .filter(name => !STRUCTURAL.has(name))
     .sort()
-  const fallback = name => lightLiterals.get(name) ?? 'initial'
+  // The pre-split index.css declared many defaults as references (an accent,
+  // a hover state), and a reference has to stay a reference: resolving it to
+  // the light literal froze those names to the built-in palette, which is how
+  // a dark theme kept a green accent.
+  const literal = name => lightLiterals.get(name) ?? 'initial'
+  // A name a theme omits falls back to what the pre-split stylesheet said. When
+  // that default was itself a reference (an accent, a hover state) it has to
+  // stay one, or the value freezes to the built-in palette — a dark theme kept
+  // the light green because `--highlightThemeColor: var(--themeColor)` had been
+  // resolved against the built-in theme.
+  const reference = (kind, target, self) => {
+    // A reference has to read the *published* name, not the axis one: custom CSS
+    // overrides `--themeColor` (the name components and users know), and a
+    // derived default that pointed at `--fui-themeColor` ignored it. The editor
+    // mirror of that rule lands in the same scope, so both axes follow.
+    if (target === self) return literal(target)
+    return `var(--${target}, ${literal(target)})`
+  }
+  const fallback = (name, kind) => {
+    const raw = lightDefaults.get(name)
+    if (raw === undefined) return literal(name)
+    return raw.replace(/var\(\s*--([\w-]+)\s*\)/g, (match, target) => reference(kind, target, name))
+  }
   // Reference an axis only where it declares the name: pointing at an
   // `--fmd-` that no Markdown palette defines reads as a typo to
   // theme-variables.spec.ts, which requires every var() to resolve.
   const rootValue = name =>
     axis[name] === 'md'
-      ? fallback(name)
-      : `var(--${PREFIX.ui}${name}, ${fallback(name)})`
+      ? fallback(name, 'ui')
+      : `var(--${PREFIX.ui}${name}, ${fallback(name, 'ui')})`
   const scopeValue = name => {
-    if (axis[name] === 'md') return `var(--${PREFIX.md}${name}, ${fallback(name)})`
-    if (axis[name] !== 'dual') return `var(--${PREFIX.ui}${name}, ${fallback(name)})`
-    return `var(--${PREFIX.md}${name}, var(--${PREFIX.ui}${name}, ${fallback(name)}))`
+    if (axis[name] === 'md') return `var(--${PREFIX.md}${name}, ${fallback(name, 'md')})`
+    if (axis[name] !== 'dual') return `var(--${PREFIX.ui}${name}, ${fallback(name, 'ui')})`
+    return `var(--${PREFIX.md}${name}, var(--${PREFIX.ui}${name}, ${fallback(name, 'md')}))`
   }
   const root = [
     ...themeNames.map(name => `  --${name}: ${rootValue(name)};`),
@@ -246,8 +265,8 @@ function renderBaseCss (lightLiterals) {
   // Structural names are deliberately absent here: :root keeps the value
   // index.css declares, so `setEditorWidth` and user CSS reach the editor.
   const scope = [
-    ...themeNames.map(name => `  --${name}: ${scopeValue(name)};`),
-    ...[...aliasOf].map(([kebab, camel]) => `  --${kebab}: var(--${camel});`)
+    ...themeNames.map(name => `  --${name}: var(--folira-user-${name}, ${scopeValue(name)});`),
+    ...[...aliasOf].map(([kebab, camel]) => `  --${kebab}: var(--folira-user-${kebab}, var(--${camel}));`)
   ]
   return [
     '/*',
@@ -263,14 +282,23 @@ function renderBaseCss (lightLiterals) {
     ' * property resolves where it is declared, so inheriting the alias from',
     ' * :root would pin it to the UI palette inside the editor.',
     ' *',
+    ' * Root bindings override Muya defaults. The editor defaults sit in',
+    ' * `folira-base`, below direct user rules, and first read the inherited',
+    ' * `--folira-user-*` bindings added to the original custom CSS rules.',
+    ' * The browser preserves their cascade and computes references in place.',
+    ' *',
     ' * Generated by scripts/themes/build.mjs — do not edit.',
     ' */',
+    '@layer folira-base;',
+    '',
     ':root {',
     root.join('\n'),
     '}',
     '',
+    '@layer folira-base {',
     `${MD_SCOPE} {`,
     scope.join('\n'),
+    '}',
     '}',
     ''
   ].join('\n')
@@ -305,6 +333,71 @@ const idsIn = dir =>
     .map(name => name.replace(/\.css$/, ''))
     .sort()
 
+/**
+ * The pre-split stylesheet spelled 31 defaults as references (`--themeColor`,
+ * `--editorColor`), and a theme file has to keep them as references: frozen to
+ * the light literal they ignore a user overrides of the referenced name. The
+ * split resolved them once; put the reference back into the light theme.
+ */
+/**
+ * The pre-split stylesheet spelled many defaults as references (`--themeColor`,
+ * `--buttonPrimaryBgColor`), and a theme that inherited such a default has to
+ * keep the reference: frozen to a literal it ignores both a user override of
+ * the referenced name and the theme's own palette. Only a value that still
+ * matches what the default would resolve to in this theme is rewritten — a
+ * theme that overrides the name keeps its literal.
+ */
+/** Every name a theme declares, across both axes, with the axis prefix stripped. */
+/** Expands the var() calls of a value with a theme's own literals, or null. */
+function resolveText (text, literals) {
+  let out = text
+  for (let depth = 0; depth < 8; depth++) {
+    let changed = false
+    out = out.replace(/var\(\s*--([A-Za-z0-9_-]+)\s*\)/g, (match, name) => {
+      const value = resolveValue(literals, name)
+      if (value === null) return match
+      changed = true
+      return value
+    })
+    if (!changed) break
+  }
+  return out.includes('var(') ? null : out
+}
+function themeLiterals (id) {
+  const literals = new Map()
+  for (const kind of ['ui', 'md']) {
+    const file = path.join(THEMES, `${kind}/${id}.css`)
+    if (!fs.existsSync(file)) continue
+    for (const [name, value] of variablesOf(fs.readFileSync(file, 'utf8'))) {
+      if (!name.startsWith(PREFIX[kind])) continue
+      literals.set(name.slice(PREFIX[kind].length), value)
+    }
+  }
+  return literals
+}
+function restoreReferences (kind, file, defaults, literals) {
+  let css = normalizeEol(fs.readFileSync(file, 'utf8'))
+  for (const [name, value] of defaults) {
+    const text = String(value)
+    if (!text.includes('var(')) continue
+    // A copied reference is evaluated in the editor scope, so a target on the
+    // other axis would drag that palette across (`--h1Color:
+    // var(--headingColor)` turned white under a dark chrome). Keep the
+    // reference only when every target is shared or same-axis.
+    const targets = [...text.matchAll(/var\(\s*--([A-Za-z0-9_-]+)/g)].map(match => axis[aliasOf.get(match[1]) ?? match[1]])
+    if (!targets.every(target => target === 'dual' || target === kind)) continue
+    // Compare against the value the default would resolve to *in this theme*,
+    // not against the theme's own literal for the same name (that always matches).
+    const expected = resolveText(text, literals)
+    if (expected === null) continue
+    const pattern = new RegExp(`(\\n\\s*--${PREFIX[kind]}${name}:\\s*)[^;]*(;)`)
+    css = css.replace(pattern, (match, head, tail, offset) => {
+      const current = match.slice(head.length, match.length - 1).trim()
+      return current === expected.trim() ? `${head}${text}${tail}` : match
+    })
+  }
+  writeFile(file, css)
+}
 function aggregate () {
   const uiIds = idsIn('ui')
   const mdIds = idsIn('md')
@@ -322,6 +415,11 @@ function aggregate () {
       .map(name => name.replace(/\.theme\.css$/, ''))
   )
 
+  const lightDefaults = new Map(
+    Object.entries(JSON.parse(fs.readFileSync(DEFAULTS_FILE, 'utf8')))
+  )
+  for (const id of uiIds) restoreReferences('ui', path.join(THEMES, `ui/${id}.css`), lightDefaults, themeLiterals(id))
+  for (const id of mdIds) restoreReferences('md', path.join(THEMES, `md/${id}.css`), lightDefaults, themeLiterals(id))
   const lightLiterals = new Map()
   for (const file of ['ui/light.css', 'md/light.css']) {
     for (const [name, value] of variablesOf(fs.readFileSync(path.join(THEMES, file), 'utf8'))) {
@@ -358,7 +456,7 @@ function aggregate () {
     return { id, label: titleCase(id), appearance: lum > 0.5 ? 'light' : 'dark', prism }
   })
 
-  writeFile(path.join(THEMES, 'base.css'), renderBaseCss(lightLiterals))
+  writeFile(path.join(THEMES, 'base.css'), renderBaseCss(lightLiterals, lightDefaults))
   writeFile(path.join(THEMES, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
   console.log(
     `themes: ${manifest.length} (${manifest.filter(t => t.appearance === 'light').length} light / ${
@@ -448,6 +546,21 @@ function promoteCrossAxis (id) {
   }
 }
 
+/**
+ * Publish shared and same-axis dependencies so user overrides keep driving
+ * derived values. Cross-axis dependencies keep their private bindings, which
+ * prevents one palette from picking up the other palette's colours.
+ */
+function publishAxisReferences (id) {
+  for (const kind of ['ui', 'md']) {
+    const file = path.join(THEMES, `${kind}/${id}.css`)
+    const source = fs.readFileSync(file, 'utf8')
+    const next = source.replace(/var\(\s*--(?:fui-|fmd-)([A-Za-z0-9_-]+)/g, (whole, name) =>
+      axis[name] === 'dual' || axis[name] === kind ? `var(--${name}` : whole)
+    if (next !== source) writeFile(file, next)
+  }
+}
+
 /** index.css owns the layout defaults the themes no longer declare. */
 function ensureStructuralDefault () {
   const source = fs.readFileSync(INDEX_CSS, 'utf8')
@@ -465,6 +578,7 @@ function normalize () {
     // A promotion can reveal a reference the donor itself made to a name that
     // only became known in this pass, so settle it in a second run.
     promoteCrossAxis(id)
+    publishAxisReferences(id)
   }
   ensureStructuralDefault()
 }

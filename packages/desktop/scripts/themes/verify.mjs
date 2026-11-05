@@ -81,6 +81,19 @@ for (const dir of ['ui', 'md']) {
   }
 }
 
+/* 2b. Shared and same-axis references must respond to public overrides. */
+
+for (const dir of ['ui', 'md']) {
+  for (const file of fs.readdirSync(path.join(THEMES, dir)).filter(name => name.endsWith('.css'))) {
+    const css = read(`${dir}/${file}`)
+    for (const match of css.matchAll(/var\(\s*--(?:fui-|fmd-)([A-Za-z0-9_-]+)/g)) {
+      if (axis[match[1]] === 'dual' || axis[match[1]] === dir) {
+        fail(`${dir}/${file}: refers to the internal --${PREFIX[dir]}${match[1]}; a shared or same-axis name must use its public spelling`)
+      }
+    }
+  }
+}
+
 /* 2. Layout variables stay out of both palettes. */
 
 for (const dir of ['ui', 'md']) {
@@ -134,15 +147,38 @@ for (const entry of manifest) {
   }
 }
 
-/* 5. The axes move independently: body colours ignore the UI theme, chrome
+/* 5. Derived accents keep following the theme that owns them. */
+/*    A default declared as `var(--themeColor)` before the split must still be a */
+/*    reference: resolving it to the built-in literal made dark themes green. */
+
+const DERIVED_ACCENTS = ['highlightThemeColor', 'focusColor']
+for (const entry of manifest) {
+  const scope = rootScope(entry.id)
+  const accent = resolve(scope, 'themeColor')
+  // A theme that states its own value keeps it; the check only guards the
+  // derived defaults the pre-split stylesheet expressed as references.
+  const stated = declarations(read(`ui/${entry.id}.css`))
+  for (const name of DERIVED_ACCENTS) {
+    if (stated.has(`${PREFIX.ui}${name}`)) continue
+    const value = resolve(scope, name)
+    if (value !== accent) {
+      fail(`${entry.id}: --${name} resolves to ${value}, but the theme accent is ${accent}`)
+    }
+  }
+  if (!stated.has(`${PREFIX.ui}buttonFocusBorder`)) {
+    const border = String(resolve(scope, 'buttonFocusBorder'))
+    if (!border.includes(accent)) {
+      fail(`${entry.id}: --buttonFocusBorder resolves to ${border}, which does not follow the theme accent ${accent}`)
+    }
+  }
+}
+
+/* 6. The axes move independently: body colours ignore the UI theme, chrome
  *    colours ignore the Markdown theme. */
 
 const ids = manifest.map(entry => entry.id)
 const pick = id => ids.includes(id)
 const BODY_SAMPLE = ['editorColor', 'h1Color', 'linkColor', 'codeBlockBgColor', 'blockquoteBorderColor']
-// Chrome-only names: dual-owned ones (float menus, selection) legitimately
-// follow the Markdown theme *inside* the editor, so they cannot be asserted here.
-const CHROME_SAMPLE = ['sideBarBgColor', 'titleBarBgColor', 'buttonPrimaryBgColor', 'buttonFocusBorder', 'focusColor']
 
 if (pick('light') && pick('dark')) {
   for (const [ui, md] of [['light', 'dark'], ['dark', 'light']]) {
@@ -156,15 +192,16 @@ if (pick('light') && pick('dark')) {
         fail(`${name}: ui=${ui} md=${md} resolves to ${body}, but md=${md} alone resolves to ${expected}`)
       }
     }
-    for (const name of CHROME_SAMPLE) {
-      if (axis[name] === 'md') continue
-      const chrome = resolve(rootScope(ui), name)
-      const inside = resolve(editorScope(ui, md), name)
-      if (chrome !== inside) {
-        fail(`${name}: ui=${ui} resolves to ${chrome} at :root but ${inside} inside the editor (md=${md})`)
-      }
-    }
   }
+}
+
+/* Chrome is rendered outside the editor scope, so its half of the isolation
+ * contract is "the root block never reads the Markdown axis". */
+
+const baseRootBlock = /:root\s*\{([^}]*)\}/.exec(baseCss)?.[1] ?? ''
+const leaked = baseRootBlock.match(/var\(\s*--fmd-([\w-]+)/g) ?? []
+for (const match of leaked) {
+  fail(`base.css reads ${match} at :root; chrome would follow the Markdown theme`)
 }
 
 /* 6. The width preference is layout: it must survive the editor re-binding. */
@@ -226,7 +263,7 @@ for (const entry of manifest) {
 
   const root = rootScope(entry.id)
   const pair = editorScope(entry.id, entry.id)
-  for (const [name, value] of legacy) {
+  for (const name of legacy.keys()) {
     // Structural variables live in index.css, and a name the split never
     // registered is not part of any palette (theme-variables.spec.ts already
     // fails on a var() that nothing declares).
@@ -252,6 +289,22 @@ for (const entry of manifest) {
     }
   }
 }
+/* 8. A user override of the public accent reaches the primary button. */
+/*    Themes that hardcode their button colour keep it; the ones the legacy */
+/*    sheet derived from `--themeColor` must derive it again. */
+
+for (const entry of manifest) {
+  const id = entry.id
+  const declared = declarations(read(`ui/${id}.css`)).get(`${PREFIX.ui}buttonPrimaryBgColor`)
+  if (declared === undefined || !declared.includes('var(--themeColor')) continue
+  const scope = rootScope(id)
+  scope.set('themeColor', '#ff0000')
+  const actual = resolve(scope, 'buttonPrimaryBgColor')
+  if (actual !== '#ff0000') {
+    fail(`${id}: overriding --themeColor leaves the primary button at ${actual}`)
+  }
+}
+
 /* report */
 
 if (failures.length) {
@@ -259,7 +312,15 @@ if (failures.length) {
   for (const message of failures) console.error(`  - ${message}`)
   process.exitCode = 1
 } else if (legacySkipped) {
-  console.log(`themes:verify — ${manifest.length} themes, cascade checks ok (legacy comparison skipped: no git history)`)
+  // Without the pre-split baseline nothing proves the split preserved every
+  // legacy value, so a green run would mean "not checked". Fail instead, and
+  // let the sandbox opt out explicitly rather than by leaving CI unset.
+  if (process.env.THEMES_VERIFY_ALLOW_NO_BASELINE === '1') {
+    console.log(`themes:verify — ${manifest.length} themes, cascade checks ok (legacy comparison skipped on request)`)
+  } else {
+    console.error('themes:verify — the legacy comparison needs the pre-split themes; fetch them (`fetch-depth: 0`) or set THEME_LEGACY_DIR')
+    process.exitCode = 1
+  }
 } else {
   console.log(`themes:verify — ${manifest.length} themes, ${legacyCompared} legacy values, cascade and overrides ok`)
 }

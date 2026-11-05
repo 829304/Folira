@@ -246,4 +246,26 @@ describe('emojiSelector — the table arriving late', () => {
         expect(show).toHaveBeenCalledTimes(1);
         expect(selector.status).toBe(false);
     });
+
+    it('does not open when the table arrives after the selector was destroyed', async () => {
+        const { muya, eventCenter } = makeFakeMuya();
+        const selector = new EmojiSelector(muya);
+
+        let release: () => void = () => {};
+        const pending = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        vi.spyOn(Emoji.prototype, 'whenReady').mockReturnValue(pending);
+        const show = vi.spyOn(selector, 'show');
+
+        eventCenter.emit('muya-emoji-picker', { reference: stubReference(), emojiText: 'smile', block: { setEmoji: vi.fn() } });
+        selector.destroy();
+        release();
+        await pending;
+        await Promise.resolve();
+
+        // The picker opened synchronously on the event; what destroy must prevent
+        // is the late continuation opening it a second time.
+        expect(show).toHaveBeenCalledTimes(1);
+    });
 });

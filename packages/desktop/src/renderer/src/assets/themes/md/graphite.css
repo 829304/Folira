@@ -25,13 +25,13 @@
   --fmd-codeBlockBgColor: rgba(104, 134, 170, 0.05);
   --fmd-footnoteBgColor: rgba(0, 0, 0, 0.03);
   --fmd-inputBgColor: rgba(0, 0, 0, 0.06);
-  --fmd-buttonFontColor: var(--fmd-editorColor);
+  --fmd-buttonFontColor: var(--editorColor);
   --fmd-buttonBgColor: #ffffff;
   --fmd-buttonBorder: 1px solid #dcdfe6;
   --fmd-buttonBgColorHover: linear-gradient(#fafafa, #f5f5f5);
-  --fmd-buttonBorderHover: var(--fmd-buttonBorder);
+  --fmd-buttonBorderHover: var(--buttonBorder);
   --fmd-buttonBgColorActive: #f5f5f5;
-  --fmd-buttonBorderActive: var(--fmd-buttonBorder);
+  --fmd-buttonBorderActive: var(--buttonBorder);
   --fmd-tableBorderColor: #e5e5e5;
   --fmd-h1Color: #6886aa;
   --fmd-h2Color: #5f9ea0;
@@ -39,10 +39,10 @@
   --fmd-h4Color: #7b68ee;
   --fmd-h5Color: #cd5c5c;
   --fmd-h6Color: #708090;
-  --fmd-blockquoteTextColor: rgba(43, 48, 50, 0.5);
-  --fmd-blockquoteBorderColor: rgb(104, 134, 170);
-  --fmd-hrColor: rgba(43, 48, 50, 0.1);
-  --fmd-linkColor: rgb(104, 134, 170);
+  --fmd-blockquoteTextColor: var(--editorColor50);
+  --fmd-blockquoteBorderColor: var(--themeColor);
+  --fmd-hrColor: var(--editorColor10);
+  --fmd-linkColor: var(--themeColor);
   --fmd-strongColor: rgba(43, 48, 50, 0.8);
   --fmd-emColor: #5f9ea0;
   --fmd-listMarkerColor: #6886aa;
@@ -55,7 +55,7 @@
 }
 
 .mu-container li.mu-list-item {
-  color: var(--fmd-editorColor);
+  color: var(--editorColor);
 }
 
 li.mu-task-list-item {
@@ -87,9 +87,9 @@ li.mu-task-list-item > input[type='checkbox']::before {
   height: 16px;
   box-sizing: border-box;
   display: inline-block;
-  border: 2px solid var(--fmd-editorColor);
+  border: 2px solid var(--editorColor);
   border-radius: 2px;
-  background-color: var(--fmd-editorBgColor);
+  background-color: var(--editorBgColor);
   position: absolute;
   top: 0;
   left: 0;
@@ -98,7 +98,7 @@ li.mu-task-list-item > input[type='checkbox']::before {
 
 li.mu-task-list-item > input.mu-checkbox-checked::before {
   border: transparent;
-  background-color: var(--fmd-editorColor);
+  background-color: var(--editorColor);
 }
 
 li.mu-task-list-item > input::after {
@@ -130,6 +130,6 @@ li.mu-task-list-item > input.mu-checkbox-checked::after {
   height: 2px;
   box-sizing: border-box;
   border: none;
-  border-bottom: 2px dashed var(--fmd-editorColor50);
+  border-bottom: 2px dashed var(--editorColor50);
   transform: translateX(-50%) translateY(-50%);
 }

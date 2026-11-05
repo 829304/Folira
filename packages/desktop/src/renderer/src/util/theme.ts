@@ -74,8 +74,10 @@ export const applyTheme = ({ ui, md }: ThemePair): void => {
     })
     .catch((err) => console.error(`[theme] cannot load prism for ${md}:`, err))
 
-  // Icons and native-ish chrome follow the UI theme, not the body.
-  document.body.classList.toggle('dark', getTheme(ui)?.appearance === 'dark')
+  // The class drives body-level styling (GitHub alerts, table chrome), so it
+  // follows the Markdown theme: light chrome around a dark page must not leave
+  // the page's own components rendering light.
+  document.body.classList.toggle('dark', getTheme(md)?.appearance === 'dark')
 
   const cm = document.querySelector('.CodeMirror')
   if (cm) {
@@ -149,41 +151,25 @@ ${getEmojiPickerPatch()}
 }
 
 /**
- * A user stylesheet usually overrides colours at `:root`. base.css re-declares
- * those names inside `.editor-wrapper`, so a custom property declared only at
- * the root stops applying to the body — the editor would ignore the override.
- * Mirror the custom-property declarations of document-level rules onto the
- * editor scope so a `:root { --editorColor: … }` reaches both axes.
+ * Keep user values on their original elements. The browser resolves their
+ * selectors, priorities and var() references before the editor inherits them.
+ * base.css reads these bindings ahead of its Markdown palette defaults.
  */
-const mirrorDocumentRules = (css: string): string => {
-  const mirrored: string[] = []
-  let index = 0
-  while (index < css.length) {
-    const open = css.indexOf('{', index)
-    if (open < 0) break
-    const selector = css.slice(index, open).trim()
-    let depth = 0
-    let close = open
-    for (; close < css.length; close++) {
-      if (css[close] === '{') depth++
-      else if (css[close] === '}') {
-        depth--
-        if (depth === 0) break
+const bindCustomProperties = (rules: CSSRuleList): void => {
+  for (const rule of Array.from(rules)) {
+    if ('style' in rule) {
+      const declarations = (rule as CSSStyleRule).style
+      for (const name of Array.from(declarations)) {
+        if (!name.startsWith('--') || name.startsWith('--folira-user-')) continue
+        declarations.setProperty(
+          `--folira-user-${name.slice(2)}`,
+          `var(${name})`,
+          declarations.getPropertyPriority(name)
+        )
       }
     }
-    const body = css.slice(open + 1, close)
-    index = close + 1
-    // At-rules (@media, @supports) need their own recursive handling; until
-    // then they pass through untouched rather than being mis-scoped.
-    if (!selector || selector.startsWith('@')) continue
-    if (!body.includes('--')) continue
-    const parts = selector.split(',').map(part => part.trim())
-    if (!parts.some(part => part === ':root' || part === 'html' || part === 'body')) continue
-    const scoped = [...new Set(parts.map(part => (part === ':root' || part === 'html' || part === 'body' ? '.editor-wrapper' : part)))]
-      .join(', ')
-    mirrored.push(`${scoped} {${body}}`)
+    if ('cssRules' in rule) bindCustomProperties((rule as CSSGroupingRule).cssRules)
   }
-  return mirrored.length ? `${css}\n\n${mirrored.join('\n')}` : css
 }
 
 export interface CustomStyleOptions {
@@ -192,16 +178,19 @@ export interface CustomStyleOptions {
 }
 
 export const addCustomStyle = (options: CustomStyleOptions): void => {
-  const { customCss } = options
-  if (!customCss) return
-
-  let customStyleEle = document.querySelector('#custom-styles') as HTMLStyleElement | null
-  if (!customStyleEle) {
-    customStyleEle = document.createElement('style')
-    customStyleEle.id = 'custom-styles'
-    document.head.appendChild(customStyleEle)
+  let element = document.querySelector('#custom-styles') as HTMLStyleElement | null
+  if (!options.customCss) {
+    element?.remove()
+    return
   }
-  customStyleEle.innerHTML = mirrorDocumentRules(customCss)
+
+  if (!element) {
+    element = document.createElement('style')
+    element.id = 'custom-styles'
+    document.head.appendChild(element)
+  }
+  element.textContent = options.customCss
+  if (element.sheet) bindCustomProperties(element.sheet.cssRules)
 }
 
 export interface AddStylesOptions extends CommonStyleOptions {

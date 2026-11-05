@@ -29,9 +29,9 @@
   --fmd-buttonBgColor: #58606a;
   --fmd-buttonBorder: 1px solid #383d44;
   --fmd-buttonBgColorHover: #646d78;
-  --fmd-buttonBorderHover: var(--fmd-buttonBorder);
+  --fmd-buttonBorderHover: var(--buttonBorder);
   --fmd-buttonBgColorActive: #4a5159;
-  --fmd-buttonBorderActive: var(--fmd-buttonBorder);
+  --fmd-buttonBorderActive: var(--buttonBorder);
   --fmd-tableBorderColor: #4f585e;
   --fmd-h1Color: #f48237;
   --fmd-h2Color: #56b6c2;
@@ -40,7 +40,7 @@
   --fmd-h5Color: #e5c07b;
   --fmd-h6Color: #61afef;
   --fmd-blockquoteTextColor: rgba(171, 178, 191, 0.7);
-  --fmd-blockquoteBorderColor: #f48237;
+  --fmd-blockquoteBorderColor: var(--themeColor);
   --fmd-hrColor: rgba(171, 178, 191, 0.3);
   --fmd-linkColor: #61afef;
   --fmd-strongColor: rgba(171, 178, 191, 1);
@@ -64,7 +64,7 @@
 pre:not(.CodeMirror-line),
 pre[class*='language-'],
 pre.mu-code-block {
-  background: var(--fmd-codeBlockBgColor) !important;
+  background: var(--codeBlockBgColor) !important;
   border: none !important;
 }
 

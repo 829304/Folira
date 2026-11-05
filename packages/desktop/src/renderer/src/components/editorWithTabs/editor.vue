@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
+import { computed, ref, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
 import log from 'electron-log'
 import {
   Muya,
@@ -128,6 +128,7 @@ import { guessClipboardFilePath } from '@/util/clipboard'
 import { getCssForOptions, getHtmlToc, type PdfCssOptions, type HtmlTocOptions } from '@/util/pdf'
 import { resolveTocHeadingElement } from '@/util/tocNavigation'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
+import { getTheme } from '@/util/themeColor'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
 import { useProjectStore } from '@/store/project'
@@ -241,6 +242,7 @@ const {
   imageRelativeDirectoryName,
   imageFolderPath,
   theme,
+  mdTheme,
   sequenceTheme,
   hideScrollbar,
   spellcheckerEnabled,
@@ -253,6 +255,14 @@ const {
   focus,
   sourceCode
 } = storeToRefs(preferencesStore)
+
+// The diagram palette follows the Markdown theme: it is part of the document.
+const diagramTheme = computed(() => mdTheme.value || theme.value)
+
+// The diagram palette follows the Markdown axis. Ask the manifest for the
+// appearance: chart ids such as `graphite` or `ayu-mirage` carry no `dark`
+// in their name, so matching the id would paint a chart on the wrong base.
+const diagramsOnDark = (id: string): boolean => getTheme(id)?.appearance === 'dark'
 
 // Editor store refs
 const { currentFile, tabs } = storeToRefs(editorStore)
@@ -607,10 +617,10 @@ watch(tabSize, (value, oldValue) => {
   }
 })
 
-watch(theme, (value, oldValue) => {
+watch(diagramTheme, (value, oldValue) => {
   if (value !== oldValue && editor.value) {
     // Agreement：Any black series theme needs to contain dark `word`.
-    if (/dark/i.test(value)) {
+    if (diagramsOnDark(value)) {
       editor.value.setOptions(
         {
           mermaidTheme: 'dark',
@@ -1791,7 +1801,7 @@ onMounted(() => {
     getPathForFile: (file: File) => window.electron.webUtils.getPathForFile(file)
   }
 
-  if (/dark/i.test(theme.value)) {
+  if (diagramsOnDark(diagramTheme.value)) {
     Object.assign(options, {
       mermaidTheme: 'dark',
       vegaTheme: 'dark'

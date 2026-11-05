@@ -160,6 +160,9 @@ export class EmojiSelector extends BaseScrollFloat {
     }
 
     override destroy() {
+        // A table load that finishes after teardown must not reopen the float:
+        // bumping the token invalidates every pending whenReady continuation.
+        this._searchToken++;
         super.destroy();
         this._emoji.destroy();
     }

@@ -27,33 +27,33 @@
   --fui-codeBgColor: #c8c9ce;
   --fui-footnoteBgColor: rgba(200, 201, 206, 0.5);
   --fui-inputBgColor: #cbccd1;
-  --fui-focusColor: var(--fui-themeColor);
+  --fui-focusColor: var(--themeColor);
   --fui-buttonFontColor: rgba(52, 59, 88, 0.7);
   --fui-buttonBgColor: #c8c9ce;
   --fui-buttonBorder: 1px solid rgba(0, 0, 0, 0.08);
   --fui-buttonShadow: none;
-  --fui-buttonFontColorHover: var(--fui-buttonFontColor);
+  --fui-buttonFontColorHover: var(--buttonFontColor);
   --fui-buttonBgColorHover: #bbbcc1;
   --fui-buttonBorderHover: 1px solid rgba(0, 0, 0, 0.12);
-  --fui-buttonFontColorActive: var(--fui-buttonFontColor);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
   --fui-buttonBgColorActive: #b0b1b7;
-  --fui-buttonBorderActive: var(--fui-buttonBorder);
+  --fui-buttonBorderActive: var(--buttonBorder);
   --fui-buttonPrimaryFontColor: #ffffff;
-  --fui-buttonPrimaryBgColor: var(--fui-themeColor);
+  --fui-buttonPrimaryBgColor: var(--themeColor);
   --fui-buttonPrimaryBorder: none;
   --fui-buttonPrimaryShadow: none;
-  --fui-buttonPrimaryFontColorHover: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
   --fui-buttonPrimaryBgColorHover: #5a7aad;
-  --fui-buttonPrimaryBorderHover: var(--fui-buttonPrimaryBorder);
-  --fui-buttonPrimaryFontColorActive: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
   --fui-buttonPrimaryBgColorActive: #2a4270;
-  --fui-buttonPrimaryBorderActive: var(--fui-buttonPrimaryBorder);
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
   --fui-buttonPrimaryFocusBorder: none;
-  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 0 1px var(--fui-themeColor);
+  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 0 1px var(--themeColor);
   --fui-tableBorderColor: #b0b1b7;
   --fui-headingColor: #343b58;
   --fui-sideBarColor: rgba(52, 59, 88, 0.7);
-  --fui-sideBarIconColor: var(--fui-iconColor);
+  --fui-sideBarIconColor: var(--iconColor);
   --fui-sideBarTitleColor: rgba(52, 59, 88, 0.9);
   --fui-sideBarTextColor: rgba(52, 59, 88, 0.5);
   --fui-sideBarBgColor: #d0d1d6;
@@ -68,7 +68,7 @@
 }
 
 ::-webkit-scrollbar {
-  background: var(--fui-editorBgColor);
+  background: var(--editorBgColor);
 }
 
 .title-bar .frameless-titlebar-button > div > svg {
@@ -115,7 +115,7 @@
 
 .tabs-container > li,
 .tabs-container > li.active {
-  background: var(--fui-editorBgColor) !important;
+  background: var(--editorBgColor) !important;
 }
 
 .open-project button,

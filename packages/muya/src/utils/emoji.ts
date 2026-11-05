@@ -14,7 +14,9 @@ export function validEmoji(text: string): { emoji: string } | undefined {
     // Plain property access would also resolve inherited names: `:constructor:`
     // and `:__proto__:` come back as functions or objects from the prototype,
     // pass an `=== undefined` test, and render as `[object Object]`.
-    if (!Object.hasOwn(emojiByAlias, text))
+    // `Object.hasOwn` needs Chrome 93; the engine builds for `chrome70`.
+    // eslint-disable-next-line e18e/prefer-object-has-own -- the build target predates it
+    if (!Object.prototype.hasOwnProperty.call(emojiByAlias, text))
         return undefined;
 
     return { emoji: emojiByAlias[text] };

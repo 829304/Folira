@@ -79,6 +79,10 @@ describe('theme custom properties', () => {
   it('never reads a custom property no stylesheet defines', () => {
     const undefinedUsages = all
       .filter((usage) => !defined.has(usage.name))
+      // Custom CSS supplies these inherited values at runtime. The fallback
+      // must still name an existing theme property when no override is set.
+      .filter((usage) => !(usage.hasFallback && usage.name.startsWith('--folira-user-') &&
+        defined.has(`--${usage.name.slice('--folira-user-'.length)}`)))
       .map((usage) => `${usage.name} in ${usage.file}${usage.hasFallback ? ' (has fallback)' : ''}`)
 
     expect([...new Set(undefinedUsages)].sort()).toEqual([])

@@ -27,32 +27,32 @@
   --fui-codeBgColor: #d8d8d869;
   --fui-footnoteBgColor: rgba(0, 0, 0, 0.03);
   --fui-inputBgColor: rgba(0, 0, 0, 0.06);
-  --fui-focusColor: var(--fui-themeColor);
-  --fui-buttonFontColor: var(--fui-editorColor);
+  --fui-focusColor: var(--themeColor);
+  --fui-buttonFontColor: var(--editorColor);
   --fui-buttonBgColor: #ffffff;
   --fui-buttonBorder: 1px solid #dcdfe6;
   --fui-buttonShadow: none;
-  --fui-buttonFontColorHover: var(--fui-buttonFontColor);
+  --fui-buttonFontColorHover: var(--buttonFontColor);
   --fui-buttonBgColorHover: linear-gradient(#fafafa, #f5f5f5);
-  --fui-buttonBorderHover: var(--fui-buttonBorder);
-  --fui-buttonFontColorActive: var(--fui-buttonFontColor);
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
   --fui-buttonBgColorActive: #f5f5f5;
-  --fui-buttonBorderActive: var(--fui-buttonBorder);
-  --fui-buttonFocusBorder: 1px solid var(--fui-themeColor);
+  --fui-buttonBorderActive: var(--buttonBorder);
+  --fui-buttonFocusBorder: 1px solid var(--themeColor);
   --fui-buttonPrimaryFontColor: #ffffff;
-  --fui-buttonPrimaryBgColor: var(--fui-themeColor);
+  --fui-buttonPrimaryBgColor: var(--themeColor);
   --fui-buttonPrimaryBorder: none;
   --fui-buttonPrimaryShadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
-  --fui-buttonPrimaryFontColorHover: var(--fui-buttonPrimaryFontColor);
-  --fui-buttonPrimaryBgColorHover: var(--fui-buttonPrimaryBgColor);
-  --fui-buttonPrimaryBorderHover: var(--fui-buttonPrimaryBorder);
-  --fui-buttonPrimaryFontColorActive: var(--fui-buttonPrimaryFontColor);
-  --fui-buttonPrimaryBgColorActive: var(--fui-buttonPrimaryBgColor);
-  --fui-buttonPrimaryBorderActive: var(--fui-buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: var(--buttonPrimaryBgColor);
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: var(--buttonPrimaryBgColor);
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
   --fui-buttonPrimaryFocusBorder: none;
-  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(53, 74, 99, 0.5), 0 0 0 1px var(--fui-themeColor);
+  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(53, 74, 99, 0.5), 0 0 0 1px var(--themeColor);
   --fui-tableBorderColor: #e5e5e5;
-  --fui-headingColor: rgba(43, 48, 50, 0.8);
+  --fui-headingColor: var(--editorColor80);
   --fui-sideBarColor: rgba(43, 48, 50, 0.8);
   --fui-sideBarIconColor: rgba(43, 48, 50, 0.6);
   --fui-sideBarTitleColor: rgba(43, 48, 50, 1);
@@ -104,11 +104,11 @@
   border: 1px solid #dddddd;
   border-top: none;
   border-bottom: none;
-  background: var(--fui-floatBgColor) !important;
+  background: var(--floatBgColor) !important;
 }
 
 .tabs-container > li.active:after {
   top: 0 !important;
   bottom: auto !important;
-  background: var(--fui-themeColor) !important;
+  background: var(--themeColor) !important;
 }

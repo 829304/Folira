@@ -27,33 +27,33 @@
   --fui-codeBgColor: #d8d8d869;
   --fui-footnoteBgColor: rgba(66, 67, 68, 0.5);
   --fui-inputBgColor: rgba(0, 0, 0, 0.1);
-  --fui-focusColor: var(--fui-themeColor);
+  --fui-focusColor: var(--themeColor);
   --fui-buttonFontColor: rgba(255, 255, 255, 0.6);
   --fui-buttonBgColor: #58606a;
   --fui-buttonBorder: 1px solid #383d44;
   --fui-buttonShadow: none;
-  --fui-buttonFontColorHover: var(--fui-buttonFontColor);
+  --fui-buttonFontColorHover: var(--buttonFontColor);
   --fui-buttonBgColorHover: #646d78;
-  --fui-buttonBorderHover: var(--fui-buttonBorder);
-  --fui-buttonFontColorActive: var(--fui-buttonFontColor);
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
   --fui-buttonBgColorActive: #4a5159;
-  --fui-buttonBorderActive: var(--fui-buttonBorder);
+  --fui-buttonBorderActive: var(--buttonBorder);
   --fui-buttonPrimaryFontColor: #ffffff;
-  --fui-buttonPrimaryBgColor: var(--fui-themeColor);
+  --fui-buttonPrimaryBgColor: var(--themeColor);
   --fui-buttonPrimaryBorder: none;
   --fui-buttonPrimaryShadow: none;
-  --fui-buttonPrimaryFontColorHover: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
   --fui-buttonPrimaryBgColorHover: #f5914f;
-  --fui-buttonPrimaryBorderHover: var(--fui-buttonPrimaryBorder);
-  --fui-buttonPrimaryFontColorActive: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
   --fui-buttonPrimaryBgColorActive: #f3731f;
-  --fui-buttonPrimaryBorderActive: var(--fui-buttonPrimaryBorder);
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
   --fui-buttonPrimaryFocusBorder: none;
-  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(145, 75, 29, 0.6), 0 0 0 1px var(--fui-themeColor);
+  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(145, 75, 29, 0.6), 0 0 0 1px var(--themeColor);
   --fui-tableBorderColor: #4f585e;
-  --fui-headingColor: rgba(171, 178, 191, 1);
+  --fui-headingColor: var(--editorColor80);
   --fui-sideBarColor: rgba(255, 255, 255, 0.6);
-  --fui-sideBarIconColor: var(--fui-iconColor);
+  --fui-sideBarIconColor: var(--iconColor);
   --fui-sideBarTitleColor: rgba(255, 255, 255, 1);
   --fui-sideBarTextColor: rgba(255, 255, 255, 0.4);
   --fui-sideBarBgColor: rgba(39, 45, 52, 0.95);
@@ -86,7 +86,7 @@
 }
 
 .tabs-container > li.active {
-  background: var(--fui-floatBgColor) !important;
+  background: var(--floatBgColor) !important;
 }
 
 .open-project button,

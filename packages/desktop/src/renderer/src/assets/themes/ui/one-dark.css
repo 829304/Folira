@@ -29,33 +29,33 @@
   --fui-footnoteBgColor: rgba(66, 67, 68, 0.5);
   --fui-inputBgColor: rgba(0, 0, 0, 0.1);
   --fui-focusColor: #568af2;
-  --fui-buttonFontColor: #9da5b4;
+  --fui-buttonFontColor: var(--editorColor);
   --fui-buttonBgColor: linear-gradient(#3a3f4b, #353b45);
   --fui-buttonBorder: 1px solid #181a1f;
   --fui-buttonShadow: none;
   --fui-buttonFontColorHover: #d7dae0;
   --fui-buttonBgColorHover: linear-gradient(#3e4451, #3a3f4b);
-  --fui-buttonBorderHover: var(--fui-buttonBorder);
-  --fui-buttonFontColorActive: var(--fui-buttonFontColor);
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
   --fui-buttonBgColorActive: #2c313a;
-  --fui-buttonBorderActive: var(--fui-buttonBorder);
+  --fui-buttonBorderActive: var(--buttonBorder);
   --fui-buttonFocusBorder: 1px solid #568af2;
   --fui-buttonPrimaryFontColor: #ffffff;
   --fui-buttonPrimaryBgColor: linear-gradient(#557ecf, #4d78cc);
   --fui-buttonPrimaryBorder: 1px solid #181a1f;
   --fui-buttonPrimaryShadow: none;
-  --fui-buttonPrimaryFontColorHover: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
   --fui-buttonPrimaryBgColorHover: linear-gradient(#6187d2, #5981d0);
-  --fui-buttonPrimaryBorderHover: var(--fui-buttonPrimaryBorder);
-  --fui-buttonPrimaryFontColorActive: var(--fui-buttonPrimaryFontColor);
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
   --fui-buttonPrimaryBgColorActive: #3d6bc8;
-  --fui-buttonPrimaryBorderActive: var(--fui-buttonPrimaryBorder);
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
   --fui-buttonPrimaryFocusBorder: none;
   --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(24, 26, 31, 0.5), 0 0 0 1px #568af2;
   --fui-tableBorderColor: #363839;
   --fui-headingColor: #e2c08d;
   --fui-sideBarColor: #9da5b4;
-  --fui-sideBarIconColor: var(--fui-iconColor);
+  --fui-sideBarIconColor: var(--iconColor);
   --fui-sideBarTitleColor: #9da5b4;
   --fui-sideBarTextColor: #9da5b4;
   --fui-sideBarBgColor: #24282f;
@@ -71,7 +71,7 @@
 
 ::-webkit-scrollbar,
 ::-webkit-scrollbar-corner {
-  background: var(--fui-editorBgColor);
+  background: var(--editorBgColor);
 }
 
 ::-webkit-scrollbar:vertical {
@@ -99,12 +99,12 @@
 }
 
 .el-button:focus {
-  color: var(--fui-buttonFontColor);
+  color: var(--buttonFontColor);
 }
 
 .el-button--primary:focus {
-  color: var(--fui-buttonPrimaryFontColor);
-  background: var(--fui-buttonPrimaryBgColor);
+  color: var(--buttonPrimaryFontColor);
+  background: var(--buttonPrimaryBgColor);
 }
 
 .title-bar .frameless-titlebar-button > div > svg {
@@ -151,7 +151,7 @@
 
 .tabs-container > li,
 .tabs-container > li.active {
-  background: var(--fui-editorBgColor) !important;
+  background: var(--editorBgColor) !important;
 }
 
 .tabs-container > li.active {
@@ -169,4 +169,26 @@
 
 .tabs-container svg.close-icon #unsaved-circle-icon {
   fill: #4d78cc;
+}
+
+.input-wrapper {
+  border-radius: 3px !important;
+  border: 1px solid #181a1f !important;
+  background: #1b1d23 !important;
+}
+
+.left-column ul > li > svg {
+  fill: rgba(215, 218, 224, 0.6) !important;
+}
+
+.left-column ul > li:hover > svg {
+  fill: #d7dae0 !important;
+}
+
+.left-column ul > li:hover > svg {
+  fill: #d7dae0 !important;
+}
+
+.left-column ul > li.active > svg {
+  fill: #4d78cc !important;
 }

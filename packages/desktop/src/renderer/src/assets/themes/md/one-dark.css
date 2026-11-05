@@ -25,13 +25,13 @@
   --fmd-codeBlockBgColor: #3a3f4b;
   --fmd-footnoteBgColor: rgba(66, 67, 68, 0.5);
   --fmd-inputBgColor: rgba(0, 0, 0, 0.1);
-  --fmd-buttonFontColor: #9da5b4;
+  --fmd-buttonFontColor: var(--editorColor);
   --fmd-buttonBgColor: linear-gradient(#3a3f4b, #353b45);
   --fmd-buttonBorder: 1px solid #181a1f;
   --fmd-buttonBgColorHover: linear-gradient(#3e4451, #3a3f4b);
-  --fmd-buttonBorderHover: var(--fmd-buttonBorder);
+  --fmd-buttonBorderHover: var(--buttonBorder);
   --fmd-buttonBgColorActive: #2c313a;
-  --fmd-buttonBorderActive: var(--fmd-buttonBorder);
+  --fmd-buttonBorderActive: var(--buttonBorder);
   --fmd-tableBorderColor: #363839;
   --fmd-h1Color: #e06c75;
   --fmd-h2Color: #61afef;
@@ -56,59 +56,51 @@
   --fmd-highlightThemeColor: #e2c08d;
 }
 
+
+
 .v-modal {
   background: #08090a !important;
   opacity: 0.65 !important;
 }
+
+
 
 .mu-front-menu,
 .mu-float-wrapper {
   box-shadow: 0 4px 8px 0 var(--fmd-floatShadow) !important;
 }
 
-.input-wrapper {
-  border-radius: 3px !important;
-  border: 1px solid #181a1f !important;
-  background: #1b1d23 !important;
-}
 
-.left-column ul > li > svg {
-  fill: rgba(215, 218, 224, 0.6) !important;
-}
-
-.left-column ul > li:hover > svg {
-  fill: #d7dae0 !important;
-}
-
-.left-column ul > li:hover > svg {
-  fill: #d7dae0 !important;
-}
-
-.left-column ul > li.active > svg {
-  fill: #4d78cc !important;
-}
 
 blockquote::before {
   background: var(--fmd-highlightThemeColor);
 }
 
+
+
 :not(pre) > code[class*='language-'],
 pre:not(.CodeMirror-line),
 pre[class*='language-'],
 pre.mu-code-block {
-  background: var(--fmd-codeBlockBgColor) !important;
+  background: var(--codeBlockBgColor) !important;
   border: none !important;
 }
+
+
 
 .mu-thematic-break:not(.mu-active)::before {
   border-top: 2px dashed #4b5362 !important;
   background: none !important;
 }
 
+
+
 li.mu-task-list-item {
   list-style-type: none;
   position: relative;
 }
+
+
 
 li.mu-task-list-item > input[type='checkbox'] {
   position: absolute;
@@ -123,10 +115,14 @@ li.mu-task-list-item > input[type='checkbox'] {
   transition: all 0.2s ease;
 }
 
+
+
 li.mu-task-list-item > input.mu-checkbox-checked {
   transform: rotate(0);
   opacity: 0.6;
 }
+
+
 
 li.mu-task-list-item > input[type='checkbox']::before {
   content: '';
@@ -134,19 +130,23 @@ li.mu-task-list-item > input[type='checkbox']::before {
   height: 16px;
   box-sizing: border-box;
   display: inline-block;
-  border: 2px solid var(--fmd-editorColor);
+  border: 2px solid var(--editorColor);
   border-radius: 2px;
-  background-color: var(--fmd-editorBgColor);
+  background-color: var(--editorBgColor);
   position: absolute;
   top: 0;
   left: 0;
   transition: all 0.2s ease;
 }
 
+
+
 li.mu-task-list-item > input.mu-checkbox-checked::before {
   border: transparent;
-  background-color: var(--fmd-editorColor);
+  background-color: var(--editorColor);
 }
+
+
 
 li.mu-task-list-item > input::after {
   content: '';
@@ -163,9 +163,13 @@ li.mu-task-list-item > input::after {
   transition: all 0.2s ease;
 }
 
+
+
 li.mu-task-list-item > input.mu-checkbox-checked::after {
   transform: rotate(-45deg) scale(1);
 }
+
+
 
 figure.mu-active.mu-math-block > div.mu-math-preview,
 figure.mu-active.mu-diagram-block > div.mu-diagram-preview {

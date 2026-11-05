@@ -27,6 +27,8 @@ test.describe('memory against document size', () => {
         (_, i) => `## Section ${i}\n\nSome prose with \`code\` and a [link](https://example.com).`,
     ).join('\n\n');
 
+    test.skip(({ browserName }) => browserName !== 'chromium', 'collects the heap through CDP');
+
     test('costs the same per block whether the document is small or large', async ({ page }) => {
         const client = await page.context().newCDPSession(page);
 

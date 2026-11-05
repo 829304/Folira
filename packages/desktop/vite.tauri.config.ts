@@ -49,6 +49,10 @@ export default defineConfig({
           stage: 0,
           features: {
             'nesting-rules': true,
+            // The theme cascade depends on `@layer` order (theme defaults <
+            // the mirrored user rules < unlayered user CSS). Flattening the
+            // layers changes which declaration wins, so keep them as written.
+            'cascade-layers': false,
             // System WebViews (WebView2 / WKWebView / webkit2gtk) support CSS
             // logical properties natively — leave them intact so RTL mirrors.
             'logical-properties-and-values': false

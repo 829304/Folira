@@ -31,7 +31,7 @@
   --fmd-buttonBgColorHover: #26233a;
   --fmd-buttonBorderHover: 1px solid rgba(0, 0, 0, 0.3);
   --fmd-buttonBgColorActive: #1a1826;
-  --fmd-buttonBorderActive: var(--fmd-buttonBorder);
+  --fmd-buttonBorderActive: var(--buttonBorder);
   --fmd-tableBorderColor: #1f1d2e;
   --fmd-h1Color: #c4a7e7;
   --fmd-h2Color: #ebbcba;
@@ -43,7 +43,7 @@
   --fmd-blockquoteBorderColor: #403d52;
   --fmd-hrColor: #26233a;
   --fmd-linkColor: #9ccfd8;
-  --fmd-strongColor: #e0def4;
+  --fmd-strongColor: var(--editorColor);
   --fmd-emColor: #ebbcba;
   --fmd-listMarkerColor: #c4a7e7;
   --fmd-floatBgColor: #1f1d2e;
@@ -64,12 +64,12 @@
 pre:not(.CodeMirror-line),
 pre[class*='language-'],
 pre.mu-code-block {
-  background: var(--fmd-codeBlockBgColor) !important;
+  background: var(--codeBlockBgColor) !important;
   border: none !important;
 }
 
 .mu-thematic-break:not(.mu-active)::before {
-  border-top: 2px dashed var(--fmd-editorColor10) !important;
+  border-top: 2px dashed var(--editorColor10) !important;
   background: none !important;
 }
 
