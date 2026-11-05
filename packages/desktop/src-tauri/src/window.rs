@@ -146,7 +146,10 @@ pub fn track(window: &tauri::Window) {
     else {
         return;
     };
-    if editor.is_maximized().unwrap_or(false) || editor.is_fullscreen().unwrap_or(false) {
+    if editor.is_maximized().unwrap_or(false)
+        || editor.is_fullscreen().unwrap_or(false)
+        || editor.is_minimized().unwrap_or(false)
+    {
         return;
     }
 
@@ -158,10 +161,13 @@ pub fn track(window: &tauri::Window) {
 
 /// Remember the window for the next launch. Called on the way out, when the
 /// geometry still describes what the user last saw.
+///
+/// Closing the window runs this while it still exists, which is where the
+/// maximised/full-screen flags and the last free-floating rectangle come from.
+/// Quitting from the menu destroys the windows first, so the exit hook reaches
+/// this with nothing to measure: the rectangle `track` already recorded is what
+/// the user last saw, and it must still reach the file.
 pub fn save(app: &AppHandle) {
-    let Some(window) = app.get_webview_window("main") else {
-        return;
-    };
     let (Some(data), Some(geometry)) = (app.try_state::<DataRoot>(), app.try_state::<Geometry>())
     else {
         return;
@@ -170,10 +176,12 @@ pub fn save(app: &AppHandle) {
     let Ok(mut state) = geometry.0.lock() else {
         return;
     };
-    state.maximized = window.is_maximized().unwrap_or(false);
-    state.fullscreen = window.is_fullscreen().unwrap_or(false);
-    if !state.maximized && !state.fullscreen {
-        update_bounds(&window, &mut state);
+    if let Some(window) = app.get_webview_window("main") {
+        state.maximized = window.is_maximized().unwrap_or(state.maximized);
+        state.fullscreen = window.is_fullscreen().unwrap_or(state.fullscreen);
+        if !state.maximized && !state.fullscreen && !window.is_minimized().unwrap_or(false) {
+            update_bounds(&window, &mut state);
+        }
     }
     state.logical = true;
 
@@ -280,7 +288,17 @@ pub async fn open_settings_window(app: AppHandle, url: String) -> Result<(), Str
     // `WebviewUrl::App` resolves against the custom protocol, which the dev
     // server never sees; with `devUrl` configured the path has to be joined
     // onto it instead, exactly as Tauri does for the windows in the config.
-    let target = match app.config().build.dev_url.clone() {
+    //
+    // Only while the dev server is the thing serving the page: the config keeps
+    // `devUrl` in the packaged build too, and following it there would open the
+    // settings window on a localhost URL that no longer exists.
+    let dev_url = app
+        .config()
+        .build
+        .dev_url
+        .clone()
+        .filter(|_| tauri::is_dev());
+    let target = match dev_url {
         Some(dev_url) => {
             WebviewUrl::External(dev_url.join(&url).map_err(|error| error.to_string())?)
         }

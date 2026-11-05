@@ -102,6 +102,41 @@ pub fn output_file(path: String, data: FileWriteData) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+/// Merge `patch` into the JSON object stored at `path`, creating the file if it
+/// is missing.
+///
+/// Each window keeps its own bag of stored preferences and used to write that
+/// whole bag back, so whichever window wrote last replaced everything the other
+/// one had changed since its own read. Merging on disk makes concurrent writers
+/// add keys instead of overwriting each other.
+#[tauri::command]
+pub fn merge_json_file(path: String, patch: serde_json::Value) -> Result<(), String> {
+    let path = Path::new(&path);
+    let existing = match fs::read_to_string(path) {
+        Ok(text) => serde_json::from_str::<serde_json::Value>(&text)
+            .ok()
+            .and_then(|value| match value {
+                serde_json::Value::Object(map) => Some(map),
+                _ => None,
+            })
+            .unwrap_or_default(),
+        // Anything unreadable is replaced rather than reported: the caller is
+        // writing a full patch, so losing a corrupt file is the repair.
+        Err(_) => serde_json::Map::new(),
+    };
+
+    let serde_json::Value::Object(patch) = patch else {
+        return Err("the preference patch must be a JSON object".to_owned());
+    };
+
+    let mut merged = existing;
+    merged.extend(patch);
+    let value = serde_json::Value::Object(merged);
+    let mut bytes = serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?;
+    bytes.push(b'\n');
+    super::atomic_write::write_atomic(path, &bytes).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub fn ensure_dir(path: String) -> Result<(), String> {
     fs::create_dir_all(&path).map_err(|e| e.to_string())

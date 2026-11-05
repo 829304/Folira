@@ -20,12 +20,20 @@ type Bag = Record<string, unknown>
 interface Store {
   path: string
   values: Bag
+  /** Keys merged since the last write, on their way to disk. */
+  pending: Bag
   /** The in-flight read, shared by every caller so the file is read once. */
   loading: Promise<Bag> | null
   writeTimer: ReturnType<typeof setTimeout> | null
 }
 
-const createStore = (): Store => ({ path: '', values: {}, loading: null, writeTimer: null })
+const createStore = (): Store => ({
+  path: '',
+  values: {},
+  pending: {},
+  loading: null,
+  writeTimer: null
+})
 
 const preferences = createStore()
 const userData = createStore()
@@ -84,17 +92,37 @@ const scheduleWrite = (store: Store): void => {
   if (store.writeTimer) clearTimeout(store.writeTimer)
   store.writeTimer = setTimeout(() => {
     store.writeTimer = null
-    invoke('output_file', {
-      path: store.path,
-      data: JSON.stringify(store.values, null, 2)
-    }).catch((err) => console.error(`[tauri-bridge] cannot write ${store.path}:`, err))
+    flush(store).catch((err) => console.error(`[tauri-bridge] cannot write ${store.path}:`, err))
   }, WRITE_DELAY)
+}
+
+/**
+ * Send the keys merged since the last write, and only those.
+ *
+ * The file is shared with every other window, so writing this window's whole
+ * bag would drop whatever another window saved in the meantime — the editor
+ * writes `sideBarVisibility` at startup while the settings window is writing a
+ * theme, and one of them used to lose. `merge_json_file` applies the patch to
+ * what is on disk, so both land.
+ */
+const flush = async(store: Store): Promise<void> => {
+  const patch = store.pending
+  if (!store.path || Object.keys(patch).length === 0) return
+  store.pending = {}
+  try {
+    await invoke('merge_json_file', { path: store.path, patch })
+  } catch (err) {
+    // Keep the keys so the next edit retries them rather than dropping them.
+    store.pending = { ...patch, ...store.pending }
+    throw err
+  }
 }
 
 const merge = async(store: Store, patch: unknown): Promise<void> => {
   if (!patch || typeof patch !== 'object') return
   await read(store)
   Object.assign(store.values, patch as Bag)
+  Object.assign(store.pending, patch as Bag)
   scheduleWrite(store)
 }
 

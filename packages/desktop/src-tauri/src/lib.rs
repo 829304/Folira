@@ -122,6 +122,9 @@ pub fn run() {
             commands::fs::read_file,
             commands::fs::write_file,
             commands::fs::output_file,
+            // Merges a preference patch into the stored file, so two windows
+            // writing at once do not replace each other's keys.
+            commands::fs::merge_json_file,
             commands::fs::ensure_dir,
             commands::fs::empty_dir,
             commands::fs::copy_path,

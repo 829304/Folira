@@ -108,6 +108,28 @@ describe('window state', () => {
     expect(window).toContain('if fills_screen(window, ')
   })
 
+  it('does not record the off-screen rectangle a minimized window reports', () => {
+    // Minimizing resizes the window to the taskbar's idea of a rectangle;
+    // storing that would bring the editor back at the wrong size.
+    const track = window.slice(window.indexOf('pub fn track('), window.indexOf('pub fn save('))
+    expect(track).toContain('is_minimized')
+  })
+
+  it('still writes the state when quitting destroyed the window first', () => {
+    // Quitting from the menu tears the windows down before `RunEvent::Exit`,
+    // so `save` must fall back to the rectangle `track` recorded rather than
+    // return early when the window is gone.
+    const save = window.slice(window.indexOf('pub fn save('), window.indexOf('fn update_bounds'))
+    expect(save).toContain('if let Some(window) = app.get_webview_window("main")')
+    expect(save).toContain('data.window_state()')
+  })
+
+  it('follows the dev server only in a development build', () => {
+    // `devUrl` stays in the packaged config; opening the settings window on it
+    // would point a shipped app at a localhost page that no longer exists.
+    expect(window).toContain('tauri::is_dev()')
+  })
+
   it('does not put data inside a macOS application bundle', () => {
     // `Folira.app/Contents/MacOS/folira` is writable, but writing there breaks
     // the signature and loses the data on the next update.
