@@ -22,7 +22,6 @@ import { storeToRefs } from 'pinia'
 import TitleBar from '@/prefComponents/common/titlebar.vue'
 import SideBar from '@/prefComponents/sideBar/index.vue'
 import { applyTheme } from '@/util/theme'
-import { DEFAULT_STYLE } from '@/config'
 import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
 import { isOsx } from '@/util'
 import { registerSettingsComponents } from '@/prefComponents/settingsComponents'
@@ -62,16 +61,13 @@ watch(activeTheme, (pair, previous) => {
 // Lifecycle
 onMounted(() => {
   nextTick(() => {
-    const state = window.marktext?.initialState
-    const initial = state as
-      | (typeof DEFAULT_STYLE & { uiTheme?: string | null; mdTheme?: string | null })
-      | undefined
+    const initialPair = window.marktext?.initialThemePair
     // The URL pair is what the last frame showed; the resolved pair is what the
     // preferences file asks for. Prefer the URL for this first paint and let the
     // watcher converge once `mt::user-preference` arrives.
     applyTheme({
-      ui: initial?.uiTheme || activeTheme.value.ui,
-      md: initial?.mdTheme || activeTheme.value.md
+      ui: initialPair?.ui || activeTheme.value.ui,
+      md: initialPair?.md || activeTheme.value.md
     })
 
     preferencesStore.ASK_FOR_USER_PREFERENCE()

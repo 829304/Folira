@@ -366,12 +366,12 @@
     "default": "dark"
   },
   "uiTheme": {
-    "description": "Theme--Interface theme; empty follows the app theme.--internal",
+    "description": "Theme--Interface theme; empty follows the app theme.",
     "type": "string",
     "default": ""
   },
   "mdTheme": {
-    "description": "Theme--Markdown theme; empty follows the app theme.--internal",
+    "description": "Theme--Markdown theme; empty follows the app theme.",
     "type": "string",
     "default": ""
   },

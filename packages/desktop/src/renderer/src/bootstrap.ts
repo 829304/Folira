@@ -14,13 +14,21 @@ interface UrlArgs {
   debug: boolean
   userDataPath: string | null
   windowId: number
+  /**
+   * The pair the previous frame was painted with, cached in the window URL.
+   * It is not a stored preference: the preferences file cannot be read until
+   * after the first paint, so this only keeps that first frame from flashing
+   * the defaults.
+   */
+  initialThemePair: {
+    ui: string | null
+    md: string | null
+  }
   initialState: {
     codeFontFamily: string | null
     codeFontSize: string | null
     hideScrollbar: boolean
     theme: string | null
-    uiTheme: string | null
-    mdTheme: string | null
     titleBarStyle: string | null
   }
 }
@@ -48,13 +56,15 @@ const parseUrlArgs = (): UrlArgs => {
     debug,
     userDataPath,
     windowId,
+    initialThemePair: {
+      ui: uiTheme,
+      md: mdTheme
+    },
     initialState: {
       codeFontFamily,
       codeFontSize,
       hideScrollbar,
       theme,
-      uiTheme,
-      mdTheme,
       titleBarStyle
     }
   }
@@ -109,11 +119,12 @@ const bootstrapRenderer = (): void => {
   window.addEventListener('error', handleRendererError)
   window.addEventListener('unhandledrejection', handleRendererError)
 
-  const { debug, initialState, userDataPath, windowId, type } = parseUrlArgs()
+  const { debug, initialThemePair, initialState, userDataPath, windowId, type } = parseUrlArgs()
   // RendererPaths throws when userDataPath is missing; preserve that runtime check.
   const paths = new RendererPaths(userDataPath as string)
   const marktext = {
     initialState,
+    initialThemePair,
     env: {
       debug,
       paths,

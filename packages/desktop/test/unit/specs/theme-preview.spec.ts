@@ -89,6 +89,15 @@ describe('preview isolation', () => {
     expect(isPreviewLoadable(UI, '  ')).toBe(false)
     expect(isPreviewLoadable(UI, MD)).toBe(true)
   })
+
+  it('keeps the pair on screen when a stylesheet load rejects', () => {
+    // A missing file resolves to an empty string, but a failed fetch rejects.
+    // Left uncaught, that becomes an unhandled rejection every time a hover
+    // lands on a theme that cannot be read.
+    expect(source).toContain('try {')
+    expect(source).toContain('catch (error)')
+    expect(source).toContain('warned')
+  })
 })
 
 describe('preview of a mixed pair', () => {

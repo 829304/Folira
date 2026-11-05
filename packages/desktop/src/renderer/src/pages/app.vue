@@ -277,16 +277,17 @@ onMounted(async () => {
     // Coalesce against DEFAULT_STYLE for every nullable field.
     // The window URL carries the pair the previous session painted with, so the
     // first frame matches what was on screen before the preferences file is read.
-    const init = window.marktext?.initialState as
-      | (typeof DEFAULT_STYLE & { uiTheme?: string | null; mdTheme?: string | null })
-      | undefined
+    // That pair is a cache for this frame only: it is deliberately not part of
+    // `initialState`, which `main.ts` feeds into the preferences store.
+    const init = window.marktext?.initialState as typeof DEFAULT_STYLE | undefined
+    const initialPair = window.marktext?.initialThemePair
     const style: AddStylesOptions = {
       theme: init?.theme ?? DEFAULT_STYLE.theme,
       codeFontFamily: init?.codeFontFamily ?? DEFAULT_STYLE.codeFontFamily,
       codeFontSize: init?.codeFontSize ?? DEFAULT_STYLE.codeFontSize,
       hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar,
-      uiTheme: init?.uiTheme || themePair.value.ui,
-      mdTheme: init?.mdTheme || themePair.value.md
+      uiTheme: initialPair?.ui || themePair.value.ui,
+      mdTheme: initialPair?.md || themePair.value.md
     }
     addStyles(style)
   })

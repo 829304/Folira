@@ -122,3 +122,39 @@ describe('theme assets on disk', () => {
     expect(css).not.toContain('--fmd-h1Color')
   })
 })
+
+describe('first frame', () => {
+  const renderer = resolve(__dirname, '../../../src/renderer/src')
+  const bootstrap = readFileSync(resolve(renderer, 'bootstrap.ts'), 'utf8')
+  const main = readFileSync(resolve(renderer, 'main.ts'), 'utf8')
+
+  it('keeps the cached pair out of the state the store receives', () => {
+    // The URL pair is the last painted frame, not a choice. `main.ts` hands
+    // `initialState` to the preferences store before mount, so a pair folded in
+    // there would read as "the user picked these" and pin a following system
+    // to one appearance.
+    expect(bootstrap).toContain('initialThemePair')
+
+    const from = bootstrap.lastIndexOf('initialState: {')
+    const literals = bootstrap.slice(from, bootstrap.indexOf('}', from))
+    expect(literals).not.toContain('uiTheme')
+    expect(literals).not.toContain('mdTheme')
+  })
+
+  it('feeds the store only the initial state', () => {
+    expect(main).toContain('SET_USER_PREFERENCE(window.marktext.initialState)')
+    expect(main).not.toContain('initialThemePair')
+  })
+
+  it('keeps both theme settings reachable from the settings search', () => {
+    const schema = JSON.parse(
+      readFileSync(resolve(__dirname, '../../../src/shared/preferences-schema.json'), 'utf8')
+    ) as Record<string, { description: string }>
+
+    for (const key of ['uiTheme', 'mdTheme']) {
+      expect(schema[key]?.description, `${key} is hidden from the search index`).not.toMatch(
+        /--internal$/
+      )
+    }
+  })
+})

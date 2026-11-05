@@ -190,6 +190,11 @@ declare global {
     DIRNAME: string
     marktext?: {
       env?: { windowId: number; [key: string]: unknown }
+      /**
+       * The pair the last frame painted with, cached in the window URL. Only
+       * the first frame reads it; it is never written to the preferences.
+       */
+      initialThemePair?: { ui?: string | null; md?: string | null }
       initialState?: {
         codeFontFamily?: string | null
         codeFontSize?: string | null

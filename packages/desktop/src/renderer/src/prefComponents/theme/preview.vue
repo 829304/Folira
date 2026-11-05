@@ -27,23 +27,37 @@ let shadow: ShadowRoot | null = null
 let request = 0
 let warned = false
 
+// A preview is not worth an error dialog, and a blank one reads as "this theme
+// is broken", so every failure ends with the pair already on screen still
+// there. The first one is worth a line in the console; repeats would only
+// repeat themselves on every hover.
+const keep = (ui: string, md: string, error?: unknown): void => {
+  if (warned) return
+  warned = true
+  console.warn(`[theme-preview] cannot load ui/${ui} or md/${md}; keeping the rendered pair`, error)
+}
+
 const render = async (): Promise<void> => {
   const token = ++request
-  const [ui, md, prism] = await Promise.all([
-    loadUiCss(props.ui),
-    loadMdCss(props.md),
-    loadPrismCss(props.md)
-  ])
+  let ui: string
+  let md: string
+  let prism: string
+  try {
+    ;[ui, md, prism] = await Promise.all([
+      loadUiCss(props.ui),
+      loadMdCss(props.md),
+      loadPrismCss(props.md)
+    ])
+  } catch (error) {
+    if (token === request) keep(props.ui, props.md, error)
+    return
+  }
   if (token !== request || !shadow) return
 
+  // A missing stylesheet resolves to an empty string rather than rejecting, so
+  // the rejection path above is not the only way a pair can arrive unusable.
   if (!isPreviewLoadable(ui, md)) {
-    // Documented failure mode: an unloadable stylesheet keeps the pair that is
-    // already on screen. A preview is not worth an error dialog, and a blank
-    // one would read as "this theme is broken".
-    if (!warned) {
-      warned = true
-      console.warn(`[theme-preview] cannot load ${!ui ? props.ui : props.md}; keeping the rendered pair`)
-    }
+    keep(props.ui, props.md)
     return
   }
 
