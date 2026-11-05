@@ -71,9 +71,15 @@ variables and user-override checks).
 
 ## Phase 2 — selection, preview, follow the system
 
-Status: planned, not started.
+Status: implemented (`becfcf92`, with `f58386a7` fixing the page background
+that a mixed pair exposed).
 
-### What is missing today
+The settings page is now the only place a theme is chosen. The native Theme
+menu and the command palette's "Change Theme" entry both offered a fixed list
+of six whole themes, which no longer described the model — they were removed
+rather than repointed, because one entry point cannot show two axes.
+
+### What Phase 1 left
 
 - `uiTheme` / `mdTheme` exist in the preferences store and default to `''`
   ("follow `theme`"), but nothing in the settings page can set them, and they
@@ -192,7 +198,8 @@ Status: planned, not started.
 - First-paint snapshot / critical CSS inlining.
 - `--ui-theme` / `--md-theme` command-line flags.
 - Export and print following the Markdown theme.
-- Listing all 33 themes in the native menu, with check marks.
+- A native theme menu, with a check mark on the current choice. The menu was
+  removed in Phase 2; themes are chosen in Preferences.
 
 ## Phase 3 — deferred
 

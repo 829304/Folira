@@ -153,9 +153,6 @@ const COMMAND_KEY_MAP: Record<string, string> = {
   'window.zoomIn': 'commands.window.zoomIn',
   'window.zoomOut': 'commands.window.zoomOut',
 
-  // Theme settings
-  'window.change-theme': 'commands.window.changeTheme',
-
   // ============================================
   // # View Controls
   // ============================================

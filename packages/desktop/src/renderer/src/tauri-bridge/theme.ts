@@ -5,10 +5,6 @@
 // where it can be read synchronously. Every writer of the theme preferences
 // ends up in `applyTheme`, which calls `rememberThemePair`, so the mirror can
 // never describe a pair the window is not showing.
-//
-// The native Theme menu (src-tauri/src/menu) emits `mt::set-theme` with
-// 'system', 'light', 'dark', or a specific theme id; the renderer decides what
-// that means for its two axes.
 
 export interface ThemePair {
   ui: string
@@ -75,16 +71,4 @@ export function resolveInitialPair(): ThemePair {
   const legacy = themeForChoice(readLegacyChoice())
 
   return { ui: legacy, md: legacy }
-}
-
-/**
- * Wire ongoing theme changes from the native Theme menu.
- *
- * The OS appearance is not handled here: the renderer reads `matchMedia` while
- * following the system, so an OS switch repaints without any event plumbing.
- */
-export function initThemeController(onMenuChoice: (choice: string) => void): void {
-  window.electron.ipcRenderer.on('mt::set-theme', (_e, choice) => {
-    onMenuChoice(String(choice))
-  })
 }

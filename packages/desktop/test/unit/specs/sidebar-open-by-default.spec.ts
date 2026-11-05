@@ -28,7 +28,7 @@ describe('the file drawer on launch', () => {
   const selfBootstrap = (): string => {
     const start = source.indexOf('if (isTauri()) {')
     expect(start, 'the Tauri self-bootstrap moved').toBeGreaterThan(-1)
-    const end = source.indexOf('initThemeController', start)
+    const end = source.indexOf('// Open a new tab, optionally with content.', start)
 
     return source.slice(start, end)
   }

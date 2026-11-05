@@ -4,7 +4,6 @@ import { delay, isOsx } from '@/util'
 import { isUpdatable } from './utils'
 import { isTauri } from '@/util/isTauri'
 import getCommandDescriptionById from './descriptions'
-import { t } from '../i18n'
 import { usePreferencesStore } from '@/store/preferences'
 
 export { default as FileEncodingCommand } from './fileEncoding'
@@ -557,45 +556,6 @@ const commands: CommandDescriptor[] = [
   // --------------------------------------------------------------------------
   // Window
 
-  {
-    id: 'window.change-theme',
-    subcommands: [
-      {
-        id: 'window.change-theme-light',
-        description: 'Cadmium Light',
-        value: 'light'
-      },
-      {
-        id: 'window.change-theme-dark',
-        description: 'Dark',
-        value: 'dark'
-      },
-      {
-        id: 'window.change-theme-graphite',
-        description: 'Graphite',
-        value: 'graphite'
-      },
-      {
-        id: 'window.change-theme-material-dark',
-        description: 'Material Dark',
-        value: 'material-dark'
-      },
-      {
-        id: 'window.change-theme-one-dark',
-        description: 'One Dark',
-        value: 'one-dark'
-      },
-      {
-        id: 'window.change-theme-ulysses',
-        description: 'Ulysses',
-        value: 'ulysses'
-      }
-    ],
-    executeSubcommand: async(_, theme) => {
-      window.electron.ipcRenderer.send('mt::set-user-preference', { theme })
-    }
-  },
-
   // --------------------------------------------------------------------------
   // View
 
@@ -771,26 +731,6 @@ export const getCommandsWithDescriptions = async(): Promise<CommandDescriptor[]>
       // Always update description for commands with ID, regardless of existing description
       if (id) {
         item.description = getCommandDescriptionById(id)
-      }
-
-      // Special handling for theme subcommands
-      if (id === 'window.change-theme' && subcommands && Array.isArray(subcommands)) {
-        for (const subcommand of subcommands) {
-          const { value } = subcommand
-          if (value === 'light') {
-            subcommand.description = t('menu.theme.cadmiumLight')
-          } else if (value === 'dark') {
-            subcommand.description = t('menu.theme.dark')
-          } else if (value === 'graphite') {
-            subcommand.description = t('menu.theme.graphiteLight')
-          } else if (value === 'material-dark') {
-            subcommand.description = t('menu.theme.materialDark')
-          } else if (value === 'one-dark') {
-            subcommand.description = t('menu.theme.oneDark')
-          } else if (value === 'ulysses') {
-            subcommand.description = t('menu.theme.ulyssesLight')
-          }
-        }
       }
 
       // Also update other subcommands descriptions

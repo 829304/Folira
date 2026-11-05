@@ -46,7 +46,6 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
         "images" if arg == "reload" => emit(app, "mt::invalidate-image-cache", json!(null)),
         "palette" => emit(app, "mt::show-command-palette", json!(null)),
         "lineending" => emit(app, "mt::set-line-ending", json!(arg)),
-        "theme" => emit(app, "mt::set-theme", json!(arg)),
         "cmd" => emit(app, "mt::execute-command-by-id", json!(arg)),
 
         // File actions that are pure renderer events.

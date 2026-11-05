@@ -32,7 +32,6 @@ import type {
   BootstrapEditorConfig
 } from '@shared/types/files'
 import { isTauri } from '@/tauri-bridge'
-import { initThemeController } from '@/tauri-bridge/theme'
 import { trackOpenFile } from '@/tauri-bridge/open-files'
 
 // ----------------------------------------------------------------------------
@@ -959,9 +958,6 @@ export const useEditorStore = defineStore('editor', {
         for (const pathname of initialPaths) {
           window.electron.ipcRenderer.send('mt::open-file', pathname, {})
         }
-        // The native Theme menu speaks in whole themes; the store turns that
-        // into a pair (or into following the system again).
-        initThemeController((choice) => preferencesStore.SET_THEME_CHOICE(choice))
       }
     },
 

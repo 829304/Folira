@@ -122,19 +122,6 @@ export const MENU_STRUCTURE: MenuBarSection[] = [
     ]
   },
   {
-    titleKey: 'menu.theme.theme',
-    items: [
-      { id: 'theme:system', labelKey: 'menu.theme.followSystem' },
-      { id: 'theme:light', labelKey: 'menu.theme.light' },
-      { id: 'theme:dark', labelKey: 'menu.theme.dark' },
-      { id: 'theme:one-dark', labelKey: 'menu.theme.oneDark', divided: true },
-      { id: 'theme:material-dark', labelKey: 'menu.theme.materialDark' },
-      { id: 'theme:dracula', labelKey: 'menu.theme.dracula' },
-      { id: 'theme:nord', labelKey: 'menu.theme.nord' },
-      { id: 'theme:solarized-dark', labelKey: 'menu.theme.solarizedDark' }
-    ]
-  },
-  {
     // The native menu's Window section also carries minimize/maximize/close as
     // OS roles. This bar only ever renders on a frameless window, whose own
     // titlebar has those buttons, so it lists just the commands.

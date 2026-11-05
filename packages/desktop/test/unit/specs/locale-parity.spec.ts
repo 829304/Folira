@@ -2,10 +2,10 @@
 //
 // A missing key degrades quietly: the renderer's `t()` falls back to English
 // and the native menu's Rust resolver does the same, so a half-translated UI
-// looks like a design choice rather than a bug. The Tauri theme menu shipped
-// that way — `menu.theme.followSystem` and `menu.theme.light` were added to
-// English and Simplified Chinese only, and the other eight silently showed
-// English entries in an otherwise translated menu.
+// looks like a design choice rather than a bug. It has happened: the theme
+// menu once shipped `menu.theme.followSystem` in English and Simplified
+// Chinese only, and the other eight silently showed English entries in an
+// otherwise translated menu.
 //
 // An extra key is worth failing on too: it is either a typo that will never be
 // read, or a key removed from English that these files still carry.

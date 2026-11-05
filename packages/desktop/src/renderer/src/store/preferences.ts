@@ -313,19 +313,6 @@ export const usePreferencesStore = defineStore('preferences', {
       })
     },
 
-    SET_THEME_CHOICE(choice: string): void {
-      // The native menu offers one theme at a time. 'system' means "follow the
-      // OS"; anything else is a whole-theme choice, so both axes move together
-      // and the legacy `theme` field keeps the value old readers expect.
-      const patch =
-        choice === 'system'
-          ? { followSystemTheme: true }
-          : { followSystemTheme: false, theme: choice, uiTheme: choice, mdTheme: choice }
-
-      Object.assign(this, patch)
-      window.electron.ipcRenderer.send('mt::set-user-preference', patch)
-    },
-
     SET_SINGLE_PREFERENCE({ type, value }: SingleSetPreferencePayload): void {
       // Update local state
       ;(this as unknown as Record<string, unknown>)[type as string] = value
