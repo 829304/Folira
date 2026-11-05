@@ -62,6 +62,7 @@ describe('preference store', () => {
     expect(writes, 'the patch should have been written').toHaveLength(1)
     expect(JSON.parse((writes[0][1] as { data: string }).data)).toEqual({
       ...STORED,
+      preferencesVersion: 2,
       sideBarVisibility: true
     })
   })

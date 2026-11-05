@@ -107,4 +107,19 @@ describe('answering a question a window asked', () => {
     expect(dispatched.map(([channel]) => channel)).toEqual(['mt::stored-user-preference'])
     expect(announced(), 'a reply must not be broadcast to every window').toEqual([])
   })
+
+  it('keeps the user data on a channel of its own', async() => {
+    // `dataCenter.json` shares store fields with the preferences file but has no
+    // theme fields; sharing the preferences channel made its arrival look like a
+    // pre-split file and switched those users off "follow the system".
+    const { initPreferenceStores, sendStoredUserData } = await load()
+    initPreferenceStores('/data')
+    const dispatched: Array<[string, unknown[]]> = []
+
+    await sendStoredUserData((channel, args) => dispatched.push([channel, args]))
+    await settle()
+
+    expect(dispatched.map(([channel]) => channel)).toEqual(['mt::stored-user-data'])
+    expect(announced(), 'a reply must not be broadcast to every window').toEqual([])
+  })
 })

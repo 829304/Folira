@@ -71,6 +71,17 @@ export interface IUserPreferences {
   [key: string]: unknown
 }
 
+/**
+ * Version of the stored preferences file, stamped on every save.
+ *
+ * A file has to be able to say whether it predates the two-axis theme split.
+ * The theme fields cannot answer that question: a user who never opened the
+ * theme page stores no theme fields at all, so their absence means "untouched",
+ * not "written by the old shape". An explicit version does answer it.
+ */
+export const PREFERENCES_VERSION_KEY = 'preferencesVersion'
+export const PREFERENCES_VERSION = 2
+
 export interface LayoutState {
   rightColumn: 'files' | 'search' | 'toc'
   showSideBar: boolean

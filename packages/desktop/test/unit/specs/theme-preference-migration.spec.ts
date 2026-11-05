@@ -3,8 +3,12 @@
 // They only know `theme`. The new default is "follow the system", so a naive
 // read would flip those users to the dark pair on a dark OS the first time the
 // new build started — an appearance change nobody asked for, on a setting they
-// never saw. The migration keeps the single theme until a file proves it was
-// written by the two-axis page.
+// never saw. The migration keeps the single theme until a file says it was
+// written by this shape.
+//
+// The marker is the file version, not a theme field: a user who never opened the
+// theme page stores no theme fields at all, so their absence says "untouched",
+// not "old file".
 
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
@@ -23,8 +27,21 @@ describe('migrating a pre-split preferences file', () => {
     })
   })
 
-  it('leaves a two-axis file untouched', () => {
-    const stored = { theme: 'light', followSystemTheme: true, lightUiTheme: '' }
+  it('leaves a file this build wrote untouched', () => {
+    const stored = {
+      preferencesVersion: 2,
+      theme: 'light',
+      followSystemTheme: true,
+      lightUiTheme: ''
+    }
+
+    expect(migrateLegacyThemeFields(stored)).toBe(stored)
+  })
+
+  it('does not mistake a theme-less file for a pre-split one', () => {
+    // Only `fontSize` was ever changed, so the file carries no theme field at
+    // all. It is current, and must keep the default "follow the system".
+    const stored = { preferencesVersion: 2, fontSize: 17 }
 
     expect(migrateLegacyThemeFields(stored)).toBe(stored)
   })
@@ -40,7 +57,7 @@ describe('migrating a pre-split preferences file', () => {
 // Only the file read at startup can predate the split. A patch carries the one
 // field the user just changed, so migrating it would write `followSystemTheme:
 // false` behind their back every time they touched anything.
-describe('applying preferences from the two sources', () => {
+describe('applying preferences from the three sources', () => {
   const source = readFileSync(
     resolve(__dirname, '../../../src/renderer/src/store/preferences.ts'),
     'utf8'
@@ -49,8 +66,14 @@ describe('applying preferences from the two sources', () => {
   const actionBody = (name: string, until: string): string =>
     source.slice(source.indexOf(`${name}(`), source.indexOf(`${until}(`))
 
-  it('migrates the stored file', () => {
-    expect(actionBody('LOAD_STORED_PREFERENCES', 'SET_USER_PREFERENCE')).toContain(
+  it('migrates the stored preferences file', () => {
+    expect(actionBody('LOAD_STORED_PREFERENCES', 'LOAD_STORED_USER_DATA')).toContain(
+      'migrateLegacyThemeFields('
+    )
+  })
+
+  it('leaves the stored user data alone', () => {
+    expect(actionBody('LOAD_STORED_USER_DATA', 'SET_USER_PREFERENCE')).not.toContain(
       'migrateLegacyThemeFields('
     )
   })

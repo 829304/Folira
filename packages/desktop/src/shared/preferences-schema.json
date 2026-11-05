@@ -345,6 +345,11 @@
     "type": "string",
     "default": "light"
   },
+  "preferencesVersion": {
+    "description": "Theme--Shape version of the stored preferences file.--internal",
+    "type": "number",
+    "default": 2
+  },
   "followSystemTheme": {
     "description": "Theme--Use separate theme in dark mode.--internal",
     "type": "boolean",

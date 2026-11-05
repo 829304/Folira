@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { PREFERENCES_VERSION, PREFERENCES_VERSION_KEY } from '@shared/types/preferences'
 import bus from '../bus'
 import { setLanguage } from '../i18n'
 
@@ -151,11 +152,11 @@ interface ModeTogglePayload {
  * A file written before the split only knows `theme`. Turning on "follow the
  * system" for it would repaint those users on a dark OS before they ever saw the
  * new setting, so the single theme stays until the user saves a pair of its own.
- * The marker is the newest field: a bag carrying `lightUiTheme` was written by
- * this shape and is taken as-is.
+ * The marker is the file version: theme fields cannot stand in for it, because a
+ * user who never opened the theme page stores none of them.
  */
 export function migrateLegacyThemeFields(raw: Record<string, unknown>): Record<string, unknown> {
-  if ('lightUiTheme' in raw) return raw
+  if (raw[PREFERENCES_VERSION_KEY] === PREFERENCES_VERSION) return raw
 
   return { ...raw, followSystemTheme: false }
 }
@@ -287,6 +288,17 @@ export const usePreferencesStore = defineStore('preferences', {
       this.SET_USER_PREFERENCE(migrated as Partial<PreferencesState>)
     },
 
+    /**
+     * Apply the bag read from `dataCenter.json`.
+     *
+     * It shares the store fields with the preferences file (image folder, upload
+     * history) but has no theme fields at all, so it must not go through the
+     * migration — that would read "no marker" as "pre-split file".
+     */
+    LOAD_STORED_USER_DATA(stored: Record<string, unknown>): void {
+      this.SET_USER_PREFERENCE(stored as Partial<PreferencesState>)
+    },
+
     SET_USER_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
       const oldLanguage = this.language
       const incoming = preference as Record<string, unknown>
@@ -321,10 +333,14 @@ export const usePreferencesStore = defineStore('preferences', {
       window.electron.ipcRenderer.send('mt::ask-for-user-preference')
       window.electron.ipcRenderer.send('mt::ask-for-user-data')
 
-      // Two channels on purpose: the stored file may need migrating, a patch
-      // from another window never does (see LOAD_STORED_PREFERENCES).
+      // Three channels on purpose: the two stored files may need preparing, a
+      // patch from another window never does (see LOAD_STORED_PREFERENCES).
       window.electron.ipcRenderer.on('mt::stored-user-preference', (_e, preferences) => {
         this.LOAD_STORED_PREFERENCES(preferences as Partial<PreferencesState>)
+      })
+
+      window.electron.ipcRenderer.on('mt::stored-user-data', (_e, stored) => {
+        this.LOAD_STORED_USER_DATA(stored as Record<string, unknown>)
       })
 
       window.electron.ipcRenderer.on('mt::user-preference', (_e, preferences) => {

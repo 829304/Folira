@@ -13,6 +13,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { emit } from '@tauri-apps/api/event'
 import { open as showOpenDialog } from '@tauri-apps/plugin-dialog'
 import pathe from 'pathe'
+import { PREFERENCES_VERSION, PREFERENCES_VERSION_KEY } from '@shared/types/preferences'
 
 type Bag = Record<string, unknown>
 
@@ -136,10 +137,20 @@ export const sendStoredPreferences = async(dispatchLocal: DispatchLocal): Promis
 }
 
 export const sendStoredUserData = async(dispatchLocal: DispatchLocal): Promise<void> => {
-  dispatchLocal('mt::stored-user-preference', [await read(userData)])
+  dispatchLocal('mt::stored-user-data', [await read(userData)])
 }
 
-export const setStoredPreferences = (patch: unknown): Promise<void> => merge(preferences, patch)
+/**
+ * Persist a preference patch.
+ *
+ * Every write carries the file version, so a file this build has touched can
+ * always be told apart from one that predates the two-axis split.
+ */
+export const setStoredPreferences = (patch: unknown): Promise<void> =>
+  merge(preferences, {
+    [PREFERENCES_VERSION_KEY]: PREFERENCES_VERSION,
+    ...(patch as Record<string, unknown>)
+  })
 
 export const setStoredUserData = (patch: unknown): Promise<void> => merge(userData, patch)
 
