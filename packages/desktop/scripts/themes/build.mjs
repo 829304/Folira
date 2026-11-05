@@ -52,7 +52,7 @@ const CHROME_SELECTOR =
   /^(:root|::-webkit-scrollbar|::selection|body|html|\.title-bar|\.side-bar|\.open-project|\.editor-tabs|\.tabs-container|\.recent-files-projects|\.el-|\.notification|\.input-wrapper|\.left-column|\.search|\.command-palette|\.rename)/
 
 /** Prism themes that ship under a different name than the editor theme. */
-const PRISM_ALIASES = { 'material-dark': 'dark' }
+const PRISM_ALIASES = { 'material-dark': 'dark', light: 'default' }
 
 /**
  * Layout variables the user controls at runtime (`setEditorWidth` writes them

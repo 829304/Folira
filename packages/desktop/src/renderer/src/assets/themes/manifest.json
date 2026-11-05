@@ -348,7 +348,7 @@
     "id": "light",
     "label": "Light",
     "appearance": "light",
-    "prism": null,
+    "prism": "default",
     "swatches": {
       "ui": {
         "editorBgColor": "rgba(255, 255, 255, 1)",

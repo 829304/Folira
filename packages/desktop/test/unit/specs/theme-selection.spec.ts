@@ -121,6 +121,16 @@ describe('theme assets on disk', () => {
     expect(css).toContain('--fui-')
     expect(css).not.toContain('--fmd-h1Color')
   })
+
+  it('gives every theme a syntax palette', () => {
+    // `loadPrismCss` returns '' without one, and the Light theme ships no
+    // highlighting of its own, so it borrows Prism's default palette.
+    for (const theme of THEMES) {
+      expect(theme.prism, `${theme.id} has no Prism theme`).toBeTruthy()
+      const file = resolve(themesDir, 'prismjs', `${String(theme.prism)}.theme.css`)
+      expect(readFileSync(file, 'utf8').length).toBeGreaterThan(0)
+    }
+  })
 })
 
 describe('first frame', () => {
@@ -144,6 +154,16 @@ describe('first frame', () => {
   it('feeds the store only the initial state', () => {
     expect(main).toContain('SET_USER_PREFERENCE(window.marktext.initialState)')
     expect(main).not.toContain('initialThemePair')
+  })
+
+  it('does not repaint the cached pair over the resolved one', () => {
+    // The stored file can arrive before the first frame is assembled. Painting
+    // the cached pair then would overwrite the user's stored choice with the
+    // theme the previous session happened to show.
+    const app = readFileSync(resolve(renderer, 'pages/app.vue'), 'utf8')
+
+    expect(app).toContain('pairApplied')
+    expect(app).toContain('pairApplied ? pair.ui : initialPair?.ui')
   })
 
   it('keeps both theme settings reachable from the settings search', () => {
