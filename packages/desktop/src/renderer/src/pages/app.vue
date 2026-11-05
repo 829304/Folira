@@ -120,8 +120,14 @@ const hasCurrentFile = computed<boolean>(() => {
 // Watchers
 // The two axes move independently: re-apply both whenever either resolves to a
 // different theme, so switching one never resets the other.
+//
+// `pairApplied` records that the store has already spoken. The URL pair is the
+// previous session's paint and may only stand in until then; applying it after
+// this watcher ran would repaint the cached theme over the stored one.
+let pairApplied = false
 watch(themePair, (pair, previous) => {
   if (pair.ui !== previous.ui || pair.md !== previous.md) {
+    pairApplied = true
     applyTheme(pair)
   }
 })
@@ -281,13 +287,15 @@ onMounted(async () => {
     // `initialState`, which `main.ts` feeds into the preferences store.
     const init = window.marktext?.initialState as typeof DEFAULT_STYLE | undefined
     const initialPair = window.marktext?.initialThemePair
+    // The store wins once it has a pair of its own; see `pairApplied`.
+    const pair = themePair.value
     const style: AddStylesOptions = {
       theme: init?.theme ?? DEFAULT_STYLE.theme,
       codeFontFamily: init?.codeFontFamily ?? DEFAULT_STYLE.codeFontFamily,
       codeFontSize: init?.codeFontSize ?? DEFAULT_STYLE.codeFontSize,
       hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar,
-      uiTheme: initialPair?.ui || themePair.value.ui,
-      mdTheme: initialPair?.md || themePair.value.md
+      uiTheme: pairApplied ? pair.ui : initialPair?.ui || pair.ui,
+      mdTheme: pairApplied ? pair.md : initialPair?.md || pair.md
     }
     addStyles(style)
   })
