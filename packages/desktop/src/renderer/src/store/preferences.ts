@@ -408,7 +408,9 @@ export const usePreferencesStore = defineStore('preferences', {
       window.electron.ipcRenderer.on('mt::user-data', (_e, message) => {
         const { patch } = message as { patch: Record<string, unknown> }
         rememberStoredUserData(patch)
-        Object.assign(this, patch)
+        // Same guard as the preference channel: a key the store does not know
+        // must not appear on it through an announcement.
+        this.APPLY_PREFERENCE(patch as Partial<PreferencesState>)
       })
     },
 

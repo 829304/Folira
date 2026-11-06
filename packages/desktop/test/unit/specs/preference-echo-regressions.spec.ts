@@ -12,6 +12,9 @@ const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 beforeEach(() => {
   vi.resetModules()
   vi.useFakeTimers()
+  // The tie rule compares the sender's id with this window's, so pin the draw:
+  // (0.5).toString(36) gives '0.i', which makes this window 'i'.
+  vi.spyOn(Math, 'random').mockReturnValue(0.5)
   disk = { fontSize: 16, treePathExcludePatterns: [] }
   writes = []
   emit.mockReset().mockResolvedValue(undefined)
@@ -25,7 +28,7 @@ beforeEach(() => {
     }
   })
 })
-afterEach(() => { vi.clearAllTimers(); vi.useRealTimers() })
+afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.restoreAllMocks() })
 async function context() {
   const store = await import('@/tauri-bridge/preferences')
   store.initPreferenceStores('/data')
@@ -96,14 +99,26 @@ describe('serialized preference echoes must not discard local writes', () => {
 })
 
 describe('ordering ties and the data channel', () => {
-  it('treats a same-millisecond announcement from another window as later', async() => {
+  it('treats a same-millisecond announcement from the larger id as later', async() => {
     const store = await context()
     const at = await store.setStoredPreferences({ fontSize: 24 })
-    store.rememberStoredPreferences({ fontSize: 18 }, at, 'another-window')
+    // This window is 'i', so 'j' is the side that wins a tie.
+    store.rememberStoredPreferences({ fontSize: 18 }, at, 'j')
     await store.flushStoredPreferences()
     // The other window won the tie, so this one must not write its own value.
     expect(writes).toEqual([])
     expect(await store.getStoredPreference('fontSize')).toBe(18)
+  })
+
+  it('keeps its own copy of a same-millisecond tie when it has the larger id', async() => {
+    const store = await context()
+    const at = await store.setStoredPreferences({ fontSize: 24 })
+    // Exactly one side may yield, or both windows would drop their queued value
+    // and the file would keep the older one.
+    store.rememberStoredPreferences({ fontSize: 18 }, at, 'h')
+    await store.flushStoredPreferences()
+    expect(writes).toEqual([{ fontSize: 24 }])
+    expect(disk.fontSize).toBe(24)
   })
 
   it('keeps the local value when an older announcement arrives', async() => {

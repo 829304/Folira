@@ -23,6 +23,14 @@ interface Store {
   pending: Bag
   /** When each pending key was queued, in ms since the epoch. */
   pendingAt: Record<string, number>
+  /**
+   * When a key was dropped because another window's announcement won it.
+   *
+   * A write that fails restores the keys it carried, but one of them may have
+   * been superseded while it was on the wire; without this the retry would put
+   * the older value back on disk.
+   */
+  superseded: Record<string, number>
   /** The in-flight read, shared by every caller so the file is read once. */
   loading: Promise<Bag> | null
   writeTimer: ReturnType<typeof setTimeout> | null
@@ -37,6 +45,7 @@ const createStore = (): Store => ({
   values: {},
   pending: {},
   pendingAt: {},
+  superseded: {},
   loading: null,
   writeTimer: null,
   writing: null,
@@ -136,10 +145,10 @@ const flush = async(store: Store): Promise<void> => {
 
   const patch = store.pending
   if (Object.keys(patch).length === 0) return
-  const queuedAt = store.pendingAt
+  const queuedAt = { ...store.pendingAt }
   store.pending = {}
-  store.pendingAt = {}
-
+  // `pendingAt` keeps describing these keys while the write is on the wire: an
+  // announcement that arrives before it settles is still ordered against them.
   const write = invoke('merge_json_file', { path: store.path, patch })
   const settled = write.then(
     () => undefined,
@@ -149,10 +158,26 @@ const flush = async(store: Store): Promise<void> => {
   try {
     await write
     store.failures = 0
+    Object.keys(patch).forEach((key) => {
+      delete store.superseded[key]
+      // Only drop the stamp this write carried: a newer edit may already have
+      // replaced it while the write was in flight.
+      if (store.pendingAt[key] === queuedAt[key]) delete store.pendingAt[key]
+    })
   } catch (err) {
-    // Keep the keys so the next edit retries them rather than dropping them.
-    store.pending = { ...patch, ...store.pending }
-    store.pendingAt = { ...queuedAt, ...store.pendingAt }
+    // Keep the keys so the next edit retries them rather than dropping them —
+    // except one another window announced while this write was on the wire,
+    // which must not be resurrected under its older stamp.
+    const carried: Bag = {}
+    const carriedAt: Record<string, number> = {}
+    Object.keys(patch).forEach((key) => {
+      const lostAt = store.superseded[key]
+      if (lostAt !== undefined && lostAt >= (queuedAt[key] ?? 0)) return
+      carried[key] = patch[key]
+      if (queuedAt[key] !== undefined) carriedAt[key] = queuedAt[key]
+    })
+    store.pending = { ...carried, ...store.pending }
+    store.pendingAt = { ...carriedAt, ...store.pendingAt }
     // Retry a few times on our own: the announcement has already taken these
     // keys away from the other windows, so leaving them parked until the next
     // unrelated edit (or the close handler) is the only copy going stale.
@@ -278,13 +303,32 @@ export const setStoredUserData = (patch: unknown): Promise<number> => {
 export const flushStoredPreferences = async(): Promise<void> => {
   // Both files must be attempted: `Promise.all` would stop at the first
   // rejection and let the close handler destroy the window while the other
-  // drain is still waiting on a write.
-  await Promise.allSettled([drain(preferences), drain(userData)])
+  // drain is still waiting on a write. The failure still has to surface, or the
+  // close handler cannot tell that the edit did not land.
+  const results = await Promise.allSettled([drain(preferences), drain(userData)])
+  const failed = results.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected'
+  )
+  if (failed) throw failed.reason
 }
 
 const drain = async(store: Store): Promise<void> => {
-  await flush(store)
-  if (Object.keys(store.pending).length > 0) await flush(store)
+  let failure: unknown
+  try {
+    await flush(store)
+  } catch (err) {
+    failure = err
+  }
+  // The keys that arrived while the first write was on the wire still get their
+  // turn, even when that write failed.
+  if (Object.keys(store.pending).length > 0) {
+    try {
+      await flush(store)
+    } catch (err) {
+      failure ??= err
+    }
+  }
+  if (failure !== undefined) throw failure
 }
 
 /**
@@ -316,14 +360,18 @@ export const rememberStoredPreferences = (
     if (typeof at === 'number' && queuedAt !== undefined && at < queuedAt) return
 
     // The announcement wins the queue entry when it is strictly newer, or when
-    // it carries the same millisecond from another window — a stamp alone
-    // cannot order those two, and the later writer would otherwise be whoever
-    // reaches the file last.
+    // it carries the same millisecond from another window. A stamp alone cannot
+    // order a tie, so exactly one side has to yield: comparing the sender's id
+    // with ours makes the window with the larger id concede. Letting every
+    // window concede instead would drop both queued copies and leave the file
+    // on the older value.
+    const winsTie = from !== undefined && from > WINDOW_ID
     if (
       typeof at === 'number' &&
       queuedAt !== undefined &&
-      (at > queuedAt || (at === queuedAt && from !== undefined && from !== WINDOW_ID))
+      (at > queuedAt || (at === queuedAt && winsTie))
     ) {
+      preferences.superseded[key] = Math.max(at, preferences.superseded[key] ?? 0)
       delete preferences.pending[key]
       delete preferences.pendingAt[key]
     }

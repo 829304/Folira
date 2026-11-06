@@ -11,8 +11,13 @@ import Parent from '../../base/parent';
 const debug = logger('diagramPreview:');
 
 // WebFontLoader waits three seconds for a font and Raphael draws the fallback
-// afterwards, so the deadline below only catches a renderer that never draws.
+// afterwards, so the drawing deadline only catches a renderer that never draws.
 const DRAWING_TIMEOUT = 5000;
+
+// The render itself gets a much wider budget: the first diagram of a session
+// imports the renderer chunk, and a large graph takes seconds to lay out. A
+// tight limit here would replace a slow but successful render with an error.
+const RENDER_TIMEOUT = 20000;
 
 // Offscreen but laid out, so renderers that measure their container (Vega sizes
 // itself from it) still get a width. `visibility` would not affect layout, but
@@ -122,12 +127,20 @@ class DiagramPreview extends Parent {
             // be current: drawing straight into the node would let an older
             // render overwrite a newer one while it was still in flight.
             const staging = createStagingNode(this.domNode!);
-            // The deadline covers the whole render, not just the wait for the
-            // `<svg>`: a renderer whose promise never settles would otherwise
-            // leave this block on "Loading..." with no timer at all, and the
-            // offscreen node attached for the life of the editor.
+            // Two budgets. The render itself may import a chunk and lay out a
+            // large graph, so it gets a wide one; the wait for the drawing that
+            // follows is bounded tightly, because a renderer that returns without
+            // drawing never will. Either way the block must leave "Loading..."
+            // and the offscreen node must not stay attached for the session.
             let stopObserving = () => {};
-            const timer = setTimeout(() => {
+            let timer: ReturnType<typeof setTimeout> | null = null;
+            const clearTimer = () => {
+                if (timer)
+                    clearTimeout(timer);
+
+                timer = null;
+            };
+            const expire = () => {
                 if (request !== this._request) {
                     staging.remove();
                     return;
@@ -142,10 +155,15 @@ class DiagramPreview extends Parent {
                 this.domNode!.innerHTML = `<div class="mu-diagram-error">&lt; ${this.muya.i18n.t(
                     'Diagram Timed Out',
                 )} &gt;</div>`;
-            }, DRAWING_TIMEOUT);
+            };
+            const arm = (deadline: number) => {
+                clearTimer();
+                timer = setTimeout(expire, deadline);
+            };
+            arm(RENDER_TIMEOUT);
             this._cancelPublish = () => {
                 stopObserving();
-                clearTimeout(timer);
+                clearTimer();
                 staging.remove();
             };
 
@@ -161,7 +179,7 @@ class DiagramPreview extends Parent {
                 });
             }
             catch (error) {
-                clearTimeout(timer);
+                clearTimer();
                 staging.remove();
                 if (request !== this._request)
                     return;
@@ -180,17 +198,16 @@ class DiagramPreview extends Parent {
             }
 
             if (request !== this._request) {
-                clearTimeout(timer);
+                clearTimer();
                 staging.remove();
                 return;
             }
 
-            stopObserving = this._publishWhenDrawn(request, staging, i18n.t('Diagram'), () => {
-                clearTimeout(timer);
-            });
+            arm(DRAWING_TIMEOUT);
+            stopObserving = this._publishWhenDrawn(request, staging, i18n.t('Diagram'), clearTimer);
             this._cancelPublish = () => {
                 stopObserving();
-                clearTimeout(timer);
+                clearTimer();
                 staging.remove();
             };
         }

@@ -623,12 +623,42 @@ describe('diagramPreview — a render that never settles', () => {
 
         expect(preview.domNode!.textContent).toBe(i18n.t('Loading...'));
 
-        // The deadline has been running since the staging node was created, so a
-        // render that never settles still ends in a readable error.
-        await vi.advanceTimersByTimeAsync(5000);
+        // The render budget has been running since the staging node was created,
+        // so a renderer that never settles still ends in a readable error. It is
+        // deliberately much larger than the drawing budget, because a chunk that
+        // has to be imported first is not a hung renderer.
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(preview.domNode!.textContent).toBe(i18n.t('Loading...'));
+
+        await vi.advanceTimersByTimeAsync(10000);
 
         expect(preview.domNode!.textContent).toContain(i18n.t('Diagram Timed Out'));
         expect(document.body.querySelectorAll('div[style*="-10000px"]')).toHaveLength(0);
+        vi.useRealTimers();
+    });
+
+    it('still publishes a render that takes longer than the drawing budget', async () => {
+        vi.useFakeTimers();
+        loadRendererMock.mockResolvedValue({
+            parse: () => ({}),
+            initialize: () => {},
+            render: (_id: string, _text: string) =>
+                new Promise<{ svg: string }>((resolve) => {
+                    // Six seconds: past the drawing budget, inside the render one.
+                    setTimeout(() => {
+                        resolve({ svg: '<svg width="12" height="12"><title>Slow</title></svg>' });
+                    }, 6000);
+                }),
+        });
+
+        const { preview } = makePreview('graph TD; A-->B', 'mermaid');
+        void preview.update('graph TD; A-->B');
+
+        await vi.advanceTimersByTimeAsync(6000);
+        for (let tick = 0; tick < 8; tick += 1) await Promise.resolve();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(preview.domNode!.querySelector('svg')).not.toBeNull();
         vi.useRealTimers();
     });
 });

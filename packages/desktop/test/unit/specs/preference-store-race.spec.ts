@@ -332,4 +332,52 @@ describe('preference store', () => {
       patch: { codeFontSize: 24 }
     })
   })
+
+  it('reports a close-time write failure instead of hiding it', async() => {
+    // The close handler has to know the edit did not land: swallowing the
+    // rejection there means the window closes on an unspoken loss.
+    invoke.mockImplementation((command: string) => {
+      if (command === 'path_exists') return Promise.resolve(true)
+      if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
+      if (command === 'merge_json_file') return Promise.reject(new Error('disk full'))
+      return Promise.resolve(undefined)
+    })
+
+    const { setStoredPreferences, flushStoredPreferences } = await loadModule()
+    await setStoredPreferences({ codeFontSize: 20 })
+
+    await expect(flushStoredPreferences()).rejects.toThrow('disk full')
+  })
+
+  it('does not resurrect a key another window took while the write was failing', async() => {
+    let fail!: (error: Error) => void
+    let calls = 0
+    invoke.mockImplementation((command: string) => {
+      if (command === 'path_exists') return Promise.resolve(true)
+      if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
+      if (command === 'merge_json_file') {
+        calls += 1
+        if (calls === 1)
+          return new Promise((_resolve, reject) => { fail = reject })
+        return Promise.resolve(undefined)
+      }
+      return Promise.resolve(undefined)
+    })
+
+    const { setStoredPreferences, rememberStoredPreferences, flushStoredPreferences } =
+      await loadModule()
+    const at = await setStoredPreferences({ codeFontSize: 18 })
+
+    // The debounced write is on the wire when the other window announces a
+    // newer value for the same key; when our write then fails, restoring the
+    // patch must not put the older value back.
+    await vi.advanceTimersByTimeAsync(300)
+    rememberStoredPreferences({ codeFontSize: 24 }, at + 1, 'z')
+    fail(new Error('disk full'))
+    await vi.advanceTimersByTimeAsync(0)
+
+    await flushStoredPreferences().catch(() => {})
+    const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
+    expect(writes).toHaveLength(1)
+  })
 })
