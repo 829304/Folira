@@ -357,8 +357,9 @@ describe('preference store', () => {
       if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
       if (command === 'merge_json_file') {
         calls += 1
-        if (calls === 1)
+        if (calls === 1) {
           return new Promise((_resolve, reject) => { fail = reject })
+        }
         return Promise.resolve(undefined)
       }
       return Promise.resolve(undefined)
@@ -377,6 +378,30 @@ describe('preference store', () => {
     await vi.advanceTimersByTimeAsync(0)
 
     await flushStoredPreferences().catch(() => {})
+    const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
+    expect(writes).toHaveLength(1)
+  })
+
+  it('keeps a saved value against an announcement older than the write', async() => {
+    // Once the write lands the queue is empty, so the accepted version has to
+    // outlive it — otherwise an older broadcast from another window drags the
+    // visible value back and the menu reads a value the file does not have.
+    invoke.mockImplementation((command: string) => {
+      if (command === 'path_exists') return Promise.resolve(true)
+      if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
+      if (command === 'merge_json_file') return Promise.resolve(undefined)
+      return Promise.resolve(undefined)
+    })
+
+    const { setStoredPreferences, rememberStoredPreferences, flushStoredPreferences, getStoredPreference } =
+      await loadModule()
+    const at = await setStoredPreferences({ codeFontSize: 24 })
+    await flushStoredPreferences()
+
+    rememberStoredPreferences({ codeFontSize: 18 }, at - 1, 'z')
+
+    expect(await getStoredPreference('codeFontSize')).toBe(24)
+    await flushStoredPreferences()
     const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
     expect(writes).toHaveLength(1)
   })

@@ -117,6 +117,7 @@ describe('ordering ties and the data channel', () => {
     // and the file would keep the older one.
     store.rememberStoredPreferences({ fontSize: 18 }, at, 'h')
     await store.flushStoredPreferences()
+    expect(await store.getStoredPreference('fontSize')).toBe(24)
     expect(writes).toEqual([{ fontSize: 24 }])
     expect(disk.fontSize).toBe(24)
   })

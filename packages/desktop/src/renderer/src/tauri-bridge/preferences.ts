@@ -24,13 +24,14 @@ interface Store {
   /** When each pending key was queued, in ms since the epoch. */
   pendingAt: Record<string, number>
   /**
-   * When a key was dropped because another window's announcement won it.
+   * The newest stamp this window has accepted for a key, whether it wrote the
+   * value itself or another window announced it.
    *
-   * A write that fails restores the keys it carried, but one of them may have
-   * been superseded while it was on the wire; without this the retry would put
-   * the older value back on disk.
+   * Kept after the write lands on purpose: a saved value still has to fend off
+   * an older announcement, and the queue alone stops being evidence once it is
+   * flushed.
    */
-  superseded: Record<string, number>
+  versions: Record<string, number>
   /** The in-flight read, shared by every caller so the file is read once. */
   loading: Promise<Bag> | null
   writeTimer: ReturnType<typeof setTimeout> | null
@@ -45,7 +46,7 @@ const createStore = (): Store => ({
   values: {},
   pending: {},
   pendingAt: {},
-  superseded: {},
+  versions: {},
   loading: null,
   writeTimer: null,
   writing: null,
@@ -159,9 +160,9 @@ const flush = async(store: Store): Promise<void> => {
     await write
     store.failures = 0
     Object.keys(patch).forEach((key) => {
-      delete store.superseded[key]
       // Only drop the stamp this write carried: a newer edit may already have
-      // replaced it while the write was in flight.
+      // replaced it while the write was in flight. `versions` stays — a saved
+      // key must still reject an announcement older than itself.
       if (store.pendingAt[key] === queuedAt[key]) delete store.pendingAt[key]
     })
   } catch (err) {
@@ -171,8 +172,8 @@ const flush = async(store: Store): Promise<void> => {
     const carried: Bag = {}
     const carriedAt: Record<string, number> = {}
     Object.keys(patch).forEach((key) => {
-      const lostAt = store.superseded[key]
-      if (lostAt !== undefined && lostAt >= (queuedAt[key] ?? 0)) return
+      const knownAt = store.versions[key]
+      if (knownAt !== undefined && knownAt > (queuedAt[key] ?? 0)) return
       carried[key] = patch[key]
       if (queuedAt[key] !== undefined) carriedAt[key] = queuedAt[key]
     })
@@ -206,6 +207,7 @@ const merge = async(store: Store, patch: unknown, at: number): Promise<void> => 
   Object.assign(store.pending, bag)
   Object.keys(bag).forEach((key) => {
     store.pendingAt[key] = at
+    store.versions[key] = at
   })
   scheduleWrite(store)
   // The read fills in the keys this window has not touched; anything merged
@@ -280,16 +282,29 @@ export const sendStoredUserData = async(dispatchLocal: DispatchLocal): Promise<v
 }
 
 /**
+ * A stamp for a local edit, strictly increasing inside this window.
+ *
+ * Two edits in the same millisecond would otherwise share a stamp, and an
+ * ordering decision between them would come down to arrival order instead of
+ * the order the user actually made them.
+ */
+let lastStamp = 0
+const nextStamp = (): number => {
+  lastStamp = Math.max(Date.now(), lastStamp + 1)
+  return lastStamp
+}
+
+/**
  * Merge a local edit and report the time it was queued at, so the caller can
  * announce it with the same stamp it was stored under.
  */
 export const setStoredPreferences = (patch: unknown): Promise<number> => {
-  const at = Date.now()
+  const at = nextStamp()
   return merge(preferences, patch, at).then(() => at)
 }
 
 export const setStoredUserData = (patch: unknown): Promise<number> => {
-  const at = Date.now()
+  const at = nextStamp()
   return merge(userData, patch, at).then(() => at)
 }
 
@@ -350,32 +365,27 @@ export const rememberStoredPreferences = (
   const accepted: Bag = {}
 
   Object.keys(announced).forEach((key) => {
-    const queuedAt = preferences.pendingAt[key]
+    const knownAt = preferences.versions[key]
 
-    // A key this window queued *after* the announcement must keep its value and
-    // its queue entry; writing the announced one over it would show an older
-    // value in this session while disk gets the newer one. An own echo carries
-    // the same stamp and the same value, so it is adopted and its queue entry
-    // stays.
-    if (typeof at === 'number' && queuedAt !== undefined && at < queuedAt) return
+    if (typeof at === 'number' && knownAt !== undefined) {
+      // A stamp alone cannot order a tie, so exactly one side has to yield:
+      // comparing the sender's id with ours makes the window with the larger id
+      // concede. Letting every window concede instead would drop both queued
+      // copies and leave the file on the older value.
+      const winsTie = from !== undefined && from > WINDOW_ID
+      const newer = at > knownAt || (at === knownAt && winsTie)
+      if (!newer) {
+        // The announcement is not a newer value: it must not touch the queue,
+        // the cache or the visible state either, or the store would show the
+        // losing side of an ordering decision while the file keeps the winner.
+        return
+      }
 
-    // The announcement wins the queue entry when it is strictly newer, or when
-    // it carries the same millisecond from another window. A stamp alone cannot
-    // order a tie, so exactly one side has to yield: comparing the sender's id
-    // with ours makes the window with the larger id concede. Letting every
-    // window concede instead would drop both queued copies and leave the file
-    // on the older value.
-    const winsTie = from !== undefined && from > WINDOW_ID
-    if (
-      typeof at === 'number' &&
-      queuedAt !== undefined &&
-      (at > queuedAt || (at === queuedAt && winsTie))
-    ) {
-      preferences.superseded[key] = Math.max(at, preferences.superseded[key] ?? 0)
       delete preferences.pending[key]
       delete preferences.pendingAt[key]
     }
 
+    if (typeof at === 'number') preferences.versions[key] = at
     accepted[key] = announced[key]
   })
 
