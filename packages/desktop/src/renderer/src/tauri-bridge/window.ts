@@ -45,11 +45,12 @@ const flushAndDestroy = (): Promise<void> => {
     await getCurrentWindow().destroy()
   })().catch(async(err) => {
     // A failed destroy leaves the window alive; forgetting the attempt lets the
-    // next close request try again instead of being vetoed forever. A quit that
-    // was driving this close has to be forgotten too, or the next plain close of
-    // the editor would take the settings window down with it.
+    // next close request try again instead of being vetoed forever — including
+    // `closeConfirmed`, which otherwise makes the guard wave the next native
+    // close straight through without asking about the tabs edited since.
     closing = null
     asking = false
+    closeConfirmed = false
     await cancelQuit()
     throw err
   })

@@ -94,6 +94,13 @@ describe('closing a window', () => {
     expect(rustWindow).toContain('pub fn cancel_quit()')
     expect(lib).toContain('window::cancel_quit')
     expect(rustWindow).toContain('app.run_on_main_thread(move || close_other_windows(&handle))')
+    // The exit hook shares the quit flow instead of closing the editor on its
+    // own, and only an app with no windows left may leave.
+    expect(rustWindow).toContain('QUIT_REQUESTED.store(true, Ordering::SeqCst);')
+    expect(rustWindow).toContain('if app.webview_windows().is_empty()')
+    // A failed destroy has to lower closeConfirmed again, or the next native
+    // close is waved through without asking about the tabs edited since.
+    expect(bridgeWindow).toContain('closeConfirmed = false')
   })
 
   it('flushes both stores, not just the preferences one', () => {

@@ -449,27 +449,44 @@ fn close_other_windows<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
-/// Route an application exit through the editor's close handshake.
+/// Route an application exit through the windows' close handshakes.
 ///
-/// Quitting from the app menu — macOS `Cmd+Q`, the dock, or a `quit` item —
-/// tears the windows down without a close request, so the renderer's
-/// `onCloseRequested` guard never runs and unsaved drafts vanish. Ask the window
-/// to close itself instead: that path flushes, asks about unsaved tabs, and
-/// destroys the window once the user agrees. The exit that follows has nothing
-/// left to veto, so the app quits on its own.
+/// Some exits — `AppHandle::exit`, and the last window going away under a
+/// caller that asked for one — reach this before any close request, so the
+/// renderer's `onCloseRequested` guard never runs and unsaved drafts vanish.
+/// Ask the editor to close instead: that path flushes, offers to save, and
+/// destroys the window once the user agrees; its `Destroyed` hook takes the
+/// remaining windows with it.
 ///
-/// Returns whether the caller must prevent the exit it is handling. No editor
-/// window means nothing is left to ask.
+/// Returns whether the caller must prevent the exit it is handling. Only an app
+/// with no windows left at all may leave: any window still up owes a flush, so
+/// the exit is held while it closes itself.
 pub fn veto_exit(app: &AppHandle) -> bool {
-    let Some(editor) = app.get_webview_window("main") else {
-        return false;
-    };
+    if let Some(editor) = app.get_webview_window("main") {
+        QUIT_REQUESTED.store(true, Ordering::SeqCst);
+        let _ = editor.unminimize();
+        let _ = editor.set_focus();
+        if let Err(err) = editor.close() {
+            // The editor is still up with nothing asked; holding the exit here
+            // would leave the app unquittable, so forget the quit and let the
+            // caller retry through the normal path.
+            eprintln!("[window] could not route the exit through the editor: {err}");
+            QUIT_REQUESTED.store(false, Ordering::SeqCst);
+        }
 
-    let _ = editor.unminimize();
-    let _ = editor.set_focus();
-    if let Err(err) = editor.close() {
-        eprintln!("[window] could not route the exit through the editor: {err}");
+        return true;
+    }
+
+    // Only auxiliary windows are left — the settings window, usually. It flushes
+    // its preferences in its own close handler, so the exit waits for it.
+    if app.webview_windows().is_empty() {
         return false;
+    }
+
+    let handle = app.clone();
+    if let Err(err) = app.run_on_main_thread(move || close_other_windows(&handle)) {
+        eprintln!("[window] could not schedule the rest of the exit: {err}");
+        close_other_windows(app);
     }
 
     true
