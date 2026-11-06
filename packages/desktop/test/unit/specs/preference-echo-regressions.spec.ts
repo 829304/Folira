@@ -133,6 +133,19 @@ describe('ordering ties and the data channel', () => {
     expect(writes).toEqual([{ fontSize: 24 }])
   })
 
+  it('adopts its own echo so the sender sees the change', async() => {
+    const store = await context()
+    const at = await store.setStoredPreferences({ autoSave: true })
+    // Menu toggles and folder pickers write through the bridge and never
+    // dispatch locally, so the sender learns the new value only from this echo.
+    // A same-stamp echo from this very window must therefore reach the store,
+    // even though it is not "newer" than what the queue already carried.
+    const accepted = store.rememberStoredPreferences({ autoSave: true }, at, 'i')
+    expect(accepted).toEqual({ autoSave: true })
+    await store.flushStoredPreferences()
+    expect(writes).toEqual([{ autoSave: true }])
+  })
+
   it('announces a data change on its own channel', async() => {
     const store = await context()
     store.announceUserData({ cliScript: '/bin/up' }, Date.now())

@@ -382,6 +382,36 @@ describe('preference store', () => {
     expect(writes).toHaveLength(1)
   })
 
+  it('does not retry a write a tie winner has already replaced', async() => {
+    // The write fails while another window wins the same-millisecond tie for that
+    // key. Recovery must not put our older value back: the file already holds
+    // the winner's.
+    let rejectWrite!: (error: Error) => void
+    let calls = 0
+    invoke.mockImplementation((command: string) => {
+      if (command === 'path_exists') return Promise.resolve(true)
+      if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
+      if (command === 'merge_json_file') {
+        calls += 1
+        return new Promise((_resolve, reject) => { rejectWrite = reject })
+      }
+      return Promise.resolve(undefined)
+    })
+
+    const { setStoredPreferences, rememberStoredPreferences, flushStoredPreferences, getStoredPreference } =
+      await loadModule()
+
+    const at = await setStoredPreferences({ codeFontSize: 20 })
+    const writing = flushStoredPreferences()
+    rememberStoredPreferences({ codeFontSize: 21 }, at, 'z')
+    rejectWrite(new Error('disk full'))
+    await expect(writing).rejects.toThrow('disk full')
+
+    await flushStoredPreferences()
+    expect(calls).toBe(1)
+    expect(await getStoredPreference('codeFontSize')).toBe(21)
+  })
+
   it('keeps a saved value against an announcement older than the write', async() => {
     // Once the write lands the queue is empty, so the accepted version has to
     // outlive it — otherwise an older broadcast from another window drags the

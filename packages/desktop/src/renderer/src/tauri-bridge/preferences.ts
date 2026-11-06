@@ -173,7 +173,12 @@ const flush = async(store: Store): Promise<void> => {
     const carriedAt: Record<string, number> = {}
     Object.keys(patch).forEach((key) => {
       const knownAt = store.versions[key]
-      if (knownAt !== undefined && knownAt > (queuedAt[key] ?? 0)) return
+      const queued = queuedAt[key] ?? 0
+      if (knownAt !== undefined && knownAt > queued) return
+      // A tie winner announced this key while the write was on the wire and took
+      // the queue entry with it; the file already holds a newer value than the
+      // one this write carried, so retrying it would put the loser back.
+      if (knownAt === queued && store.pendingAt[key] === undefined) return
       carried[key] = patch[key]
       if (queuedAt[key] !== undefined) carriedAt[key] = queuedAt[key]
     })
@@ -318,8 +323,9 @@ export const setStoredUserData = (patch: unknown): Promise<number> => {
 export const flushStoredPreferences = async(): Promise<void> => {
   // Both files must be attempted: `Promise.all` would stop at the first
   // rejection and let the close handler destroy the window while the other
-  // drain is still waiting on a write. The failure still has to surface, or the
-  // close handler cannot tell that the edit did not land.
+  // drain is still waiting on a write. The rejection is re-thrown afterwards for
+  // the tests and the console — the close handler closes regardless, because a
+  // failed write must not trap the user in an open window.
   const results = await Promise.allSettled([drain(preferences), drain(userData)])
   const failed = results.find(
     (result): result is PromiseRejectedResult => result.status === 'rejected'
@@ -368,16 +374,21 @@ export const rememberStoredPreferences = (
     const knownAt = preferences.versions[key]
 
     if (typeof at === 'number' && knownAt !== undefined) {
-      // A stamp alone cannot order a tie, so exactly one side has to yield:
-      // comparing the sender's id with ours makes the window with the larger id
-      // concede. Letting every window concede instead would drop both queued
-      // copies and leave the file on the older value.
+      // A stamp alone cannot order a tie, so exactly one side has to yield: the
+      // larger sender id wins it and the window holding the smaller id drops its
+      // queued copy. Letting every window yield would drop both copies and leave
+      // the file on the older value.
       const winsTie = from !== undefined && from > WINDOW_ID
       const newer = at > knownAt || (at === knownAt && winsTie)
       if (!newer) {
-        // The announcement is not a newer value: it must not touch the queue,
-        // the cache or the visible state either, or the store would show the
-        // losing side of an ordering decision while the file keeps the winner.
+        // Our own echo carries the stamp this window wrote under: the file and
+        // the cache already hold it, but the store does not — nothing dispatches
+        // a second time for a local edit, so the sender would never see its own
+        // change. Adopting the value here keeps the queue and `versions` alone.
+        if (from === WINDOW_ID && at === knownAt) accepted[key] = announced[key]
+        // Any other announcement is not a newer value: it must not touch the
+        // queue, the cache or the visible state either, or the store would show
+        // the losing side while the file keeps the winner.
         return
       }
 
