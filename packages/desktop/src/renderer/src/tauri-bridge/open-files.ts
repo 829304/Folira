@@ -101,8 +101,10 @@ export const restoreTrackedOpenFiles = (paths: string[]): void => {
 }
 export const clearTrackedOpenFiles = (): void => {
   if (openPaths.size === 0) return
+  // The read tickets survive: a close that fails puts the paths back, and
+  // dropping the tickets would discard a reload already on its way for a window
+  // that is still open. They are removed per path when a tab closes.
   openPaths.clear()
-  readTickets.clear()
   syncWatch()
 }
 
