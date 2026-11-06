@@ -169,26 +169,7 @@ describe('first frame', () => {
     expect(app).toContain('preferencesLoaded.value ? pair.ui : initialPair?.ui')
   })
 
-  it('applies the resolved pair once the preferences have loaded', () => {
-    // Waiting for the pair to *change* is not enough: on a fresh launch the
-    // stored file resolves to the same ids the cache already painted, so no
-    // change would ever arrive and the cached theme would stay on screen. The
-    // first load has to repaint unconditionally.
-    const app = readFileSync(resolve(renderer, 'pages/app.vue'), 'utf8')
-    const settings = readFileSync(resolve(renderer, 'pages/preference.vue'), 'utf8')
-
-    for (const page of [app, settings]) {
-      const from = page.indexOf('const { preferencesLoaded }')
-      expect(from, 'both pages watch the pair together with the flag').toBeGreaterThan(-1)
-      const watcher = page.slice(from, from + 900)
-      expect(watcher).toContain('preferencesLoaded]')
-      expect(watcher).toContain('if (!loaded) return')
-      expect(watcher).toContain('paintedPair')
-    }
-
-    const store = readFileSync(resolve(renderer, 'store/preferences.ts'), 'utf8')
-    expect(store).toContain('preferencesLoaded = true')
-  })
+  // Preference-arrival behavior is exercised by theme-loading.spec.ts.
 
   it('keeps both theme settings reachable from the settings search', () => {
     const schema = JSON.parse(

@@ -16,13 +16,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, nextTick, getCurrentInstance } from 'vue'
+import { computed, onMounted, nextTick, getCurrentInstance } from 'vue'
 import { usePreferencesStore } from '@/store/preferences'
 import { storeToRefs } from 'pinia'
 import TitleBar from '@/prefComponents/common/titlebar.vue'
 import SideBar from '@/prefComponents/sideBar/index.vue'
 import { applyTheme } from '@/util/theme'
 import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
+import { useAppliedTheme } from '@/composables/useAppliedTheme'
 import { isOsx } from '@/util'
 import { registerSettingsComponents } from '@/prefComponents/settingsComponents'
 import { dismissSplash } from '@/util/splash'
@@ -56,18 +57,7 @@ const showCustomTitleBar = computed<boolean>(() => {
 // replaces it once its file has been read — including when the stored pair
 // happens to equal the cached one, which never changes the computed value.
 const { preferencesLoaded } = storeToRefs(preferencesStore)
-let paintedPair: { ui: string; md: string } | null = null
-watch(
-  [activeTheme, preferencesLoaded],
-  ([pair, loaded]) => {
-    if (!loaded) return
-    if (paintedPair && paintedPair.ui === pair.ui && paintedPair.md === pair.md) return
-    paintedPair = { ui: pair.ui, md: pair.md }
-    applyTheme(pair)
-  },
-  { immediate: true }
-)
-
+useAppliedTheme(activeTheme, preferencesLoaded)
 // Lifecycle
 onMounted(() => {
   nextTick(() => {

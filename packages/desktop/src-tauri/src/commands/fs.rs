@@ -75,7 +75,9 @@ pub fn read_file(path: String, encoding: Option<String>) -> Result<FileData, Str
             // which is worse. Markdown documents go through
             // `commands::markdown` instead, which also handles the encodings
             // this branch cannot decode at all.
-            let bytes = bytes.strip_prefix(&[0xefu8, 0xbb, 0xbf][..]).unwrap_or(&bytes);
+            let bytes = bytes
+                .strip_prefix(&[0xefu8, 0xbb, 0xbf][..])
+                .unwrap_or(&bytes);
             std::str::from_utf8(bytes)
                 .map(|text| FileData::Text(text.to_owned()))
                 .map_err(|e| e.to_string())
@@ -143,7 +145,8 @@ pub fn merge_json_file(path: String, patch: serde_json::Value) -> Result<(), Str
 #[tauri::command]
 pub fn ensure_dir(path: String) -> Result<(), String> {
     fs::create_dir_all(&path).map_err(|e| e.to_string())
-}#[tauri::command]
+}
+#[tauri::command]
 pub fn empty_dir(path: String) -> Result<(), String> {
     let p = Path::new(&path);
     if p.exists() {
@@ -234,7 +237,10 @@ pub fn readdir_kinds(path: String) -> Result<Vec<DirEntryKind>, String> {
         } else {
             ""
         };
-        entries.push(DirEntryKind { file, kind: kind.to_string() });
+        entries.push(DirEntryKind {
+            file,
+            kind: kind.to_string(),
+        });
     }
     Ok(entries)
 }
@@ -304,8 +310,11 @@ mod tests {
         let path = dir.join("preferences.json");
         // Windows editors write the byte-order mark more often than not, and a
         // BOM makes the whole file unparseable as JSON.
-        fs::write(&path, b"\xef\xbb\xbf{\n  \"theme\": \"graphite\",\n  \"fontSize\": 15\n}\n")
-            .unwrap();
+        fs::write(
+            &path,
+            b"\xef\xbb\xbf{\n  \"theme\": \"graphite\",\n  \"fontSize\": 15\n}\n",
+        )
+        .unwrap();
 
         merge_json_file(
             path.to_string_lossy().into_owned(),
@@ -326,12 +335,128 @@ mod tests {
         let dir = temp_dir("merge-create");
         let path = dir.join("preferences.json");
 
-        merge_json_file(path.to_string_lossy().into_owned(), json!({ "autoSave": true })).unwrap();
+        merge_json_file(
+            path.to_string_lossy().into_owned(),
+            json!({ "autoSave": true }),
+        )
+        .unwrap();
         let created: serde_json::Value =
             serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
         assert_eq!(created, json!({ "autoSave": true }));
 
         assert!(merge_json_file(path.to_string_lossy().into_owned(), json!([1, 2])).is_err());
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn raw_reads_preserve_bom_and_non_utf8_bytes() {
+        let dir = temp_dir("raw-read");
+        let path = dir.join("binary.dat");
+        let bytes = vec![0xef, 0xbb, 0xbf, 0xff, 0, 0x80];
+        fs::write(&path, &bytes).unwrap();
+        match read_file(path.to_string_lossy().into_owned(), None).unwrap() {
+            FileData::Binary(actual) => assert_eq!(actual, bytes),
+            _ => panic!("raw read returned text"),
+        }
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn both_utf8_aliases_strip_only_the_leading_bom_and_preserve_unicode() {
+        let dir = temp_dir("text-read");
+        let path = dir.join("中文.md");
+        fs::write(&path, "\u{feff}中文😀\u{feff}\r\n").unwrap();
+        for encoding in ["utf8", "utf-8"] {
+            match read_file(path.to_string_lossy().into_owned(), Some(encoding.into())).unwrap() {
+                FileData::Text(text) => assert_eq!(text, "中文😀\u{feff}\r\n"),
+                _ => panic!("text read returned bytes"),
+            }
+        }
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn invalid_utf8_is_reported_instead_of_silently_replacing_characters() {
+        let dir = temp_dir("invalid-text");
+        let path = dir.join("invalid.md");
+        fs::write(&path, [0xff, 0xfe, 0x80]).unwrap();
+        assert!(read_file(path.to_string_lossy().into_owned(), Some("utf8".into())).is_err());
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn reading_a_missing_file_is_an_error_for_text_and_binary_modes() {
+        let dir = temp_dir("missing-read");
+        let path = dir.join("missing.md").to_string_lossy().into_owned();
+        assert!(read_file(path.clone(), Some("utf8".into())).is_err());
+        assert!(read_file(path, None).is_err());
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn file_commands_create_missing_parents_and_replace_without_leaving_old_bytes() {
+        let dir = temp_dir("nested-write");
+        let path = dir.join("nested").join("中文.md");
+        let name = path.to_string_lossy().into_owned();
+        output_file(
+            name.clone(),
+            FileWriteData::Text("old longer content".into()),
+        )
+        .unwrap();
+        write_file(name, FileWriteData::Binary(vec![0, 255, 128])).unwrap();
+        assert_eq!(fs::read(&path).unwrap(), vec![0, 255, 128]);
+        assert_eq!(fs::read_dir(path.parent().unwrap()).unwrap().count(), 1);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn invalid_json_patches_leave_the_existing_file_byte_for_byte_unchanged() {
+        let dir = temp_dir("invalid-patch");
+        let path = dir.join("preferences.json");
+        let original = b"{\n  \"fontSize\": 20\n}\n";
+        fs::write(&path, original).unwrap();
+        for patch in [json!(null), json!([1, 2]), json!("oops"), json!(42)] {
+            assert!(merge_json_file(path.to_string_lossy().into_owned(), patch).is_err());
+            assert_eq!(fs::read(&path).unwrap(), original);
+        }
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn json_merge_overrides_only_named_keys_including_explicit_null() {
+        let dir = temp_dir("merge-values");
+        let path = dir.join("preferences.json");
+        fs::write(&path, br#"{"theme":"light","fontSize":16,"keep":{"x":1}}"#).unwrap();
+        merge_json_file(
+            path.to_string_lossy().into_owned(),
+            json!({"theme":null,"fontSize":24}),
+        )
+        .unwrap();
+        let actual: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(actual, json!({"theme":null,"fontSize":24,"keep":{"x":1}}));
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn directory_listing_distinguishes_folders_images_and_regular_documents() {
+        let dir = temp_dir("entry-kinds");
+        fs::create_dir(dir.join("folder.png")).unwrap();
+        fs::write(dir.join("IMAGE.PNG"), b"image").unwrap();
+        fs::write(dir.join("note.md"), b"text").unwrap();
+        let mut entries = readdir_kinds(dir.to_string_lossy().into_owned()).unwrap();
+        entries.sort_by(|a, b| a.file.cmp(&b.file));
+        let actual: Vec<_> = entries
+            .iter()
+            .map(|e| (e.file.as_str(), e.kind.as_str()))
+            .collect();
+        assert_eq!(
+            actual,
+            vec![
+                ("IMAGE.PNG", "image"),
+                ("folder.png", "directory"),
+                ("note.md", "")
+            ]
+        );
+        let _ = fs::remove_dir_all(dir);
     }
 }

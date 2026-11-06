@@ -322,7 +322,6 @@ fn normalize(app: &AppHandle, state: WindowState) -> WindowState {
         return state;
     }
 
-    let mut state = state;
     // `monitor_from_point` reads physical pixels; on a legacy physical file the
     // saved point already is one, and on a logical file this is the best guess
     // the file allows.
@@ -335,6 +334,18 @@ fn normalize(app: &AppHandle, state: WindowState) -> WindowState {
         .filter(|scale| *scale > 0.0)
         .unwrap_or(1.0);
 
+    normalize_at_scale(state, scale)
+}
+
+/// Unit conversion after the platform has selected a monitor scale.
+///
+/// Idempotent: `normalize` rejects a current file before it gets here, and the
+/// early return keeps a second conversion from rescaling coordinates that are
+/// already in the right unit.
+fn normalize_at_scale(mut state: WindowState, scale: f64) -> WindowState {
+    if state.version >= STATE_VERSION {
+        return state;
+    }
     if state.logical {
         // Everything was logical: the size already is, the position is not.
         state.x = state.x.map(|value| value * scale);
@@ -457,4 +468,59 @@ fn center_over(
     }
 
     child.set_position(PhysicalPosition::new(x, y))
+}
+
+#[cfg(test)]
+mod geometry_tests {
+    use super::*;
+
+    fn legacy(logical: bool) -> WindowState {
+        WindowState {
+            width: Some(1200.0),
+            height: Some(800.0),
+            x: Some(-900.0),
+            y: Some(100.0),
+            version: 0,
+            logical,
+            maximized: true,
+            fullscreen: false,
+        }
+    }
+
+    #[test]
+    fn legacy_logical_coordinates_become_physical_on_a_scaled_display() {
+        let state = normalize_at_scale(legacy(true), 1.5);
+        assert_eq!((state.x, state.y), (Some(-1350.0), Some(150.0)));
+        assert_eq!((state.width, state.height), (Some(1200.0), Some(800.0)));
+        assert!(state.maximized);
+        assert!(!state.logical);
+        assert_eq!(state.version, STATE_VERSION);
+    }
+
+    #[test]
+    fn legacy_physical_size_becomes_logical_without_moving_the_window() {
+        let state = normalize_at_scale(legacy(false), 2.0);
+        assert_eq!((state.width, state.height), (Some(600.0), Some(400.0)));
+        assert_eq!((state.x, state.y), (Some(-900.0), Some(100.0)));
+    }
+
+    #[test]
+    fn moving_to_another_scale_does_not_convert_current_coordinates_again() {
+        let state = normalize_at_scale(normalize_at_scale(legacy(true), 1.5), 2.0);
+        assert_eq!((state.x, state.y), (Some(-1350.0), Some(150.0)));
+        assert_eq!(state.width, Some(1200.0));
+    }
+
+    #[test]
+    fn migration_preserves_missing_coordinates_and_fullscreen_state() {
+        let mut state = legacy(true);
+        state.x = None;
+        state.height = None;
+        state.fullscreen = true;
+        let state = normalize_at_scale(state, 1.25);
+        assert_eq!(state.x, None);
+        assert_eq!(state.height, None);
+        assert_eq!(state.y, Some(125.0));
+        assert!(state.fullscreen);
+    }
 }

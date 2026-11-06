@@ -170,3 +170,74 @@ describe('saving a document', () => {
     expect(result).toBeNull()
   })
 })
+
+// Resolve writes explicitly: these contracts must not depend on timer speed.
+const pendingWrite = () => {
+  let resolve!: () => void
+  let reject!: (error: Error) => void
+  const promise = new Promise<void>((_resolve, _reject) => { resolve = _resolve; reject = _reject })
+  return { promise, resolve, reject }
+}
+
+describe('save completion boundaries', () => {
+  beforeEach(() => {
+    invoke.mockReset()
+    showSaveDialog.mockReset()
+    invoke.mockResolvedValue(undefined)
+  })
+
+  it('does not acknowledge an existing file until its write completes', async() => {
+    const { saveDocument } = await load()
+    const write = pendingWrite()
+    invoke.mockImplementation((command: string) => command === 'write_file' ? write.promise : Promise.resolve())
+    const dispatch = vi.fn()
+    const saving = saveDocument({ id: 'a', filename: 'a.md', pathname: '/docs/a.md', markdown: 'A' }, dispatch)
+
+    expect(written().path).toBe('/docs/a.md')
+    expect(dispatch).not.toHaveBeenCalled()
+    write.resolve()
+    await expect(saving).resolves.toBe('/docs/a.md')
+    expect(dispatch.mock.calls).toEqual([['mt::tab-saved', ['a']]])
+  })
+
+  it('reports a delayed write failure without emitting a saved event', async() => {
+    const { saveDocument } = await load()
+    const write = pendingWrite()
+    invoke.mockImplementation((command: string) => command === 'write_file' ? write.promise : Promise.resolve())
+    const dispatch = vi.fn()
+    const saving = saveDocument({ id: 'a', filename: 'a.md', pathname: '/docs/a.md', markdown: 'A' }, dispatch)
+
+    expect(dispatch).not.toHaveBeenCalled()
+    write.reject(new Error('disk full'))
+    await expect(saving).resolves.toBeNull()
+    expect(dispatch.mock.calls).toEqual([['mt::tab-save-failure', ['a', 'disk full']]])
+  })
+
+  it('keeps the original identity when save-as fails after choosing a new path', async() => {
+    const { saveDocument } = await load()
+    showSaveDialog.mockResolvedValue('/docs/new.md')
+    invoke.mockImplementation((command: string) => command === 'write_file'
+      ? Promise.reject(new Error('permission denied'))
+      : Promise.resolve())
+    const dispatch = vi.fn()
+    const file = { id: 'a', filename: 'old.md', pathname: '/docs/old.md', markdown: 'A' }
+
+    await expect(saveDocument(file, dispatch, true)).resolves.toBeNull()
+    expect(written().path).toBe('/docs/new.md')
+    expect(file.pathname).toBe('/docs/old.md')
+    expect(dispatch.mock.calls).toEqual([['mt::tab-save-failure', ['a', 'permission denied']]])
+  })
+
+  it('preserves Unicode text and normalizes mixed line endings without doubling CR', async() => {
+    const { saveDocument } = await load()
+    await saveDocument({
+      id: 'a',
+      filename: 'a.md',
+      pathname: '/docs/a.md',
+      markdown: '中文😀\r\ne\u0301\n末行',
+      options: { encoding: UTF8, lineEnding: 'crlf', adjustLineEndingOnSave: true }
+    }, vi.fn())
+
+    expect(asText(written().bytes)).toBe('中文😀\r\ne\u0301\r\n末行')
+  })
+})

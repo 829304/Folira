@@ -47,7 +47,7 @@
 import { computed, watch, nextTick, onMounted, ref } from 'vue'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
-import { addStyles, applyTheme, addCustomStyle, type AddStylesOptions } from '@/util/theme'
+import { addStyles, addCustomStyle, type AddStylesOptions } from '@/util/theme'
 import Recent from '@/components/recent/index.vue'
 import EditorWithTabs from '@/components/editorWithTabs/index.vue'
 import TitleBar from '@/components/titleBar/index.vue'
@@ -66,7 +66,7 @@ import { dismissSplash } from '@/util/splash'
 import { showEditorContextMenu } from '@/contextMenu/editor'
 import { DEFAULT_STYLE } from '@/config'
 import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
-import type { ThemePair } from '@/util/themeSelection'
+import { useAppliedTheme } from '@/composables/useAppliedTheme'
 import { useLayoutStore } from '@/store/layout'
 import { useListenForMainStore } from '@/store/listenForMain'
 import { usePreferencesStore } from '@/store/preferences'
@@ -128,18 +128,7 @@ const hasCurrentFile = computed<boolean>(() => {
 // default on a fresh launch — never changes the pair, so a change-only watcher
 // would leave the cached theme on screen for the whole session.
 const { preferencesLoaded } = storeToRefs(preferencesStore)
-let paintedPair: ThemePair | null = null
-watch(
-  [themePair, preferencesLoaded],
-  ([pair, loaded]) => {
-    if (!loaded) return
-    if (paintedPair && paintedPair.ui === pair.ui && paintedPair.md === pair.md) return
-    paintedPair = { ui: pair.ui, md: pair.md }
-    applyTheme(pair)
-  },
-  { immediate: true }
-)
-
+useAppliedTheme(themePair, preferencesLoaded)
 watch(customCss, (value, oldValue) => {
   if (value !== oldValue) {
     addCustomStyle({

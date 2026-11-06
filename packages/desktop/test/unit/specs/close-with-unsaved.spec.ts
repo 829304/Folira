@@ -166,3 +166,42 @@ describe('closing the window with unsaved changes', () => {
     expect(destroyWindow).toHaveBeenCalled()
   })
 })
+
+describe('closing waits for outstanding writes', () => {
+  beforeEach(() => {
+    invoke.mockReset()
+    showSaveDialog.mockReset()
+    destroyWindow.mockReset()
+    invoke.mockResolvedValue(undefined)
+  })
+
+  it.each(['tabs', 'window'])('does not close %s while one file is still being written', async(target) => {
+    const { saveAndCloseTabs, closeWindowConfirm, UNSAVED_FILES_ASK_EVENT, bus } = await load()
+    answerWith(bus, UNSAVED_FILES_ASK_EVENT, 'save')
+    let release!: () => void
+    const pending = new Promise<void>((resolve) => { release = resolve })
+    let started!: () => void
+    const writing = new Promise<void>((resolve) => { started = resolve })
+    invoke.mockImplementation((command: string, args: { path?: string }) => {
+      if (command === 'write_file' && args.path === '/docs/b.md') {
+        started()
+        return pending
+      }
+      return Promise.resolve(undefined)
+    })
+    const dispatch = vi.fn()
+    const close = target === 'tabs' ? saveAndCloseTabs : closeWindowConfirm
+    const closing = close([unsaved('a', '/docs/a.md'), unsaved('b', '/docs/b.md')], dispatch)
+    await writing
+
+    expect(destroyWindow).not.toHaveBeenCalled()
+    expect(dispatch.mock.calls.filter(([channel]) => channel === 'mt::force-close-tabs-by-id')).toEqual([])
+    release()
+    await closing
+    if (target === 'tabs') {
+      expect(dispatch).toHaveBeenCalledWith('mt::force-close-tabs-by-id', [['a', 'b']])
+    } else {
+      expect(destroyWindow).toHaveBeenCalledTimes(1)
+    }
+  })
+})

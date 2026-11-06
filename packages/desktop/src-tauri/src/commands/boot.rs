@@ -296,6 +296,12 @@ mod tests {
         let first = take_pending_open_files();
         assert_eq!(first, vec!["a.md", "b.md", "c.md"]);
         assert!(take_pending_open_files().is_empty());
+        queue_open_files(Vec::new());
+        assert!(take_pending_open_files().is_empty());
+        // A later launch may legitimately ask to reopen a previously delivered path.
+        queue_open_files(vec!["a.md".to_string(), "d.md".to_string()]);
+        assert_eq!(take_pending_open_files(), vec!["a.md", "d.md"]);
+        assert!(take_pending_open_files().is_empty());
     }
 
     #[test]
@@ -305,5 +311,44 @@ mod tests {
         let slot = Mutex::new(Some(vec!["a.md".to_string()]));
         assert_eq!(take_once(&slot), vec!["a.md"]);
         assert!(take_once(&slot).is_empty());
+    }
+
+    #[test]
+    fn absolute_launch_paths_are_not_rebased_to_the_second_process_directory() {
+        let caller = Caller::new("absolute");
+        let other = Caller::new("absolute-other");
+        let file = caller.file("中文 note.md");
+        let argument = file.to_string_lossy().into_owned();
+        assert_eq!(
+            paths_from_args(vec![argument.clone()].into_iter(), Some(&other.dir)),
+            vec![argument]
+        );
+    }
+
+    #[test]
+    fn launch_filters_flags_directories_and_missing_files_but_keeps_valid_files() {
+        let caller = Caller::new("filter");
+        let file = caller.file("note.md");
+        fs::create_dir_all(caller.dir.join("folder")).unwrap();
+        let args = vec!["--debug", "folder", "missing.md", "note.md"]
+            .into_iter()
+            .map(String::from);
+        assert_eq!(
+            paths_from_args(args, Some(&caller.dir)),
+            vec![file.to_string_lossy().into_owned()]
+        );
+    }
+
+    #[test]
+    fn simultaneous_startup_requests_deliver_the_initial_paths_to_only_one_caller() {
+        let slot = Mutex::new(Some(vec!["a.md".to_string(), "b.md".to_string()]));
+        std::thread::scope(|scope| {
+            let first = scope.spawn(|| take_once(&slot));
+            let second = scope.spawn(|| take_once(&slot));
+            let mut batches = vec![first.join().unwrap(), second.join().unwrap()];
+            batches.sort_by_key(Vec::len);
+            assert!(batches[0].is_empty());
+            assert_eq!(batches[1], vec!["a.md", "b.md"]);
+        });
     }
 }

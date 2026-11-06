@@ -93,7 +93,10 @@ fn parse_max_file_size(raw: &Option<String>) -> Option<u64> {
     };
     // `checked_mul`, not `*`: a release build wraps on overflow, so a huge value
     // would come back as a tiny limit and exclude every file instead of none.
-    digits.parse::<u64>().ok().and_then(|n| n.checked_mul(scale))
+    digits
+        .parse::<u64>()
+        .ok()
+        .and_then(|n| n.checked_mul(scale))
 }
 
 fn build_matcher(pattern: &str, options: &SearchOptions) -> Result<Regex, String> {
@@ -120,9 +123,12 @@ fn has_included_extension(name: &str, inclusions: &[String]) -> bool {
         return true;
     }
     let lower = name.to_ascii_lowercase();
-    inclusions
-        .iter()
-        .any(|ext| lower.ends_with(&format!(".{}", ext.trim_start_matches('.').to_ascii_lowercase())))
+    inclusions.iter().any(|ext| {
+        lower.ends_with(&format!(
+            ".{}",
+            ext.trim_start_matches('.').to_ascii_lowercase()
+        ))
+    })
 }
 
 /// Every line of `content` that matches, as the renderer's `SearchMatch` shape.
@@ -328,8 +334,14 @@ mod tests {
     fn file_size_suffixes_scale() {
         assert_eq!(parse_max_file_size(&Some("512".into())), Some(512));
         assert_eq!(parse_max_file_size(&Some("2K".into())), Some(2 * 1024));
-        assert_eq!(parse_max_file_size(&Some("3M".into())), Some(3 * 1024 * 1024));
-        assert_eq!(parse_max_file_size(&Some("1G".into())), Some(1024 * 1024 * 1024));
+        assert_eq!(
+            parse_max_file_size(&Some("3M".into())),
+            Some(3 * 1024 * 1024)
+        );
+        assert_eq!(
+            parse_max_file_size(&Some("1G".into())),
+            Some(1024 * 1024 * 1024)
+        );
         // The settings schema writes uppercase; accepting either costs nothing.
         assert_eq!(parse_max_file_size(&Some("2k".into())), Some(2 * 1024));
     }
@@ -341,7 +353,10 @@ mod tests {
         assert_eq!(parse_max_file_size(&Some("   ".into())), None);
         assert_eq!(parse_max_file_size(&Some("big".into())), None);
         // Overflowing must read as "no limit", never as a very small one.
-        assert_eq!(parse_max_file_size(&Some("18446744073709551G".into())), None);
+        assert_eq!(
+            parse_max_file_size(&Some("18446744073709551G".into())),
+            None
+        );
     }
 
     #[test]
@@ -409,5 +424,30 @@ mod tests {
         assert!(!has_included_extension("image.png", &markdown));
         // An empty list means every readable file.
         assert!(has_included_extension("image.png", &[]));
+    }
+
+    #[test]
+    fn cancelling_a_finished_or_unknown_search_does_not_recreate_it() {
+        let id = "unit-finished-search".to_string();
+        rg_cancel(id.clone());
+        assert!(!searches().lock().unwrap().contains_key(&id));
+    }
+
+    #[test]
+    fn cancelling_one_active_search_does_not_cancel_another() {
+        let first = "unit-cancel-first".to_string();
+        let second = "unit-cancel-second".to_string();
+        {
+            let mut map = searches().lock().unwrap();
+            map.insert(first.clone(), false);
+            map.insert(second.clone(), false);
+        }
+        rg_cancel(first.clone());
+        rg_cancel(first.clone());
+        assert!(is_cancelled(&first));
+        assert!(!is_cancelled(&second));
+        let mut map = searches().lock().unwrap();
+        map.remove(&first);
+        map.remove(&second);
     }
 }
