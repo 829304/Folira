@@ -51,7 +51,7 @@ import { loadMarkdownFile, type LoadedMarkdown } from './markdown-file'
 import { askForOpenProject, loadProjectTree } from './project'
 import { broadcastLanguage, openSettingsWindow, sendCurrentLanguage } from './settings'
 import { installTabShortcuts } from './shortcuts'
-import { closeWindow, closeWindowConfirm, installCloseGuard, requestClose } from './window'
+import { abandonCloseRequest, closeWindow, closeWindowConfirm, installCloseGuard, requestClose } from './window'
 import { installFileDrop, installWindowEvents } from './window-events'
 import { resolveInitialTheme } from './theme'
 import { setLanguage, t } from '@/i18n'
@@ -351,6 +351,11 @@ const handleSend = (channel: string, args: unknown[]): void => {
       return
     case 'mt::close-window':
       fire(closeWindow())
+      return
+    case 'mt::close-window-abort':
+      // The editor could not work out what to ask about; drop the pending
+      // question so the next close request asks again instead of being vetoed.
+      abandonCloseRequest()
       return
     case 'mt::close-window-confirm':
       fire(closeWindowConfirm((args[0] as UnsavedFile[]) ?? [], dispatchLocal))

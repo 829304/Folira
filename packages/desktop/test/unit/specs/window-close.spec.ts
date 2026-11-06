@@ -72,6 +72,20 @@ describe('closing a window', () => {
     expect(cancelBranch.match(/await cancelQuit\(\)/g)?.length).toBeGreaterThanOrEqual(2)
   })
 
+  it('lets the editor give a question back when it cannot answer', () => {
+    // Collecting the answer reads every tab's options. A state that throws there
+    // used to leave the bridge's latch raised with no reply at all: the window
+    // could then only be closed by killing the process.
+    expect(editorStore).toContain("window.electron.ipcRenderer.send('mt::close-window-abort')")
+    const answer = editorStore.slice(editorStore.indexOf("on('mt::ask-for-close'"))
+    expect(answer).toContain('try {')
+    expect(answer).toContain('catch (err) {')
+    expect(answer).toContain('Failed to work out what to ask about before closing')
+    // The bridge has to route that channel back to the latch, or the message is
+    // just another silent send.
+    expect(bridgeIndex).toContain("case 'mt::close-window-abort':")
+    expect(bridgeIndex).toContain('abandonCloseRequest()')
+  })
   it('lets the app menu hand its quit to the editor', () => {
     // A predefined Quit maps to macOS `terminate:`, which tears the windows down
     // without a close request: the renderer's guard never runs and unsaved drafts

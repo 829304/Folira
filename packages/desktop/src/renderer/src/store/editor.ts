@@ -659,30 +659,39 @@ export const useEditorStore = defineStore('editor', {
             console.error('Failed to update buffered state before closing', err)
           })
           .then(() => {
-            const unsavedFiles = this.tabs
-              .filter((file) => !file.isSaved)
-              .map((file) => {
-                const { id, filename, pathname, markdown } = file
-                const options = getOptionsFromState(file)
-                return {
-                  id,
-                  filename,
-                  pathname,
-                  markdown,
-                  options,
-                  defaultPath: getRootFolderFromState(projectStore)
-                }
-              })
+            // Collecting the answer can still fail — a state the options cannot
+            // be read from throws here. Replying with nothing would leave the
+            // bridge's `asking` latch raised and make the window unclosable, so
+            // tell it to forget the question instead.
+            try {
+              const unsavedFiles = this.tabs
+                .filter((file) => !file.isSaved)
+                .map((file) => {
+                  const { id, filename, pathname, markdown } = file
+                  const options = getOptionsFromState(file)
+                  return {
+                    id,
+                    filename,
+                    pathname,
+                    markdown,
+                    options,
+                    defaultPath: getRootFolderFromState(projectStore)
+                  }
+                })
 
-            // Every unsaved tab gets asked about, whatever the startup setting
-            // says. This build leaves `update-buffer-state` unimplemented (see
-            // tauri-bridge/index.ts), so nothing is restored on the next launch
-            // — and treating `restoreAll` as "already saved somewhere" would
-            // close the window with the edits gone and no prompt.
-            if (unsavedFiles.length > 0) {
-              window.electron.ipcRenderer.send('mt::close-window-confirm', deepClone(unsavedFiles))
-            } else {
-              window.electron.ipcRenderer.send('mt::close-window')
+              // Every unsaved tab gets asked about, whatever the startup setting
+              // says. This build leaves `update-buffer-state` unimplemented (see
+              // tauri-bridge/index.ts), so nothing is restored on the next launch
+              // — and treating `restoreAll` as "already saved somewhere" would
+              // close the window with the edits gone and no prompt.
+              if (unsavedFiles.length > 0) {
+                window.electron.ipcRenderer.send('mt::close-window-confirm', deepClone(unsavedFiles))
+              } else {
+                window.electron.ipcRenderer.send('mt::close-window')
+              }
+            } catch (err) {
+              console.error('Failed to work out what to ask about before closing', err)
+              window.electron.ipcRenderer.send('mt::close-window-abort')
             }
           })
       })

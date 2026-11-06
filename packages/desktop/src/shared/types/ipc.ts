@@ -111,6 +111,7 @@ export interface IpcSendChannels {
   'mt::check-for-update': []
   'mt::clipboard::write-text': [text: string]
   'mt::close-window': []
+  'mt::close-window-abort': []
   'mt::close-window-confirm': [unsavedFiles: UnsavedFile[]]
   'mt::cmd-close-window': []
   'mt::cmd-import-file': []

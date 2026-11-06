@@ -66,6 +66,22 @@ describe('requestClose', () => {
     expect(spies.invoke).toHaveBeenCalledWith('cancel_quit')
   })
 
+  it('lets the editor give the question back', async() => {
+    const { abandonCloseRequest, requestClose } = await loadWindow()
+    const dispatch = vi.fn(() => 1)
+
+    requestClose(dispatch)
+    requestClose(dispatch)
+    expect(dispatch).toHaveBeenCalledTimes(1)
+
+    // The editor could not work out what to ask about and says so on its own
+    // channel; the next close request has to ask again rather than be vetoed
+    // for the rest of the session.
+    abandonCloseRequest()
+    requestClose(dispatch)
+
+    expect(dispatch).toHaveBeenCalledTimes(2)
+  })
   it('keeps the latch while the question is still open', async() => {
     const { requestClose } = await loadWindow()
     const dispatch = vi.fn(() => 1)

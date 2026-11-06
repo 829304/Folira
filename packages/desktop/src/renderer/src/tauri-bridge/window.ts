@@ -89,10 +89,12 @@ export const requestClose = (dispatchLocal: DispatchLocal): void => {
  * to lower it — and tell Rust the quit it may have started is off — or every
  * later close is vetoed forever.
  */
-const abandonRequest = (): void => {
+export const abandonCloseRequest = (): void => {
   asking = false
   cancelQuit().catch((err) => console.warn('[tauri-bridge] cannot cancel the pending quit:', err))
 }
+
+const abandonRequest = abandonCloseRequest
 
 /**
  * Only the editor answers `mt::ask-for-close` — it is the editor store that
