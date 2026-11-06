@@ -39,6 +39,14 @@ interface Store {
   writing: Promise<void> | null
   /** Failed writes since the last success, so a stuck file is not retried forever. */
   failures: number
+  /**
+   * The stamp of a tie this window lost, per key.
+   *
+   * Our own echo carries the stamp we wrote under, which is also the stamp the
+   * winner announced. Without this mark the echo would put the losing value back
+   * into the visible store while the file holds the winner's.
+   */
+  tied: Record<string, number>
 }
 
 const createStore = (): Store => ({
@@ -47,6 +55,7 @@ const createStore = (): Store => ({
   pending: {},
   pendingAt: {},
   versions: {},
+  tied: {},
   loading: null,
   writeTimer: null,
   writing: null,
@@ -213,6 +222,9 @@ const merge = async(store: Store, patch: unknown, at: number): Promise<void> => 
   Object.keys(bag).forEach((key) => {
     store.pendingAt[key] = at
     store.versions[key] = at
+    // A local write owns the key again, so a tie this window lost earlier no
+    // longer describes the stamp that is current.
+    delete store.tied[key]
   })
   scheduleWrite(store)
   // The read fills in the keys this window has not touched; anything merged
@@ -385,13 +397,21 @@ export const rememberStoredPreferences = (
         // the cache already hold it, but the store does not — nothing dispatches
         // a second time for a local edit, so the sender would never see its own
         // change. Adopting the value here keeps the queue and `versions` alone.
-        if (from === WINDOW_ID && at === knownAt) accepted[key] = announced[key]
+        const lostTie = preferences.tied[key] === at
+        if (from === WINDOW_ID && at === knownAt && !lostTie) accepted[key] = announced[key]
         // Any other announcement is not a newer value: it must not touch the
         // queue, the cache or the visible state either, or the store would show
         // the losing side while the file keeps the winner.
         return
       }
 
+      if (at === knownAt) {
+        // Same stamp, so this is the tie we yielded: remember it, or our own
+        // echo would put the losing value back on screen.
+        preferences.tied[key] = at
+      } else {
+        delete preferences.tied[key]
+      }
       delete preferences.pending[key]
       delete preferences.pendingAt[key]
     }

@@ -6,7 +6,7 @@
 // caller see an empty bag — and the debounced write that followed replaced the
 // file with just that one key.
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
@@ -35,6 +35,13 @@ describe('preference store', () => {
   beforeEach(() => {
     invoke.mockReset()
     vi.useFakeTimers()
+    // Tie tests compare the sender's id with this window's, so pin the draw:
+    // (0.5).toString(36).slice(2) is 'i'.
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('keeps stored preferences when one is written mid-read', async() => {

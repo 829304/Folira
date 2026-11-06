@@ -133,6 +133,18 @@ describe('ordering ties and the data channel', () => {
     expect(writes).toEqual([{ fontSize: 24 }])
   })
 
+  it('does not adopt its own echo after losing the tie', async() => {
+    const store = await context()
+    const at = await store.setStoredPreferences({ fontSize: 24 })
+    // 'j' wins the same-stamp tie, so its value is the one on disk.
+    store.rememberStoredPreferences({ fontSize: 18 }, at, 'j')
+    // Our own echo still says 24 under the same stamp; adopting it would put the
+    // losing value back on screen while the file keeps 18.
+    const accepted = store.rememberStoredPreferences({ fontSize: 24 }, at, 'i')
+    expect(accepted).toEqual({})
+    expect(await store.getStoredPreference('fontSize')).toBe(18)
+  })
+
   it('adopts its own echo so the sender sees the change', async() => {
     const store = await context()
     const at = await store.setStoredPreferences({ autoSave: true })
