@@ -338,3 +338,74 @@ describe('diagramPreview — accessible name', () => {
         expect(preview.domNode!.getAttribute('aria-label')).toBeNull();
     });
 });
+
+// Start empty so the constructor cannot create an unobserved render request.
+// Renderer loading is controlled explicitly; no real Mermaid or animation frame.
+// An update that finishes after a newer one started must not touch the preview.
+describe('diagramPreview — overlapping updates', () => {
+    function renderer(title: string) {
+        return {
+            parse: () => ({
+                drawSVG: (target: HTMLElement) => {
+                    target.innerHTML = `<svg width="10" height="10"><title>${title}</title></svg>`;
+                },
+            }),
+        };
+    }
+
+    it('keeps the newest diagram when an older renderer finishes last', async () => {
+        let release!: (value: ReturnType<typeof renderer>) => void;
+        const oldRenderer = new Promise<ReturnType<typeof renderer>>((resolve) => {
+            release = resolve;
+        });
+        loadRendererMock.mockReturnValueOnce(oldRenderer).mockResolvedValue(renderer('New'));
+        const { preview } = makePreview('', 'flowchart');
+
+        const oldUpdate = preview.update('old');
+        await preview.update('new');
+        expect(preview.domNode!.querySelector('title')?.textContent).toBe('New');
+        release(renderer('Old'));
+        await oldUpdate;
+
+        expect(preview.domNode!.querySelector('title')?.textContent).toBe('New');
+        expect(preview.domNode!.getAttribute('aria-label')).toBe('New');
+    });
+
+    it('ignores an old failure after a newer render succeeds', async () => {
+        let reject!: (error: Error) => void;
+        const oldRenderer = new Promise<never>((_resolve, rejectPromise) => {
+            reject = rejectPromise;
+        });
+        loadRendererMock.mockReturnValueOnce(oldRenderer).mockResolvedValue(renderer('New'));
+        const { preview } = makePreview('', 'flowchart');
+
+        const oldUpdate = preview.update('old');
+        await preview.update('new');
+        reject(new Error('old request failed'));
+        await oldUpdate;
+
+        expect(preview.domNode!.querySelector('.mu-diagram-error')).toBeNull();
+        expect(preview.domNode!.querySelector('title')?.textContent).toBe('New');
+    });
+
+    it('keeps empty content empty when an earlier render completes', async () => {
+        let release!: (value: ReturnType<typeof renderer>) => void;
+        const oldRenderer = new Promise<ReturnType<typeof renderer>>((resolve) => {
+            release = resolve;
+        });
+        loadRendererMock.mockReturnValueOnce(oldRenderer);
+        const { preview, muya } = makePreview('', 'flowchart');
+        const emit = vi.fn();
+        Object.assign(muya, { isReadOnly: true, eventCenter: { emit } });
+
+        const oldUpdate = preview.update('old');
+        await preview.update('');
+        release(renderer('Old'));
+        await oldUpdate;
+        preview.domNode!.click();
+
+        expect(preview.domNode!.querySelector(`.${CLASS_NAMES.MU_EMPTY}`)).not.toBeNull();
+        expect(preview.domNode!.querySelector('svg')).toBeNull();
+        expect(emit).not.toHaveBeenCalled();
+    });
+});

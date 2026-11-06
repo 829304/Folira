@@ -10,11 +10,24 @@ import Parent from '../../base/parent';
 
 const debug = logger('diagramPreview:');
 
+// Offscreen but laid out, so renderers that measure their container (Vega sizes
+// itself from it) still get a width. `visibility` would not affect layout, but
+// the node must be in the document for fonts and measurements to resolve.
+function createStagingNode(preview: HTMLElement): HTMLElement {
+    const staging = document.createElement('div');
+    const width = preview.clientWidth || 800;
+    staging.style.cssText = `position:absolute;left:-10000px;top:0;width:${width}px;`;
+    document.body.appendChild(staging);
+
+    return staging;
+}
+
 class DiagramPreview extends Parent {
     private _code: string;
     private _type: string;
     private _rendered = false;
     private _cancelFinalize: (() => void) | null = null;
+    private _request = 0;
     static override blockName = 'diagram-preview';
 
     static create(muya: Muya, state: IDiagramState) {
@@ -78,6 +91,10 @@ class DiagramPreview extends Parent {
 
     async update(code = this._code) {
         const { i18n } = this.muya;
+        // Renderers load lazily and resolve out of order, so each update takes a
+        // ticket: work that finishes after a later update started is discarded
+        // instead of painting the preview with stale content.
+        const request = ++this._request;
         this._rendered = false;
         if (this._code !== code)
             this._code = code;
@@ -94,9 +111,14 @@ class DiagramPreview extends Parent {
             const { mermaidTheme, vegaTheme, plantumlServer, sequenceTheme } = this.muya.options;
             const { _type: type } = this;
 
+            // Render off to the side and move the result in once it is known to
+            // be current: drawing straight into the node would let an older
+            // render overwrite a newer one while it was still in flight.
+            const staging = createStagingNode(this.domNode!);
+
             try {
                 await renderDiagram({
-                    target: this.domNode!,
+                    target: staging,
                     code,
                     type,
                     mermaidTheme,
@@ -104,10 +126,12 @@ class DiagramPreview extends Parent {
                     plantumlServer,
                     sequenceTheme,
                 });
-                this._rendered = true;
-                this._cancelFinalize = finalizeRenderedDiagram(this.domNode!, i18n.t('Diagram'));
             }
             catch (error) {
+                staging.remove();
+                if (request !== this._request)
+                    return;
+
                 const detail
                     = error instanceof Error ? error.message : String(error);
                 debug.error(`render ${type} diagram failed: ${detail}`);
@@ -118,7 +142,18 @@ class DiagramPreview extends Parent {
                     PREVIEW_DOMPURIFY_CONFIG,
                     true,
                 )}</div></div>`;
+                return;
             }
+
+            if (request !== this._request) {
+                staging.remove();
+                return;
+            }
+
+            this.domNode!.replaceChildren(...Array.from(staging.childNodes));
+            staging.remove();
+            this._rendered = true;
+            this._cancelFinalize = finalizeRenderedDiagram(this.domNode!, i18n.t('Diagram'));
         }
         else {
             this.domNode!.innerHTML = `<div class="${CLASS_NAMES.MU_EMPTY}">&lt; ${i18n.t(

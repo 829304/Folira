@@ -15,6 +15,23 @@ import { isTauri } from '@/util/isTauri'
 /** Paths behind open tabs. The Rust watch is re-armed whenever this changes. */
 const openPaths = new Set<string>()
 
+// Reading a file takes a round trip, and the world moves on during it: the tab
+// can close, a second change can finish reading first, or the file can go away.
+// Each read claims a ticket and only publishes while its ticket is still the one
+// on file, so an older read cannot overwrite newer content.
+const readTickets = new Map<string, number>()
+
+// One counter for the whole process, never per path: a tab that closes and
+// reopens while a read is in flight would otherwise hand the old read a ticket
+// that matches the new one.
+let readTicketSequence = 0
+
+const claimReadTicket = (pathname: string): number => {
+  const ticket = ++readTicketSequence
+  readTickets.set(pathname, ticket)
+  return ticket
+}
+
 let syncTimer: ReturnType<typeof setTimeout> | null = null
 
 // Opening a folder of documents adds paths one at a time; re-arming the watch
@@ -59,12 +76,14 @@ export const takePendingOpenFiles = async(): Promise<string[]> => {
 
 export const untrackOpenFile = (pathname: string | null | undefined): void => {
   if (!pathname || !openPaths.delete(pathname)) return
+  readTickets.delete(pathname)
   syncWatch()
 }
 
 export const clearTrackedOpenFiles = (): void => {
   if (openPaths.size === 0) return
   openPaths.clear()
+  readTickets.clear()
   syncWatch()
 }
 
@@ -92,9 +111,16 @@ export const handleDiskChange = async(
   if (!pathname || !openPaths.has(pathname)) return
 
   if (kind === 'unlink') {
+    // Forgetting the ticket aborts any read still in flight: its content
+    // describes a file that no longer exists.
+    readTickets.delete(pathname)
     dispatchLocal('mt::update-file', [{ type: 'unlink', change: { pathname } }])
     return
   }
+
+  // Claim the ticket before the read starts: a change that arrives while this
+  // one is in flight takes a later ticket and wins.
+  const ticket = claimReadTicket(pathname)
 
   let document: LoadedMarkdown
   try {
@@ -103,6 +129,10 @@ export const handleDiskChange = async(
     // Removed between the event and the read; the unlink event is on its way.
     return
   }
+
+  // The tab may have closed, or a later change may have published already.
+  // Either way this content is stale and must not reach the editor.
+  if (!openPaths.has(pathname) || readTickets.get(pathname) !== ticket) return
 
   // The whole document. `loadChange` in the editor store reads the encoding and
   // line ending off this payload, so sending only the text reset both to
