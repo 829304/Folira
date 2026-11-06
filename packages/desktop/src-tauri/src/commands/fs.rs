@@ -142,6 +142,41 @@ pub fn merge_json_file(path: String, patch: serde_json::Value) -> Result<(), Str
     super::atomic_write::write_atomic(path, &bytes).map_err(|e| e.to_string())
 }
 
+/// Remove `keys` from the JSON object stored at `path`.
+///
+/// A preferences file from a build that still wrote the old theme pair keeps
+/// those keys forever unless something deletes them: every write merges its own
+/// patch, so nothing ever rewrites the file as a whole. Returns whether the file
+/// changed, and leaves it untouched when none of the keys are there.
+#[tauri::command]
+pub fn prune_json_file(path: String, keys: Vec<String>) -> Result<bool, String> {
+    let path = Path::new(&path);
+    let Ok(text) = fs::read_to_string(path) else {
+        // Nothing stored means nothing to clean; a missing file is not an error.
+        return Ok(false);
+    };
+    let Ok(serde_json::Value::Object(mut stored)) =
+        serde_json::from_str::<serde_json::Value>(text.trim_start_matches('\u{feff}'))
+    else {
+        // A corrupt file is left for the next merge to replace, as above.
+        return Ok(false);
+    };
+
+    let before = stored.len();
+    for key in &keys {
+        stored.remove(key);
+    }
+    if stored.len() == before {
+        return Ok(false);
+    }
+
+    let value = serde_json::Value::Object(stored);
+    let mut bytes = serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?;
+    bytes.push(b'\n');
+    super::atomic_write::write_atomic(path, &bytes).map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
 #[tauri::command]
 pub fn ensure_dir(path: String) -> Result<(), String> {
     fs::create_dir_all(&path).map_err(|e| e.to_string())
@@ -345,6 +380,54 @@ mod tests {
         assert_eq!(created, json!({ "autoSave": true }));
 
         assert!(merge_json_file(path.to_string_lossy().into_owned(), json!([1, 2])).is_err());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn prunes_only_the_keys_it_is_given() {
+        let dir = temp_dir("prune");
+        let path = dir.join("preferences.json");
+        fs::write(
+            &path,
+            b"\xef\xbb\xbf{\n  \"theme\": \"nord\",\n  \"uiTheme\": \"graphite\",\n  \"followSystemTheme\": false\n}\n",
+        )
+        .unwrap();
+
+        let changed = prune_json_file(
+            path.to_string_lossy().into_owned(),
+            vec!["uiTheme".to_owned(), "followSystemTheme".to_owned()],
+        )
+        .unwrap();
+
+        assert!(changed);
+        let stored: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(stored, json!({ "theme": "nord" }));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn leaves_the_file_alone_when_nothing_matches() {
+        let dir = temp_dir("prune-noop");
+        let path = dir.join("preferences.json");
+        let original = "{\n  \"theme\": \"nord\"\n}\n";
+        fs::write(&path, original).unwrap();
+
+        let changed = prune_json_file(
+            path.to_string_lossy().into_owned(),
+            vec!["uiTheme".to_owned()],
+        )
+        .unwrap();
+
+        assert!(!changed);
+        assert_eq!(fs::read_to_string(&path).unwrap(), original);
+        // A missing file is the normal first launch, not a failure.
+        let missing = dir.join("missing.json");
+        assert!(!prune_json_file(
+            missing.to_string_lossy().into_owned(),
+            vec!["uiTheme".to_owned()]
+        )
+        .unwrap());
         let _ = fs::remove_dir_all(&dir);
     }
 

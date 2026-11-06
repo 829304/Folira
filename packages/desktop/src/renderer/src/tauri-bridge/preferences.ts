@@ -14,6 +14,8 @@ import { emit } from '@tauri-apps/api/event'
 import { open as showOpenDialog } from '@tauri-apps/plugin-dialog'
 import pathe from 'pathe'
 
+import { DEPRECATED_PREFERENCE_KEYS } from '@shared/types/preferences'
+
 type Bag = Record<string, unknown>
 
 interface Store {
@@ -37,6 +39,8 @@ interface Store {
   writeTimer: ReturnType<typeof setTimeout> | null
   /** The write in flight, so a close waits for it instead of racing it. */
   writing: Promise<void> | null
+  /** The cleanup in flight, so a close waits for the file to settle. */
+  pruning: Promise<void> | null
   /** Failed writes since the last success, so a stuck file is not retried forever. */
   failures: number
   /**
@@ -61,6 +65,7 @@ const createStore = (): Store => ({
   loading: null,
   writeTimer: null,
   writing: null,
+  pruning: null,
   failures: 0
 })
 
@@ -95,6 +100,15 @@ const loadFromDisk = async(store: Store): Promise<Bag> => {
         // Stored values fill in what is not already set. Anything written while
         // this read was in flight is newer than the file and must survive it.
         store.values = { ...(parsed as Bag), ...store.values }
+
+        // A file from a build before the single-theme switch still carries the
+        // old pair. Drop it from this window's bag now, so nothing reads it, and
+        // rewrite the file without it once the queued writes have landed.
+        const legacy = DEPRECATED_PREFERENCE_KEYS.filter(key => key in (parsed as Bag))
+        if (legacy.length > 0) {
+          legacy.forEach((key) => { delete store.values[key] })
+          queuePrune(store, legacy)
+        }
       }
     }
   } catch (err) {
@@ -204,6 +218,26 @@ const flush = async(store: Store): Promise<void> => {
   } finally {
     if (store.writing === settled) store.writing = null
   }
+}
+
+/**
+ * Remove preferences this build no longer understands from the file.
+ *
+ * Runs after whatever this window queued: the command rewrites the whole file,
+ * so it must not land between a patch and the write that carries it. Cleanups
+ * are chained behind each other rather than dropped, and a failure only costs
+ * the cleanup — the file keeps the old keys until the next launch tries again,
+ * which is better than failing a write or the close handler.
+ */
+const queuePrune = (store: Store, keys: readonly string[]): void => {
+  const run = async(): Promise<void> => {
+    await flush(store)
+    await invoke('prune_json_file', { path: store.path, keys })
+  }
+  const previous = store.pruning ?? Promise.resolve()
+  store.pruning = previous
+    .then(run, run)
+    .catch((err) => { console.error(`[tauri-bridge] cannot prune ${store.path}:`, err) })
 }
 
 /**
@@ -342,12 +376,14 @@ export const setStoredUserData = (patch: unknown): Promise<number> => {
  * second pass covers the edit that arrived while the first write was in flight.
  */
 export const flushStoredPreferences = async(): Promise<void> => {
-  // Both files must be attempted: `Promise.all` would stop at the first
-  // rejection and let the close handler destroy the window while the other
-  // drain is still waiting on a write. The rejection is re-thrown afterwards for
-  // the tests and the console — the close handler closes regardless, because a
-  // failed write must not trap the user in an open window.
-  const results = await Promise.allSettled([drain(preferences), drain(userData)])
+  // Start the writes before anything else so a close that arrives right after
+  // this call still finds them on the wire; the cleanups they precede are waited
+  // on alongside them. A cleanup already swallows its own failure, which is why
+  // only the writes below are reported.
+  const cleanups = [preferences.pruning, userData.pruning].filter(
+    (cleanup): cleanup is Promise<void> => cleanup !== null
+  )
+  const results = await Promise.allSettled([drain(preferences), drain(userData), ...cleanups])
   const failed = results.find(
     (result): result is PromiseRejectedResult => result.status === 'rejected'
   )

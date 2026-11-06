@@ -74,3 +74,23 @@ export interface LayoutState {
   showTabBar: boolean
   [key: string]: unknown
 }
+
+/**
+ * Preferences a build before the single-theme switch could write.
+ *
+ * They are read as nothing and removed from the file on the first launch that
+ * finds them: keeping them around would let an old window resurrect a pair the
+ * current app no longer understands.
+ */
+export const DEPRECATED_PREFERENCE_KEYS = [
+  'uiTheme',
+  'mdTheme',
+  'followSystemTheme',
+  'lightModeTheme',
+  'darkModeTheme',
+  'lightUiTheme',
+  'lightMdTheme',
+  'darkUiTheme',
+  'darkMdTheme',
+  'preferencesVersion'
+] as const

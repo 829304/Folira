@@ -58,9 +58,6 @@
   "plantumlServer": "https://www.plantuml.com/plantuml",
 
   "theme": "light",
-  "followSystemTheme": true,
-  "lightModeTheme": "light",
-  "darkModeTheme": "dark",
   "customCss": "",
 
   "spellcheckerEnabled": false,

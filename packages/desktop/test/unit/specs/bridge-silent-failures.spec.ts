@@ -25,6 +25,8 @@ const BRIDGE = resolve(__dirname, '../../../src/renderer/src/tauri-bridge')
 const DELIBERATELY_SILENT: Record<string, string> = {
   'preferences.ts:cannot read':
     'A preferences file that does not exist yet on first run. Defaults apply.',
+  'preferences.ts:cannot prune':
+    'A best-effort cleanup of old preference keys: the next launch retries, and the keys are already ignored.',
   'preferences.ts:cannot write':
     'A background write on every toggle; a toast per failure would be worse than the console.',
   'export.ts:cannot open the print dialog':
