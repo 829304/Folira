@@ -51,7 +51,7 @@ import { loadMarkdownFile, type LoadedMarkdown } from './markdown-file'
 import { askForOpenProject, loadProjectTree } from './project'
 import { broadcastLanguage, openSettingsWindow, sendCurrentLanguage } from './settings'
 import { installTabShortcuts } from './shortcuts'
-import { closeWindow, closeWindowConfirm, installCloseGuard } from './window'
+import { closeWindow, closeWindowConfirm, installCloseGuard, requestClose } from './window'
 import { installFileDrop, installWindowEvents } from './window-events'
 import { resolveInitialTheme } from './theme'
 import { setLanguage, t } from '@/i18n'
@@ -347,7 +347,7 @@ const handleSend = (channel: string, args: unknown[]): void => {
     case 'mt::app-try-quit':
       // One window per process here, so quitting and closing are the same
       // handshake: ask the renderer, then honour its answer.
-      dispatchLocal('mt::ask-for-close', [])
+      requestClose(dispatchLocal)
       return
     case 'mt::close-window':
       fire(closeWindow())
@@ -369,7 +369,7 @@ const handleSend = (channel: string, args: unknown[]): void => {
       fire(toggleBooleanPreference('autoSave'))
       return
     case 'mt::cmd-close-window':
-      dispatchLocal('mt::ask-for-close', [])
+      requestClose(dispatchLocal)
       return
     case 'mt::cmd-new-editor-window':
       // This build is deliberately one window with many tabs, so "New Window"

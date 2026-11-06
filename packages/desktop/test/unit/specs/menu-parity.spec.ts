@@ -25,15 +25,26 @@ const all = (source: string, pattern: RegExp): string[] =>
 const native = readFileSync(NATIVE, 'utf-8')
 const bar = readFileSync(BAR, 'utf-8')
 
-// Cut/copy/paste/quit and friends are `PredefinedMenuItem`s: the OS supplies
-// both the label and the behaviour, and the WebView already handles them
-// without a menu, which is why the bar does not draw them.
+// Cut/copy/paste and friends are `PredefinedMenuItem`s: the OS supplies both the
+// label and the behaviour, and the WebView already handles them without a menu,
+// which is why the bar does not draw them. `app:*` ids live in the macOS
+// application menu, which only exists there — the custom bar never draws it, and
+// Windows/Linux quit by closing the last window.
 const nativeIds = new Set(all(native, /item\(app,\s*"([^"]+)"/g))
 const barIds = new Set(all(bar, /id:\s*'([^']+)'/g))
 
 describe('the two menus', () => {
   it('offer the same commands', () => {
-    expect([...nativeIds].filter((id) => !barIds.has(id)), 'in the native menu only').toEqual([])
+    // pp:quit is the one id that lives only in the macOS application menu.
+    // Name it explicitly instead of dropping every pp:* id: a macOS item
+    // that silently disappears has to fail this check, not slip through it.
+    const appMenuOnly = (id: string): boolean => id === 'app:quit'
+    expect(
+      [...nativeIds].filter((id) => !appMenuOnly(id) && !barIds.has(id)),
+      'in the native menu only'
+    ).toEqual([])
+    expect(nativeIds.has('app:quit'), 'quit lives in the native menu').toBe(true)
+    expect(barIds.has('app:quit'), 'the drawn bar never shows the app menu').toBe(false)
     expect([...barIds].filter((id) => !nativeIds.has(id)), 'in the custom bar only').toEqual([])
   })
 

@@ -61,6 +61,10 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
             _ => {}
         },
 
+        // Quit is a real close handshake, not an OS terminate: the editor has
+        // to flush and ask about unsaved tabs before the process goes away.
+        "app" if arg == "quit" => crate::window::quit_request(app),
+
         "help" if arg == "about" => emit(app, "mt::about-dialog", json!(null)),
 
         _ => {}

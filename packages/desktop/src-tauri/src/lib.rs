@@ -116,6 +116,11 @@ pub fn run() {
             // instead of the rectangle the user chose, so keep the last
             // free-floating one current as it changes.
             tauri::WindowEvent::Resized(_) | tauri::WindowEvent::Moved(_) => window::track(window),
+            // The editor is the first window a quit closes; once it is gone the
+            // rest of the quit continues here.
+            tauri::WindowEvent::Destroyed => {
+                window::finish_quit(&window.app_handle().clone(), window.label());
+            }
             _ => {}
         })
         .on_menu_event(|app, event| {
@@ -133,6 +138,9 @@ pub fn run() {
             // Geometry is written before the editor destroys itself; the exit
             // hook alone is too late once the window is gone.
             window::remember_window_state,
+            // A quit the user cancelled must not linger: the next plain close
+            // of the editor would take the settings window down with it.
+            window::cancel_quit,
             // fs::* — mirror of the mt::fs:: channels
             commands::fs::is_file,
             commands::fs::is_directory,
@@ -186,7 +194,23 @@ pub fn run() {
             // windows are torn down, so a quit from the menu — which destroys
             // them without a close request — still gets one measurement.
             match event {
-                tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => window::save(app),
+                // A quit from the app menu never asks the editor about unsaved
+                // work, so hold the exit and let its own close handshake decide.
+                //
+                // Only two paths produce this event (tauri 2.12.5): the last
+                // window being destroyed, and `AppHandle::exit`. The order is
+                // load-bearing — `on_event_loop_event` drops the window from the
+                // manager before this fires, which is why `veto_exit` sees no
+                // editor once the close handshake has finished. Re-check that
+                // order when bumping the tauri version: if it flips, closing the
+                // last window would re-enter the close handshake.
+                tauri::RunEvent::ExitRequested { api, .. } => {
+                    window::save(app);
+                    if window::veto_exit(app) {
+                        api.prevent_exit();
+                    }
+                }
+                tauri::RunEvent::Exit => window::save(app),
                 _ => {}
             }
         });

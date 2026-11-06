@@ -45,8 +45,11 @@ fn item<R: Runtime>(
 
 #[cfg(target_os = "macos")]
 fn app_submenu<R: Runtime>(app: &AppHandle<R>, tr: &Translations) -> tauri::Result<Submenu<R>> {
-    // about/services/hide/hideOthers/quit are PredefinedMenuItems localized by
-    // macOS itself; only the custom Preferences item needs translating.
+    // about/services/hide/hideOthers are PredefinedMenuItems localized by macOS
+    // itself. Quit is not: the predefined item maps to `terminate:`, which tears
+    // the windows down without a close request, so the editor's unsaved-work
+    // guard never runs. A custom item routes the quit through the same close
+    // handshake a title-bar click takes.
     SubmenuBuilder::new(app, tr.t("menu.marktext.title"))
         .item(&PredefinedMenuItem::about(app, None, None)?)
         .item(&PredefinedMenuItem::separator(app)?)
@@ -57,7 +60,7 @@ fn app_submenu<R: Runtime>(app: &AppHandle<R>, tr: &Translations) -> tauri::Resu
         .item(&PredefinedMenuItem::hide(app, None)?)
         .item(&PredefinedMenuItem::hide_others(app, None)?)
         .item(&PredefinedMenuItem::separator(app)?)
-        .item(&PredefinedMenuItem::quit(app, None)?)
+        .item(&item(app, "app:quit", &tr.t("menu.marktext.quit"), Some("CmdOrCtrl+Q"))?)
         .build()
 }
 

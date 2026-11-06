@@ -14,9 +14,12 @@ const desktopDir = resolve(__dirname, '../../..')
 const read = (relative: string): string => readFileSync(resolve(desktopDir, relative), 'utf-8')
 
 const bridgeWindow = read('src/renderer/src/tauri-bridge/window.ts')
+const bridgeIndex = read('src/renderer/src/tauri-bridge/index.ts')
 const bridgePreferences = read('src/renderer/src/tauri-bridge/preferences.ts')
 const lib = read('src-tauri/src/lib.rs')
 const rustWindow = read('src-tauri/src/window.rs')
+const menu = read('src-tauri/src/menu/mod.rs')
+const dispatch = read('src-tauri/src/menu/dispatch.rs')
 const boot = read('src-tauri/src/commands/boot.rs')
 const editorStore = read('src/renderer/src/store/editor.ts')
 
@@ -44,6 +47,53 @@ describe('closing a window', () => {
   it('still asks the editor about unsaved files before closing it', () => {
     expect(bridgeWindow).toContain("windowType !== 'editor'")
     expect(bridgeWindow).toContain("dispatchLocal('mt::ask-for-close', [])")
+  })
+
+  it('asks once at a time, so a double close cannot stack dialogs', () => {
+    // Two close requests before the first answer used to dispatch the question
+    // twice, and the editor stacked a second save dialog over the unanswered
+    // one. Every entry point goes through one guard now.
+    expect(bridgeWindow).toContain('export const requestClose')
+    const guard = bridgeWindow.slice(bridgeWindow.indexOf('export const requestClose'))
+    expect(guard).toContain('if (closeConfirmed || closing || asking) return')
+    expect(guard.indexOf('asking = true')).toBeLessThan(
+      guard.indexOf("dispatchLocal('mt::ask-for-close', [])")
+    )
+    // The menu and the command palette used to dispatch straight to the
+    // renderer, which bypassed the flag entirely.
+    expect(bridgeIndex).toContain("case 'mt::app-try-quit':")
+    expect(bridgeIndex).toContain("case 'mt::cmd-close-window':")
+    expect(bridgeIndex.match(/requestClose\(dispatchLocal\)/g)?.length).toBeGreaterThanOrEqual(2)
+    expect(bridgeIndex).not.toContain("dispatchLocal('mt::ask-for-close', [])")
+    // Keeping the window has to forget a pending quit, otherwise the next plain
+    // close of the editor would also close the settings window.
+    expect(bridgeWindow).toContain("invoke('cancel_quit')")
+    const cancelBranch = bridgeWindow.slice(bridgeWindow.indexOf('export const closeWindowConfirm'))
+    expect(cancelBranch.match(/await cancelQuit\(\)/g)?.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('lets the app menu hand its quit to the editor', () => {
+    // A predefined Quit maps to macOS `terminate:`, which tears the windows down
+    // without a close request: the renderer's guard never runs and unsaved drafts
+    // vanish. The custom item runs the same close handshake a title-bar click
+    // takes, then finishes with whatever windows are left.
+    expect(menu).not.toContain('PredefinedMenuItem::quit')
+    expect(menu).toContain('"app:quit"')
+    expect(dispatch).toContain('crate::window::quit_request(app)')
+    expect(rustWindow).toContain('pub fn quit_request<R: Runtime>(app: &AppHandle<R>)')
+    expect(rustWindow).toContain('pub fn finish_quit<R: Runtime>')
+    expect(lib).toContain('window::finish_quit(&window.app_handle().clone(), window.label())')
+    // Not every quit reaches `RunEvent::ExitRequested`; the one that does still
+    // goes through the editor when there is one.
+    expect(lib).toContain('window::veto_exit(app)')
+    expect(lib).toContain('api.prevent_exit()')
+    expect(rustWindow).toContain('let _ = editor.unminimize();')
+    // The abandoned quit is cleared from the renderer, and the remaining
+    // windows are closed on a later tick so two windows are never torn down
+    // from inside one event callback.
+    expect(rustWindow).toContain('pub fn cancel_quit()')
+    expect(lib).toContain('window::cancel_quit')
+    expect(rustWindow).toContain('app.run_on_main_thread(move || close_other_windows(&handle))')
   })
 
   it('flushes both stores, not just the preferences one', () => {

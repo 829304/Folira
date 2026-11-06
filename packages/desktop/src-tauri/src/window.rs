@@ -12,11 +12,12 @@
 //! build is trying not to use.
 
 use std::error::Error;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::{
-    AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindow,
+    AppHandle, Manager, PhysicalPosition, PhysicalSize, Runtime, WebviewUrl, WebviewWindow,
     WebviewWindowBuilder,
 };
 
@@ -129,6 +130,10 @@ pub fn create(app: &AppHandle, data: &DataRoot) -> Result<(), Box<dyn Error>> {
         let _ = window.maximize();
     }
 
+    // A fresh editor window means the app is in use again: a quit the user
+    // cancelled must not make the next ordinary close take the settings
+    // window with it.
+    QUIT_REQUESTED.store(false, Ordering::SeqCst);
     // The state is managed by the first build. When the editor is rebuilt after
     // being closed — the settings window can keep the process alive — the
     // managed copy has to describe the new window instead of being replaced,
@@ -375,6 +380,99 @@ fn load(path: &std::path::Path) -> Option<WindowState> {
 #[tauri::command]
 pub fn remember_window_state(app: AppHandle) {
     save(&app);
+}
+
+/// Set while a quit is in progress, so the editor's own close can take the
+/// remaining windows with it instead of leaving the settings window (and the
+/// process) behind. Cleared when a new editor window is built.
+static QUIT_REQUESTED: AtomicBool = AtomicBool::new(false);
+
+/// Quit the application through the windows' close handshakes.
+///
+/// The app-menu Quit item cannot rely on `RunEvent::ExitRequested` (macOS turns
+/// `terminate:` into `LoopDestroyed`, which only produces `RunEvent::Exit`), so
+/// the quit is driven from here: the editor is asked to close, and once it is
+/// gone its `Destroyed` hook closes whatever else is still open. With no editor
+/// left, that means the settings window, which flushes its preferences on the
+/// way out like any other close.
+pub fn quit_request<R: Runtime>(app: &AppHandle<R>) {
+    QUIT_REQUESTED.store(true, Ordering::SeqCst);
+
+    match app.get_webview_window("main") {
+        Some(editor) => {
+            let _ = editor.unminimize();
+            let _ = editor.set_focus();
+            if let Err(err) = editor.close() {
+                eprintln!("[window] could not close the editor for the quit: {err}");
+                QUIT_REQUESTED.store(false, Ordering::SeqCst);
+            }
+        }
+        None => close_other_windows(app),
+    }
+}
+
+/// Continue a quit that is already in progress once a window has gone.
+///
+/// Runs from the window event callback, so the remaining windows are closed on
+/// a later main-thread tick: closing a window while another one is being
+/// destroyed re-enters the event loop, and at least macOS refuses to tear down
+/// two windows from the same callback.
+pub fn finish_quit<R: Runtime>(app: &AppHandle<R>, label: &str) {
+    if label != "main" || !QUIT_REQUESTED.swap(false, Ordering::SeqCst) {
+        return;
+    }
+
+    let handle = app.clone();
+    if let Err(err) = app.run_on_main_thread(move || close_other_windows(&handle)) {
+        eprintln!("[window] could not schedule the rest of the quit: {err}");
+        close_other_windows(app);
+    }
+}
+
+/// Forget a quit the user abandoned in the unsaved-files dialog.
+///
+/// Without this the flag would survive a cancelled quit and the next ordinary
+/// close of the editor would take the settings window down with it.
+#[tauri::command]
+pub fn cancel_quit() {
+    QUIT_REQUESTED.store(false, Ordering::SeqCst);
+}
+
+fn close_other_windows<R: Runtime>(app: &AppHandle<R>) {
+    for (label, window) in app.webview_windows() {
+        if label == "main" {
+            continue;
+        }
+        if let Err(err) = window.close() {
+            eprintln!("[window] could not close {label} for the quit: {err}");
+        }
+    }
+}
+
+/// Route an application exit through the editor's close handshake.
+///
+/// Quitting from the app menu — macOS `Cmd+Q`, the dock, or a `quit` item —
+/// tears the windows down without a close request, so the renderer's
+/// `onCloseRequested` guard never runs and unsaved drafts vanish. Ask the window
+/// to close itself instead: that path flushes, asks about unsaved tabs, and
+/// destroys the window once the user agrees. The exit that follows has nothing
+/// left to veto, so the app quits on its own.
+///
+/// Returns whether the caller must prevent the exit it is handling. No editor
+/// window means nothing is left to ask.
+pub fn veto_exit(app: &AppHandle) -> bool {
+    let Some(editor) = app.get_webview_window("main") else {
+        return false;
+    };
+
+    let _ = editor.unminimize();
+    let _ = editor.set_focus();
+    if let Err(err) = editor.close() {
+        eprintln!("[window] could not route the exit through the editor: {err}");
+        return false;
+    }
+
+    true
 }
 
 /// Open the preferences window, or focus it if it is already up.

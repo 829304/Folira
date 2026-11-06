@@ -28,6 +28,12 @@ let closeConfirmed = false
 // wait for it rather than start over.
 let closing: Promise<void> | null = null
 
+// True between asking the editor about unsaved tabs and the answer coming back.
+// Without it two close requests — a double click on the title bar, or the taskbar
+// menu while the first dialog is up — each ask again, and the editor stacks a
+// second save dialog on top of the unanswered one.
+let asking = false
+
 const flushAndDestroy = (): Promise<void> => {
   closing ??= (async() => {
     clearTrackedOpenFiles()
@@ -37,9 +43,33 @@ const flushAndDestroy = (): Promise<void> => {
     // destroy the window without ever seeing the destroyed flag set.
     closeConfirmed = true
     await getCurrentWindow().destroy()
-  })()
+  })().catch(async(err) => {
+    // A failed destroy leaves the window alive; forgetting the attempt lets the
+    // next close request try again instead of being vetoed forever. A quit that
+    // was driving this close has to be forgotten too, or the next plain close of
+    // the editor would take the settings window down with it.
+    closing = null
+    asking = false
+    await cancelQuit()
+    throw err
+  })
 
   return closing
+}
+
+/**
+ * Ask the editor about unsaved tabs, once.
+ *
+ * Every close entry point has to come through here — the title-bar request, the
+ * File menu, the command palette. Two of them used to dispatch the question
+ * straight to the renderer, so a second request while the first dialog was still
+ * open stacked another one and orphaned the first answer.
+ */
+export const requestClose = (dispatchLocal: DispatchLocal): void => {
+  if (closeConfirmed || closing || asking) return
+
+  asking = true
+  dispatchLocal('mt::ask-for-close', [])
 }
 
 /**
@@ -69,7 +99,7 @@ export const installCloseGuard = (dispatchLocal: DispatchLocal, windowType: stri
       // The renderer is already flushing a close it agreed to; asking again
       // would reopen the save dialog on a window that is on its way out.
       if (closing) return
-      dispatchLocal('mt::ask-for-close', [])
+      requestClose(dispatchLocal)
     })
     .catch((err) => console.warn('[tauri-bridge] cannot guard window close:', err))
 }
@@ -104,6 +134,22 @@ export const closeWindow = async(): Promise<void> => {
 }
 
 /**
+ * Tell Rust the quit was abandoned.
+ *
+ * The application menu closes the editor on the way out and remembers that a
+ * quit is pending. If the user keeps the window, that memory has to go, or the
+ * next plain close of the editor would also close the settings window and end
+ * the process.
+ */
+const cancelQuit = async(): Promise<void> => {
+  try {
+    await invoke('cancel_quit')
+  } catch (err) {
+    console.warn('[tauri-bridge] cannot cancel the pending quit:', err)
+  }
+}
+
+/**
  * Close with unsaved documents on the table.
  *
  * Diverges from Electron on one point: if a save fails or its dialog is
@@ -115,13 +161,30 @@ export const closeWindowConfirm = async(
   files: UnsavedFile[],
   dispatchLocal: DispatchLocal
 ): Promise<void> => {
-  const choice = await askAboutUnsavedFiles(files)
-  if (choice === 'cancel') return
+  try {
+    const choice = await askAboutUnsavedFiles(files)
+    if (choice === 'cancel') {
+      // The window stays open, so the next close request has to ask again.
+      asking = false
+      await cancelQuit()
+      return
+    }
 
-  if (choice === 'save') {
-    const written = await Promise.all(files.map((file) => saveDocument(file, dispatchLocal)))
-    if (written.some((path) => path === null)) return
+    if (choice === 'save') {
+      const written = await Promise.all(files.map((file) => saveDocument(file, dispatchLocal)))
+      if (written.some((path) => path === null)) {
+        asking = false
+        await cancelQuit()
+        return
+      }
+    }
+
+    await closeWindow()
+  } catch (err) {
+    // A rejected dialog or write must not leave the window permanently
+    // unclosable: the next request gets to ask again.
+    asking = false
+    await cancelQuit()
+    throw err
   }
-
-  await closeWindow()
 }
