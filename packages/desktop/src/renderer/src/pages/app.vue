@@ -67,6 +67,7 @@ import { showEditorContextMenu } from '@/contextMenu/editor'
 import { DEFAULT_STYLE } from '@/config'
 import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
 import { useAppliedTheme } from '@/composables/useAppliedTheme'
+import { firstPaintPair } from '@/util/themeSelection'
 import { useLayoutStore } from '@/store/layout'
 import { useListenForMainStore } from '@/store/listenForMain'
 import { usePreferencesStore } from '@/store/preferences'
@@ -288,15 +289,15 @@ onMounted(async () => {
     // `initialState`, which `main.ts` feeds into the preferences store. Once the
     // store's file has arrived its resolution is the real one.
     const init = window.marktext?.initialState as typeof DEFAULT_STYLE | undefined
-    const initialPair = window.marktext?.initialThemePair
-    const pair = themePair.value
+    const cached = window.marktext?.initialThemePair
+    const pair = firstPaintPair(themePair.value, preferencesLoaded.value, cached)
     const style: AddStylesOptions = {
       theme: init?.theme ?? DEFAULT_STYLE.theme,
       codeFontFamily: init?.codeFontFamily ?? DEFAULT_STYLE.codeFontFamily,
       codeFontSize: init?.codeFontSize ?? DEFAULT_STYLE.codeFontSize,
       hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar,
-      uiTheme: preferencesLoaded.value ? pair.ui : initialPair?.ui || pair.ui,
-      mdTheme: preferencesLoaded.value ? pair.md : initialPair?.md || pair.md
+      uiTheme: pair.ui,
+      mdTheme: pair.md
     }
     addStyles(style)
   })

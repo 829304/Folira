@@ -75,6 +75,26 @@ export function resolveThemePair(preferences: ThemePreferences, appearance: Appe
 }
 
 /**
+ * The pair to paint before the stored preferences have been read.
+ *
+ * The window URL carries the pair the previous session painted with, so the
+ * first frame matches what was on screen. That pair is a cache for one frame
+ * only: once the file has arrived its resolution wins, even when it names the
+ * same ids, because a following-system user would otherwise keep the cached
+ * appearance forever. An axis missing from the cache falls back on its own,
+ * which is what a URL written before both axes existed looks like.
+ */
+export function firstPaintPair(
+  resolved: ThemePair,
+  loaded: boolean,
+  cached?: { ui?: string | null; md?: string | null } | null
+): ThemePair {
+  if (loaded) return resolved
+
+  return { ui: cached?.ui || resolved.ui, md: cached?.md || resolved.md }
+}
+
+/**
  * The appearance the Markdown axis asks for.
  *
  * Muya's own dark styles (GitHub alerts, for one) are driven by `body.dark`,

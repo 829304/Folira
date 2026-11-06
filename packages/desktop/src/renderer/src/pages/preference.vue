@@ -24,6 +24,7 @@ import SideBar from '@/prefComponents/sideBar/index.vue'
 import { applyTheme } from '@/util/theme'
 import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
 import { useAppliedTheme } from '@/composables/useAppliedTheme'
+import { firstPaintPair } from '@/util/themeSelection'
 import { isOsx } from '@/util'
 import { registerSettingsComponents } from '@/prefComponents/settingsComponents'
 import { dismissSplash } from '@/util/splash'
@@ -61,20 +62,17 @@ useAppliedTheme(activeTheme, preferencesLoaded)
 // Lifecycle
 onMounted(() => {
   nextTick(() => {
-    const initialPair = window.marktext?.initialThemePair
+    const cached = window.marktext?.initialThemePair
     // The URL pair is what the last frame showed; the resolved pair is what the
     // preferences file asks for. Prefer the stored one when it has already been
     // read, and keep the URL pair only for the first paint.
-    applyTheme({
-      ui: preferencesLoaded.value ? activeTheme.value.ui : initialPair?.ui || activeTheme.value.ui,
-      md: preferencesLoaded.value ? activeTheme.value.md : initialPair?.md || activeTheme.value.md
-    })
-
-    preferencesStore.ASK_FOR_USER_PREFERENCE()
-    // This window shares `index.html`, and therefore its loading screen, with
-    // the editor. Its own first content is the settings tree, which is here.
-    dismissSplash()
+    applyTheme(firstPaintPair(activeTheme.value, preferencesLoaded.value, cached))
   })
+
+  preferencesStore.ASK_FOR_USER_PREFERENCE()
+  // This window shares `index.html`, and therefore its loading screen, with
+  // the editor. Its own first content is the settings tree, which is here.
+  dismissSplash()
 })
 </script>
 

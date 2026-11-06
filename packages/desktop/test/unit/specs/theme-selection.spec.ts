@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   fallbackTheme,
+  firstPaintPair,
   markdownAppearance,
   resolveThemePair,
   type ThemePreferences
@@ -135,38 +136,52 @@ describe('theme assets on disk', () => {
 
 describe('first frame', () => {
   const renderer = resolve(__dirname, '../../../src/renderer/src')
-  const bootstrap = readFileSync(resolve(renderer, 'bootstrap.ts'), 'utf8')
-  const main = readFileSync(resolve(renderer, 'main.ts'), 'utf8')
 
-  it('keeps the cached pair out of the state the store receives', () => {
+  it('keeps the cached pair out of the state the store receives', async() => {
     // The URL pair is the last painted frame, not a choice. `main.ts` hands
     // `initialState` to the preferences store before mount, so a pair folded in
     // there would read as "the user picked these" and pin a following system
     // to one appearance.
-    expect(bootstrap).toContain('initialThemePair')
+    window.history.replaceState({}, '', '/index.html?wid=2&uith=dracula&mdth=solarized-light&theme=graphite')
 
-    const from = bootstrap.lastIndexOf('initialState: {')
-    const literals = bootstrap.slice(from, bootstrap.indexOf('}', from))
-    expect(literals).not.toContain('uiTheme')
-    expect(literals).not.toContain('mdTheme')
+    const { parseUrlArgs } = await import('@/util/urlArgs')
+    const args = parseUrlArgs()
+
+    expect(args.initialThemePair).toEqual({ ui: 'dracula', md: 'solarized-light' })
+    expect(Object.keys(args.initialState)).not.toContain('uiTheme')
+    expect(Object.keys(args.initialState)).not.toContain('mdTheme')
+  })
+
+  it('paints the resolved pair once the preferences have loaded', () => {
+    // Same ids, different answer: the stored file decides even when it resolves
+    // to the defaults, so the cached pair cannot outlive the first frame.
+    const resolved = { ui: 'light', md: 'light' }
+    const cached = { ui: 'dark', md: 'dracula' }
+
+    expect(firstPaintPair(resolved, false, cached)).toEqual(cached)
+    expect(firstPaintPair(resolved, true, cached)).toEqual(resolved)
+    expect(firstPaintPair(resolved, false, undefined)).toEqual(resolved)
+  })
+
+  it('falls back one axis at a time when the cache is partial', () => {
+    const resolved = { ui: 'light', md: 'light' }
+
+    expect(firstPaintPair(resolved, false, { ui: 'dark' })).toEqual({ ui: 'dark', md: 'light' })
+    expect(firstPaintPair(resolved, false, { md: 'dracula' })).toEqual({ ui: 'light', md: 'dracula' })
   })
 
   it('feeds the store only the initial state', () => {
     // Seeded, not applied: the URL bag holds launch defaults that must not
     // reach the bridge's copy of the stored values, or reading the file would
-    // merge those defaults over what is on disk.
+    // merge those defaults over what is on disk. This is the one wiring check
+    // that stays a source read — `main.ts` mounts the app, so there is no
+    // smaller unit to drive — and its behaviour is covered by
+    // preference-store-race.spec.ts.
+    const main = readFileSync(resolve(renderer, 'main.ts'), 'utf8')
+
     expect(main).toContain('SEED_USER_PREFERENCE(window.marktext.initialState)')
     expect(main).not.toContain('SET_USER_PREFERENCE(window.marktext.initialState)')
     expect(main).not.toContain('initialThemePair')
-  })
-
-  it('does not repaint the cached pair over the resolved one', () => {
-    // The stored file can arrive before the first frame is assembled. Painting
-    // the cached pair then would overwrite the user's stored choice with the
-    // theme the previous session happened to show.
-    const app = readFileSync(resolve(renderer, 'pages/app.vue'), 'utf8')
-
-    expect(app).toContain('preferencesLoaded.value ? pair.ui : initialPair?.ui')
   })
 
   // Preference-arrival behavior is exercised by theme-loading.spec.ts.

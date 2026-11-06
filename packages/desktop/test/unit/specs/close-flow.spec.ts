@@ -45,7 +45,11 @@ async function boot(saved = false, pathname = '') {
       }
     }
   })
-  const dispatch = (name: string, args: unknown[]) => handlers.get(name)?.({}, ...args)
+  const dispatched: Array<{ name: string; args: unknown[] }> = []
+  const dispatch = (name: string, args: unknown[]) => {
+    dispatched.push({ name, args })
+    handlers.get(name)?.({}, ...args)
+  }
   const store = (await import('@/store/editor')).useEditorStore()
   const preferences = (await import('@/store/preferences')).usePreferencesStore()
   const file = {
@@ -75,7 +79,7 @@ async function boot(saved = false, pathname = '') {
     await vi.waitFor(() => expect(jobs).toHaveLength(1))
     await jobs[0]
   }
-  return { store, preferences, bus, close, preventDefault, snapshots }
+  return { store, preferences, bus, close, preventDefault, snapshots, dispatched, dispatch }
 }
 
 beforeEach(() => {
@@ -140,6 +144,25 @@ describe('native close through the editor store and real close bridge', () => {
     await app.close()
     expect(ask).toHaveBeenCalledOnce()
     expect(destroy).not.toHaveBeenCalled()
+  })
+
+  it('closes the window without writing when the answer is dontSave', async() => {
+    const app = await boot(false, '/docs/a.md')
+    app.bus.on('unsaved-files::ask', (request) => (request as UnsavedFilesRequest).respond('dontSave'))
+    await app.close()
+    expect(invoke.mock.calls.some(([command]) => command === 'write_file')).toBe(false)
+    expect(destroy).toHaveBeenCalledOnce()
+  })
+
+  it('forces the tabs closed instead of saving them on dontSave', async() => {
+    const app = await boot(false, '/docs/a.md')
+    const { saveAndCloseTabs } = await import('@/tauri-bridge/save')
+    app.bus.on('unsaved-files::ask', (request) => (request as UnsavedFilesRequest).respond('dontSave'))
+
+    await saveAndCloseTabs([{ id: 'a' } as Parameters<typeof saveAndCloseTabs>[0][number]], app.dispatch)
+
+    expect(app.dispatched).toContainEqual({ name: 'mt::force-close-tabs-by-id', args: [['a']] })
+    expect(invoke.mock.calls.some(([command]) => command === 'write_file')).toBe(false)
   })
 
   it('closes clean documents without asking', async() => {
