@@ -341,54 +341,9 @@
     "default": "https://www.plantuml.com/plantuml"
   },
   "theme": {
-    "description": "Theme--Select the theme used in Folira--internal",
+    "description": "Theme--Select the theme used in Folira.",
     "type": "string",
     "default": "light"
-  },
-  "followSystemTheme": {
-    "description": "Theme--Use separate theme in dark mode.--internal",
-    "type": "boolean",
-    "default": true
-  },
-  "lightModeTheme": {
-    "description": "Theme--Theme to use when system is in light mode.--internal",
-    "type": "string",
-    "default": "light"
-  },
-  "darkModeTheme": {
-    "description": "Theme--Theme to use when system is in dark mode.--internal",
-    "type": "string",
-    "default": "dark"
-  },
-  "uiTheme": {
-    "description": "Theme--Interface theme; empty follows the app theme.",
-    "type": "string",
-    "default": ""
-  },
-  "mdTheme": {
-    "description": "Theme--Markdown theme; empty follows the app theme.",
-    "type": "string",
-    "default": ""
-  },
-  "lightUiTheme": {
-    "description": "Theme--Interface theme when the system is light; empty falls back to the light mode theme.--internal",
-    "type": "string",
-    "default": ""
-  },
-  "lightMdTheme": {
-    "description": "Theme--Markdown theme when the system is light; empty falls back to the light mode theme.--internal",
-    "type": "string",
-    "default": ""
-  },
-  "darkUiTheme": {
-    "description": "Theme--Interface theme when the system is dark; empty falls back to the dark mode theme.--internal",
-    "type": "string",
-    "default": ""
-  },
-  "darkMdTheme": {
-    "description": "Theme--Markdown theme when the system is dark; empty falls back to the dark mode theme.--internal",
-    "type": "string",
-    "default": ""
   },
   "restoreLayoutState": {
     "description": "General--Restore previous editor state on startup.",

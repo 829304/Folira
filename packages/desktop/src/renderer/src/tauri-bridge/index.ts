@@ -53,7 +53,7 @@ import { broadcastLanguage, openSettingsWindow, sendCurrentLanguage } from './se
 import { installTabShortcuts } from './shortcuts'
 import { closeWindow, closeWindowConfirm, installCloseGuard } from './window'
 import { installFileDrop, installWindowEvents } from './window-events'
-import { resolveInitialPair } from './theme'
+import { resolveInitialTheme } from './theme'
 import { setLanguage, t } from '@/i18n'
 
 // -----------------------------------------------------------------------------
@@ -797,11 +797,9 @@ function synthesizeEditorUrlArgs(boot: BootInfo): void {
   params.set('type', 'editor')
   params.set('wid', '1')
   params.set('udp', boot.paths?.userData || '/tmp')
-  // Honor the saved pair on first paint; each axis is resolved separately, so
-  // a mixed pair survives a restart.
-  const pair = resolveInitialPair()
-  params.set('uith', pair.ui)
-  params.set('mdth', pair.md)
+  // Honor the saved theme on first paint; the preferences file cannot be read
+  // before this frame.
+  params.set('th', resolveInitialTheme())
   params.set('debug', '0')
   params.set('hsb', '0')
   params.set('tbs', 'custom')

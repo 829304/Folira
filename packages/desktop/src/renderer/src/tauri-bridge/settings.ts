@@ -12,7 +12,7 @@ import { emit } from '@tauri-apps/api/event'
 
 import type { DispatchLocal } from './save'
 import { getStoredPreference } from './preferences'
-import { resolveInitialPair } from './theme'
+import { resolveInitialTheme } from './theme'
 
 /**
  * Open the preferences window, or focus it and switch tabs if it is already up.
@@ -29,13 +29,11 @@ export const openSettingsWindow = async(
   category: string | null,
   userDataPath: string
 ): Promise<void> => {
-  const pair = resolveInitialPair()
   const params = new URLSearchParams({
     type: category ? `settings/${category}` : 'settings',
     wid: '2',
     udp: userDataPath || '/tmp',
-    uith: pair.ui,
-    mdth: pair.md,
+    th: resolveInitialTheme(),
     debug: '0',
     hsb: '0',
     tbs: 'custom'

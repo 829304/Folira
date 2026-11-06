@@ -67,22 +67,21 @@ describe('theme.ts emoji-picker Linux font patch', () => {
     expect(css).not.toContain('.ag-emoji-picker')
   })
 
-  it('routes the patch through addStyles (theme + common) on Linux', async() => {
-    const { addStyles } = await loadTheme(true)
-    addStyles({ theme: 'light', ...commonOptions })
+  it('keeps the patch out of every theme sheet', async() => {
+    const { addCommonStyle } = await loadTheme(true)
+    addCommonStyle(commonOptions)
 
     expect(commonStyleHtml()).toContain(EMOJI_SELECTOR)
-    // The theme sheets carry the theme CSS, not the emoji patch. Each axis has
-    // its own sheet now, and Prism is a third one.
+    // The emoji rule belongs to the common sheet; no theme file carries it.
     for (const id of ['ag-theme-ui', 'ag-theme-md', 'ag-theme-prism']) {
       const html = (document.querySelector(`#${id}`) as HTMLStyleElement | null)?.innerHTML ?? ''
       expect(html, id).not.toContain('.mu-emoji-picker')
     }
   })
 
-  it('routes nothing emoji-related through addStyles off Linux', async() => {
-    const { addStyles } = await loadTheme(false)
-    addStyles({ theme: 'light', ...commonOptions })
+  it('writes nothing emoji-related off Linux', async() => {
+    const { addCommonStyle } = await loadTheme(false)
+    addCommonStyle(commonOptions)
 
     expect(commonStyleHtml()).not.toContain('.mu-emoji-picker')
   })

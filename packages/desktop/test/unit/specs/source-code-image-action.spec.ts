@@ -56,7 +56,7 @@ const loadComponent = (deps: Record<string, unknown>) => {
     `const { _defineComponent, ref, computed, watch, onMounted, onBeforeUnmount, nextTick,
       useEditorStore, usePreferencesStore, storeToRefs, codeMirror,
       setCursorAtFirstLine, setTextDirection, getWordCount, adjustCursor, bus,
-      useResolvedThemePair, oneDarkThemes, railscastsThemes } = __deps
+      appliedTheme, DEFAULT_THEME_ID, oneDarkThemes, railscastsThemes } = __deps
     ${js}
     return module.exports`
   ) as (deps: Record<string, unknown>, exports: object, module: object) => SetupModule
@@ -76,7 +76,8 @@ const makeDeps = (over: Record<string, unknown> = {}) => ({
   useEditorStore: () => ({ LISTEN_FOR_CONTENT_CHANGE: () => {} }),
   usePreferencesStore: () => ({}),
   storeToRefs: () => ({ theme: ref(''), sourceCode: ref(true), currentFile: ref(null) }),
-  useResolvedThemePair: () => computed(() => ({ ui: 'light', md: 'light' })),
+  appliedTheme: ref('light'),
+  DEFAULT_THEME_ID: 'light',
   codeMirror: () => ({}),
   setCursorAtFirstLine: vi.fn(),
   setTextDirection: () => {},

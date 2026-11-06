@@ -8,7 +8,7 @@ import {
   railscastsThemes
 } from '../config'
 import { getTheme, loadMdCss, loadPrismCss, loadUiCss } from './themeColor'
-import { rememberThemePair } from '@/tauri-bridge/theme'
+import { rememberTheme } from '@/tauri-bridge/theme'
 import { settleSplashTheme } from './splash'
 import { isLinux } from './index'
 import { shallowRef } from 'vue'
@@ -22,23 +22,6 @@ const getEmojiPickerPatch = (): string => {
     ? '.mu-emoji-picker section .emoji-wrapper .item span { font-family: sans-serif, "Noto Color Emoji"; }'
     : ''
 }
-
-const ensureStyle = (id: string): HTMLStyleElement => {
-  let element = document.querySelector(`#${id}`) as HTMLStyleElement | null
-  if (!element) {
-    element = document.createElement('style')
-    element.id = id
-    document.head.appendChild(element)
-  }
-  return element
-}
-
-// Each axis counts its own requests. The two stylesheets load concurrently and
-// can settle in either order, so "the newest request wins" is tracked per axis
-// rather than by comparing the element's own dataset.
-let uiRequest = 0
-let mdRequest = 0
-let prismRequest = 0
 
 /**
  * Repaint the pieces that are not stylesheets.
@@ -65,99 +48,39 @@ const paintPalette = (theme: string): void => {
   }
 }
 
-export interface ThemePair {
-  ui: string
-  md: string
-}
-
 /**
- * Apply a UI theme and a Markdown theme. The Prism sheet belongs to the
- * Markdown theme: syntax highlighting is part of the body, not the chrome.
+ * The theme a window is actually showing.
+ *
+ * `null` until a commit lands: the preferences may ask for a theme whose sheets
+ * are still loading, or whose load failed, and the diagram and source-mode
+ * chrome must keep describing what is on screen rather than what was requested.
  */
-export const applyTheme = (pair: ThemePair): void => {
-  const { ui, md } = pair
-  // Mirror the pair where first paint can read it synchronously; the
-  // preferences file is not available until well after the first frame.
-  rememberThemePair({ ui, md })
-
-  const uiEl = ensureStyle(UI_THEME_STYLE_ID)
-  const mdEl = ensureStyle(MD_THEME_STYLE_ID)
-  const prismEl = ensureStyle(PRISM_STYLE_ID)
-
-  uiEl.dataset.theme = ui
-  const uiToken = ++uiRequest
-  loadUiCss(ui)
-    .then((css) => {
-      if (uiToken === uiRequest) uiEl.innerHTML = patchTheme(css)
-    })
-    .catch((err) => console.error(`[theme] cannot load ui/${ui}:`, err))
-
-  mdEl.dataset.theme = md
-  const mdToken = ++mdRequest
-  loadMdCss(md)
-    .then((css) => {
-      if (mdToken === mdRequest) mdEl.innerHTML = patchTheme(css)
-    })
-    .catch((err) => console.error(`[theme] cannot load md/${md}:`, err))
-
-  const prismToken = ++prismRequest
-  loadPrismCss(md)
-    .then((css) => {
-      if (prismToken === prismRequest) prismEl.innerHTML = patchTheme(css)
-    })
-    .catch((err) => console.error(`[theme] cannot load prism for ${md}:`, err))
-
-  paintPalette(md)
-
-  // The pair path writes the same slots, so the single-theme cache no longer
-  // describes what is on screen. Phase 2 removes the path altogether.
-  appliedSheets = false
-  appliedTheme.value = null
-}
-
-/** Legacy entry point: one theme for both axes. */
-export const addThemeStyle = (theme: string): void => {
-  applyTheme({ ui: theme, md: theme })
-}
-
-// --- Single-theme kernel ---------------------------------------------------
-//
-// A theme id names a whole set: chrome, body and syntax. The pair-based entry
-// above stays until the settings page and the startup path switch together, so
-// both can be covered by tests in the meantime; the first-paint mirror is wired
-// in at that switch.
+export const appliedTheme = shallowRef<string | null>(null)
 
 export type ThemeApplyResult = 'applied' | 'superseded' | 'failed'
 
-/** The theme this window has on screen; `null` before the first commit. */
-export const appliedTheme = shallowRef<string | null>(null)
-
-// Bumped before every attempt so a newer attempt retires the one in flight,
-// even when the newer one ends up reusing what is already painted.
 let themeApplyRequest = 0
-// Whether the three slots in the document came from a completed commit.
+/** Whether the three slots currently hold a committed theme. */
 let appliedSheets = false
 
 /**
- * A theme slot that lands before the user's custom CSS.
+ * The stylesheet slot for one part of the current theme.
  *
- * Slots are created lazily on the first switch, long after `#custom-styles` may
- * exist, and appending would put the generated palette after the user's
- * overrides. Every call re-places the slot before the custom sheet, so a slot
- * left behind by the pair path ends up in the documented order too: base → ui →
- * md → prism → custom.
+ * Existing slots are moved back in front of the user's custom CSS on every call:
+ * a window may have been styled by another path (`addCustomStyle` re-appends
+ * itself), and a user rule must always win over the theme it overrides.
  */
 const ensureThemeStyle = (id: string): HTMLStyleElement => {
-  const found = document.querySelector(`#${id}`) as HTMLStyleElement | null
-  const element = found ?? document.createElement('style')
-  if (!found) element.id = id
+  const element = (document.querySelector(`#${id}`) as HTMLStyleElement | null) ?? document.createElement('style')
+  element.id = id
 
   const custom = document.querySelector('#custom-styles')
   if (custom?.parentNode === document.head) {
     document.head.insertBefore(element, custom)
-  } else if (!found) {
+  } else if (element.parentNode !== document.head) {
     document.head.appendChild(element)
   }
+
   return element
 }
 
@@ -226,6 +149,9 @@ function settleFailure(theme: string, token: number): ThemeApplyResult {
  * newer selection leaves the previous theme exactly as it was, so a window can
  * never show one theme's chrome around another theme's body. `superseded` says
  * a newer attempt won and this failure must stay quiet.
+ *
+ * The token is taken before the cache check so that re-selecting a theme still
+ * invalidates an attempt that is in flight for a different one.
  */
 export const applyThemeSet = async(theme: string): Promise<ThemeApplyResult> => {
   const token = ++themeApplyRequest
@@ -266,6 +192,9 @@ export const applyThemeSet = async(theme: string): Promise<ThemeApplyResult> => 
   paintPalette(theme)
   appliedSheets = true
   appliedTheme.value = theme
+  // Mirror the committed id for the next first paint. Recorded after the commit
+  // so the cache can never name a theme that failed to load.
+  rememberTheme(theme)
   // The splash may leave as soon as the first palette is on screen.
   settleSplashTheme()
 
@@ -362,20 +291,9 @@ export const addCustomStyle = (options: CustomStyleOptions): void => {
     element.id = 'custom-styles'
     document.head.appendChild(element)
   }
+  // Re-append so the user sheet stays after the theme slots: adding it must not
+  // let a theme override rules the user wrote.
+  document.head.appendChild(element)
   element.textContent = options.customCss
   if (element.sheet) bindCustomProperties(element.sheet.cssRules)
-}
-
-export interface AddStylesOptions extends CommonStyleOptions {
-  theme: string
-  /** Per-axis overrides; empty or missing means "same as `theme`". */
-  uiTheme?: string
-  mdTheme?: string
-}
-
-// Append common sheet and theme at the end of head - order is important.
-export const addStyles = (options: AddStylesOptions): void => {
-  const { theme, uiTheme, mdTheme } = options
-  applyTheme({ ui: uiTheme || theme, md: mdTheme || theme })
-  addCommonStyle(options)
 }

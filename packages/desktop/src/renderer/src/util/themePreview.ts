@@ -1,11 +1,13 @@
+import { getTheme } from './themeColor'
+
 // The settings preview renders a sample document with the same cascade a window
 // gets, inside a shadow root.
 //
 // The shadow root is what keeps the preview honest: the generated stylesheets
 // stay untouched (`:root` becomes `:host`, `.editor-wrapper` keeps its name),
-// so the two axes resolve exactly as they do in the editor — interface names on
-// the host, Markdown names on the `.editor-wrapper` inside it — while none of
-// those rules can reach the settings page itself.
+// so a theme's two files resolve exactly as they do in the editor — interface
+// names on the host, Markdown names on the `.editor-wrapper` inside it — while
+// none of those rules can reach the settings page itself.
 
 /** Rewrite the document scope of a generated stylesheet onto the shadow host. */
 export const scopeThemeCss = (css: string): string => css.replace(/:root\b/g, ':host')
@@ -35,13 +37,22 @@ export const composePreviewCss = (parts: {
     .join('\n')
 
 /**
- * A preview needs both axes. `themeColor` answers a missing stylesheet with an
- * empty string rather than an error, so this is the failure signal the caller
- * acts on: keep whatever is already rendered instead of showing a half-styled
- * sample.
+ * A preview needs one complete theme. `themeColor` answers a missing stylesheet
+ * with an empty string rather than an error, so this is the failure signal the
+ * caller acts on: keep whatever is already rendered instead of showing a
+ * half-styled sample. Syntax colours are only required when the manifest
+ * promises a palette; a null `prism` is a theme without highlighting.
  */
-export const isPreviewLoadable = (ui: string, md: string): boolean =>
-  ui.trim().length > 0 && md.trim().length > 0
+export const isPreviewLoadable = (
+  theme: string,
+  ui: string,
+  md: string,
+  prism: string
+): boolean => {
+  const wantsPrism = (getTheme(theme)?.prism ?? null) !== null
+
+  return ui.trim().length > 0 && md.trim().length > 0 && (!wantsPrism || prism.trim().length > 0)
+}
 
 /**
  * The sample the preview renders.

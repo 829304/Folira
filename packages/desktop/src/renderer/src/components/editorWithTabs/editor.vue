@@ -128,7 +128,8 @@ import { guessClipboardFilePath } from '@/util/clipboard'
 import { getCssForOptions, getHtmlToc, type PdfCssOptions, type HtmlTocOptions } from '@/util/pdf'
 import { resolveTocHeadingElement } from '@/util/tocNavigation'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
-import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
+import { appliedTheme } from '@/util/theme'
+import { DEFAULT_THEME_ID } from '@/util/themeSelection'
 import { getTheme } from '@/util/themeColor'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
@@ -258,8 +259,9 @@ const {
 // The diagram palette follows the Markdown axis: charts are part of the
 // document, not of the chrome. The pair comes from the same resolver the shell
 // and the settings window use, so following the system reaches the charts too.
-const themePair = useResolvedThemePair()
-const diagramTheme = computed(() => themePair.value.md)
+// Diagrams follow the theme that is actually on screen, so a load that is still
+// in flight (or failed) cannot restyle them ahead of the sheets.
+const diagramTheme = computed(() => appliedTheme.value ?? DEFAULT_THEME_ID)
 
 // Ask the manifest for the appearance: chart ids such as `graphite` or
 // `ayu-mirage` carry no `dark` in their name, so matching the id would paint a

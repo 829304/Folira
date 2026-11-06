@@ -47,7 +47,7 @@
 import { computed, watch, nextTick, onMounted, ref } from 'vue'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
-import { addStyles, addCustomStyle, type AddStylesOptions } from '@/util/theme'
+import { addCommonStyle, addCustomStyle, type CommonStyleOptions } from '@/util/theme'
 import Recent from '@/components/recent/index.vue'
 import EditorWithTabs from '@/components/editorWithTabs/index.vue'
 import TitleBar from '@/components/titleBar/index.vue'
@@ -65,9 +65,8 @@ import { markStartup } from '@/util/startupTrace'
 import { dismissSplash } from '@/util/splash'
 import { showEditorContextMenu } from '@/contextMenu/editor'
 import { DEFAULT_STYLE } from '@/config'
-import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
+import { useResolvedTheme } from '@/composables/useResolvedTheme'
 import { useAppliedTheme } from '@/composables/useAppliedTheme'
-import { firstPaintPair } from '@/util/themeSelection'
 import { useLayoutStore } from '@/store/layout'
 import { useListenForMainStore } from '@/store/listenForMain'
 import { usePreferencesStore } from '@/store/preferences'
@@ -93,9 +92,8 @@ const { windowActive, platform, init } = storeToRefs(mainStore)
 const { showTabBar } = storeToRefs(layoutStore)
 const { sourceCode, customCss, textDirection, zoom } = storeToRefs(preferencesStore)
 
-// One resolver for both axes: it knows the pre-split fallback and how to pick
-// the pair that belongs to the current OS appearance while following it.
-const themePair = useResolvedThemePair()
+// One resolver: it validates the stored id and knows the fallback.
+const resolvedTheme = useResolvedTheme()
 
 const { projectTree } = storeToRefs(projectStore)
 const { currentFile } = storeToRefs(editorStore)
@@ -120,16 +118,13 @@ const hasCurrentFile = computed<boolean>(() => {
 })
 
 // Watchers
-// The two axes move independently: re-apply both whenever either resolves to a
-// different theme, so switching one never resets the other.
-//
-// The URL pair is the previous session's paint and may only stand in until the
-// store has spoken. Waiting on `preferencesLoaded` rather than on the pair
-// changing matters: a resolution that happens to equal the cached one — the
-// default on a fresh launch — never changes the pair, so a change-only watcher
-// would leave the cached theme on screen for the whole session.
+// The URL cache is the previous session's paint and may only stand in until the
+// store has spoken. Waiting on `preferencesLoaded` rather than on the id changing
+// matters: a resolution that happens to equal the cached one — the default on a
+// fresh launch — never changes the value, so a change-only watcher would leave the
+// cached theme on screen for the whole session.
 const { preferencesLoaded } = storeToRefs(preferencesStore)
-useAppliedTheme(themePair, preferencesLoaded)
+useAppliedTheme(resolvedTheme, preferencesLoaded)
 watch(customCss, (value, oldValue) => {
   if (value !== oldValue) {
     addCustomStyle({
@@ -281,25 +276,16 @@ onMounted(async () => {
 
   nextTick(() => {
     // `initialState` from bootstrap carries nullable URL params (string|null);
-    // `addStyles` requires non-null `theme` / `codeFontFamily` strings.
-    // Coalesce against DEFAULT_STYLE for every nullable field.
-    // The window URL carries the pair the previous session painted with, so the
-    // first frame matches what was on screen before the preferences file is read.
-    // That pair is a cache for this frame only: it is deliberately not part of
-    // `initialState`, which `main.ts` feeds into the preferences store. Once the
-    // store's file has arrived its resolution is the real one.
+    // the common sheet needs non-null strings, so coalesce against DEFAULT_STYLE.
+    // The theme itself is not painted here: `useAppliedTheme` owns that, because
+    // it has to commit the whole set atomically and wait for the stored id.
     const init = window.marktext?.initialState as typeof DEFAULT_STYLE | undefined
-    const cached = window.marktext?.initialThemePair
-    const pair = firstPaintPair(themePair.value, preferencesLoaded.value, cached)
-    const style: AddStylesOptions = {
-      theme: init?.theme ?? DEFAULT_STYLE.theme,
+    const style: CommonStyleOptions = {
       codeFontFamily: init?.codeFontFamily ?? DEFAULT_STYLE.codeFontFamily,
       codeFontSize: init?.codeFontSize ?? DEFAULT_STYLE.codeFontSize,
-      hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar,
-      uiTheme: pair.ui,
-      mdTheme: pair.md
+      hideScrollbar: init?.hideScrollbar ?? DEFAULT_STYLE.hideScrollbar
     }
-    addStyles(style)
+    addCommonStyle(style)
   })
 })
 </script>

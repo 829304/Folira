@@ -15,8 +15,7 @@ import { composePreviewCss, isPreviewLoadable, PREVIEW_SAMPLE } from '@/util/the
 import chromeCss from './preview.css?inline'
 
 const props = defineProps<{
-  ui: string
-  md: string
+  theme: string
 }>()
 
 const host = ref<HTMLDivElement | null>(null)
@@ -28,13 +27,13 @@ let request = 0
 let warned = false
 
 // A preview is not worth an error dialog, and a blank one reads as "this theme
-// is broken", so every failure ends with the pair already on screen still
+// is broken", so every failure ends with the theme already on screen still
 // there. The first one is worth a line in the console; repeats would only
 // repeat themselves on every hover.
-const keep = (ui: string, md: string, error?: unknown): void => {
+const keep = (theme: string, error?: unknown): void => {
   if (warned) return
   warned = true
-  console.warn(`[theme-preview] cannot load ui/${ui} or md/${md}; keeping the rendered pair`, error)
+  console.warn(`[theme-preview] cannot load ${theme}; keeping the rendered theme`, error)
 }
 
 const render = async (): Promise<void> => {
@@ -44,23 +43,26 @@ const render = async (): Promise<void> => {
   let prism: string
   try {
     ;[ui, md, prism] = await Promise.all([
-      loadUiCss(props.ui),
-      loadMdCss(props.md),
-      loadPrismCss(props.md)
+      loadUiCss(props.theme),
+      loadMdCss(props.theme),
+      loadPrismCss(props.theme)
     ])
   } catch (error) {
-    if (token === request) keep(props.ui, props.md, error)
+    if (token === request) keep(props.theme, error)
     return
   }
   if (token !== request || !shadow) return
 
   // A missing stylesheet resolves to an empty string rather than rejecting, so
-  // the rejection path above is not the only way a pair can arrive unusable.
-  if (!isPreviewLoadable(ui, md)) {
-    keep(props.ui, props.md)
+  // the rejection path above is not the only way a theme can arrive unusable.
+  if (!isPreviewLoadable(props.theme, ui, md, prism)) {
+    keep(props.theme)
     return
   }
 
+  // A theme's files arrive together: replacing the shadow contents only after
+  // all three have loaded is what keeps a failed or superseded request from
+  // leaving the sample with one theme's frame around another's body.
   const sheet = document.createElement('style')
   sheet.textContent = composePreviewCss({ base: baseCss, ui, md, prism, chrome: chromeCss })
 
@@ -77,7 +79,7 @@ onMounted(() => {
   render()
 })
 
-watch(() => [props.ui, props.md], render)
+watch(() => props.theme, render)
 
 onBeforeUnmount(() => {
   shadow = null

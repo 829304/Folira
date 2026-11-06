@@ -191,15 +191,14 @@ declare global {
     marktext?: {
       env?: { windowId: number; [key: string]: unknown }
       /**
-       * The pair the last frame painted with, cached in the window URL. Only
+       * The theme the last frame painted with, cached in the window URL. Only
        * the first frame reads it; it is never written to the preferences.
        */
-      initialThemePair?: { ui?: string | null; md?: string | null }
+      initialTheme?: string | null
       initialState?: {
         codeFontFamily?: string | null
         codeFontSize?: string | null
         hideScrollbar?: boolean
-        theme?: string | null
         titleBarStyle?: string | null
         [key: string]: unknown
       }

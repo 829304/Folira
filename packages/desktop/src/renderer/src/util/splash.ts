@@ -12,6 +12,11 @@
  * to parse, a bootstrap message that never arrives. So the safety net is not
  * optional: a splash that outlives its cause is a frozen app as far as anyone
  * watching can tell, and worse than no splash at all.
+ *
+ * Content alone is not enough either: the first theme is fetched after the
+ * markup is parsed, and revealing the window before that commit shows the
+ * default palette for a frame. The splash therefore waits for both, bounded by
+ * the same deadline as the safety net.
  */
 
 /** Matches the `transition` on `#splash` in index.html. */
@@ -24,9 +29,13 @@ const FADE_MS = 180
  */
 const SAFETY_MS = 6000
 
-let dismissed = false
+/** Fixed once: the theme wait and the safety net count from the same instant. */
+const deadlineAt = Date.now() + SAFETY_MS
 
-/** Hide the splash now, without waiting for anything else. */
+let dismissed = false
+let contentReady = false
+let themeSettled = false
+
 const hideSplash = (): void => {
   const splash = document.getElementById('splash')
   if (!splash) return
@@ -38,70 +47,53 @@ const hideSplash = (): void => {
   window.setTimeout(() => splash.remove(), FADE_MS + 50)
 }
 
-/** Idempotent: several callers race to be the first content on screen. */
-export const dismissSplash = (): void => {
+/** Idempotent, and the only path that actually reveals the window. */
+const reveal = (): void => {
   if (dismissed) return
   dismissed = true
   hideSplash()
 }
 
-// --- Theme readiness gate ---------------------------------------------------
-//
-// The first frame can reach the screen before its theme stylesheets have been
-// fetched, which shows the default palette for a moment. The gate lets the
-// splash cover that stretch, but only as a stretch: the deadline is fixed once,
-// at module load, so a late or broken theme loader cannot hold the window
-// inside the splash longer than the safety net already allows.
+let revealTimer: number | undefined
 
-/** Fixed once: every wait below counts from the same instant. */
-const deadlineAt = Date.now() + SAFETY_MS
+const revealWhenReady = (): void => {
+  if (!contentReady) return
 
-let settleTheme: () => void = () => {}
-let themeSettled = false
-const themeReady = new Promise<void>((resolve) => {
-  settleTheme = resolve
-})
-
-let gate: Promise<void> | null = null
-let gateTimer: number | undefined
-
-/** Release the gate: the first theme commit (or its failure) is in. */
-export const settleSplashTheme = (): void => {
-  themeSettled = true
-  settleTheme()
-
-  // A window that settles before anyone asks still leaves no timer behind.
-  if (gateTimer !== undefined) {
-    window.clearTimeout(gateTimer)
-    gateTimer = undefined
+  if (themeSettled) {
+    reveal()
+    return
   }
+
+  // A theme that never settles must not hold the window past the deadline the
+  // safety net already promises, so the wait itself is bounded here.
+  if (revealTimer !== undefined) return
+  revealTimer = window.setTimeout(() => {
+    revealTimer = undefined
+    reveal()
+  }, Math.max(0, deadlineAt - Date.now()))
+}
+
+/** Idempotent: several callers race to be the first content on screen. */
+export const dismissSplash = (): void => {
+  contentReady = true
+  revealWhenReady()
 }
 
 /**
- * Resolves when the first theme settles, or when the startup deadline passes.
+ * Release the theme half of the gate.
  *
- * One promise serves every waiter, so a second caller cannot extend the wait.
+ * Called by the first successful commit (`applyThemeSet`) and by a failure that
+ * still owns the window: a theme that cannot be loaded must show the default
+ * palette rather than keep the splash up.
  */
-export const whenSplashThemeReady = (): Promise<void> => {
-  if (gate) return gate
-  if (themeSettled) return Promise.resolve()
-
-  const remaining = Math.max(0, deadlineAt - Date.now())
-  gate = Promise.race([
-    themeReady,
-    new Promise<void>((resolve) => {
-      gateTimer = window.setTimeout(resolve, remaining)
-    })
-  ])
-
-  return gate
+export const settleSplashTheme = (): void => {
+  themeSettled = true
+  revealWhenReady()
 }
 
 /** The safety net: straight out, no theme wait, no second deadline. */
 export const forceDismissSplash = (): void => {
-  if (dismissed) return
-  dismissed = true
-  hideSplash()
+  reveal()
 }
 
 /** Arm the deadline. Call once, as early as the app can run code. */

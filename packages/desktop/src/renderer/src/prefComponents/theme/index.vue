@@ -2,190 +2,70 @@
   <div class="pref-theme">
     <h4>{{ t('preferences.theme.title') }}</h4>
 
-    <Bool
-      :description="t('preferences.theme.followSystemTheme')"
-      :bool="followSystemTheme"
-      :on-change="setPreference('followSystemTheme')"
-    />
-
     <section class="preview-section">
       <h6 class="section-title">
         {{ t('preferences.theme.preview') }}
       </h6>
-      <theme-preview
-        :ui="previewPair.ui"
-        :md="previewPair.md"
-      />
+      <theme-preview :theme="previewTheme" />
     </section>
 
-    <template v-if="followSystemTheme">
-      <compound>
-        <template #head>
-          <h6 class="section-title">
-            {{ t('preferences.theme.interfaceTheme') }}
-          </h6>
-        </template>
-        <template #children>
-          <cur-select
-            :description="t('preferences.theme.lightModeTheme')"
-            :value="lightUiTheme || lightModeTheme"
-            :options="uiOptions"
-            :on-change="setPreference('lightUiTheme')"
-          />
-          <cur-select
-            :description="t('preferences.theme.darkModeTheme')"
-            :value="darkUiTheme || darkModeTheme"
-            :options="uiOptions"
-            :on-change="setPreference('darkUiTheme')"
-          />
-        </template>
-      </compound>
+    <div class="search-row">
+      <input
+        v-model="query"
+        class="search-input"
+        type="search"
+        :placeholder="t('preferences.theme.searchThemes')"
+      >
+    </div>
 
-      <compound>
-        <template #head>
-          <h6 class="section-title">
-            {{ t('preferences.theme.markdownTheme') }}
-          </h6>
-        </template>
-        <template #children>
-          <cur-select
-            :description="t('preferences.theme.lightModeTheme')"
-            :value="lightMdTheme || lightModeTheme"
-            :options="mdOptions"
-            :on-change="setPreference('lightMdTheme')"
-          />
-          <cur-select
-            :description="t('preferences.theme.darkModeTheme')"
-            :value="darkMdTheme || darkModeTheme"
-            :options="mdOptions"
-            :on-change="setPreference('darkMdTheme')"
-          />
-        </template>
-      </compound>
-    </template>
-
-    <template v-else>
-      <div class="filter-row">
-        <input
-          v-model="query"
-          class="search-input"
-          type="search"
-          :placeholder="t('preferences.theme.searchThemes')"
+    <div class="theme-grid">
+      <button
+        v-for="entry of visibleThemes"
+        :key="entry.id"
+        type="button"
+        class="theme-card"
+        :class="{ active: entry.id === selectedTheme }"
+        @click="selectTheme(entry.id)"
+        @mouseenter="hovered = entry.id"
+        @mouseleave="hovered = null"
+        @focus="hovered = entry.id"
+        @blur="hovered = null"
+      >
+        <span
+          class="theme-swatch"
+          :style="{ background: swatch(entry, 'ui', 'editorBgColor') }"
         >
-        <div class="appearance-filter">
-          <button
-            v-for="option of APPEARANCE_FILTERS"
-            :key="option.value"
-            type="button"
-            class="filter-button"
-            :class="{ active: appearanceFilter === option.value }"
-            @click="appearanceFilter = option.value"
-          >
-            {{ t(option.label) }}
-          </button>
-        </div>
-      </div>
-
-      <section class="axis-section">
-        <h6 class="section-title">
-          {{ t('preferences.theme.interfaceTheme') }}
-        </h6>
-        <div class="theme-grid">
-          <button
-            v-for="entry of visibleUiThemes"
-            :key="entry.id"
-            type="button"
-            class="theme-card"
-            :class="{ active: entry.id === savedPair.ui }"
-            @click="setAxisTheme('uiTheme', entry.id)"
-            @mouseenter="hovered = { ...savedPair, ui: entry.id }"
-            @mouseleave="hovered = null"
-            @focus="hovered = { ...savedPair, ui: entry.id }"
-            @blur="hovered = null"
+          <span
+            class="theme-swatch-page"
+            :style="{ background: swatch(entry, 'md', 'editorBgColor') }"
           >
             <span
-              class="ui-swatch"
-              :style="{ background: swatch(entry, 'ui', 'editorBgColor') }"
-            >
-              <span
-                class="ui-swatch-side"
-                :style="{ background: swatch(entry, 'ui', 'sideBarBgColor') }"
-              />
-              <span class="ui-swatch-body">
-                <span
-                  class="ui-swatch-heading"
-                  :style="{ background: swatch(entry, 'ui', 'editorColor') }"
-                />
-                <span
-                  class="ui-swatch-line"
-                  :style="{ background: swatch(entry, 'ui', 'editorColor') }"
-                />
-                <span
-                  class="ui-swatch-button"
-                  :style="{ background: swatch(entry, 'ui', 'buttonPrimaryBgColor') }"
-                />
-              </span>
-            </span>
-            <span class="theme-name">{{ entry.label }}</span>
-          </button>
-        </div>
-        <p
-          v-if="visibleUiThemes.length === 0"
-          class="empty"
-        >
-          {{ t('preferences.theme.noThemes') }}
-        </p>
-      </section>
-
-      <section class="axis-section">
-        <h6 class="section-title">
-          {{ t('preferences.theme.markdownTheme') }}
-        </h6>
-        <div class="theme-grid">
-          <button
-            v-for="entry of visibleMdThemes"
-            :key="entry.id"
-            type="button"
-            class="theme-card"
-            :class="{ active: entry.id === savedPair.md }"
-            @click="setAxisTheme('mdTheme', entry.id)"
-            @mouseenter="hovered = { ...savedPair, md: entry.id }"
-            @mouseleave="hovered = null"
-            @focus="hovered = { ...savedPair, md: entry.id }"
-            @blur="hovered = null"
-          >
+              class="theme-swatch-heading"
+              :style="{ background: swatch(entry, 'md', 'h1Color') }"
+            />
             <span
-              class="md-swatch"
-              :style="{ background: swatch(entry, 'md', 'editorBgColor') }"
-            >
-              <span
-                class="md-swatch-heading"
-                :style="{ background: swatch(entry, 'md', 'h1Color') }"
-              />
-              <span
-                class="md-swatch-line"
-                :style="{ background: swatch(entry, 'md', 'editorColor') }"
-              />
-              <span
-                class="md-swatch-link"
-                :style="{ background: swatch(entry, 'md', 'linkColor') }"
-              />
-              <span
-                class="md-swatch-code"
-                :style="{ background: swatch(entry, 'md', 'codeBlockBgColor') }"
-              />
-            </span>
-            <span class="theme-name">{{ entry.label }}</span>
-          </button>
-        </div>
-        <p
-          v-if="visibleMdThemes.length === 0"
-          class="empty"
-        >
-          {{ t('preferences.theme.noThemes') }}
-        </p>
-      </section>
-    </template>
+              class="theme-swatch-line"
+              :style="{ background: swatch(entry, 'md', 'editorColor') }"
+            />
+            <span
+              class="theme-swatch-link"
+              :style="{ background: swatch(entry, 'md', 'linkColor') }"
+            />
+            <span
+              class="theme-swatch-code"
+              :style="{ background: swatch(entry, 'md', 'codeBlockBgColor') }"
+            />
+          </span>
+        </span>
+        <span class="theme-name">{{ entry.label }}</span>
+      </button>
+    </div>
+    <p
+      v-if="visibleThemes.length === 0"
+      class="empty"
+    >
+      {{ t('preferences.theme.noThemes') }}
+    </p>
 
     <div class="custom-css">
       <div class="description">
@@ -211,77 +91,48 @@ import { useI18n } from 'vue-i18n'
 
 import { usePreferencesStore } from '@/store/preferences'
 import type { PreferencesState } from '@/store/preferences'
+import { applyThemeSet } from '@/util/theme'
 import { THEMES, type ThemeEntry } from '@/util/themeColor'
-import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
-import type { ThemePair } from '@/util/themeSelection'
-import Bool from '../common/bool/index.vue'
-import CurSelect from '../common/select/index.vue'
-import Compound from '../common/compound/index.vue'
+import { resolveThemeId } from '@/util/themeSelection'
 import ThemePreview from './preview.vue'
-import type { PrefSelectOption } from '../common/types'
-
-type AppearanceFilter = 'all' | 'light' | 'dark'
-
-const APPEARANCE_FILTERS: ReadonlyArray<{ value: AppearanceFilter; label: string }> = [
-  { value: 'all', label: 'preferences.theme.allThemes' },
-  { value: 'light', label: 'preferences.theme.lightThemes' },
-  { value: 'dark', label: 'preferences.theme.darkThemes' }
-]
 
 const { t } = useI18n()
 const preferenceStore = usePreferencesStore()
-const {
-  followSystemTheme,
-  lightModeTheme,
-  darkModeTheme,
-  lightUiTheme,
-  lightMdTheme,
-  darkUiTheme,
-  darkMdTheme,
-  customCss
-} = storeToRefs(preferenceStore)
+const { customCss } = storeToRefs(preferenceStore)
 
-const savedPair = useResolvedThemePair()
-const hovered = ref<ThemePair | null>(null)
-// Hovering a card repaints the preview only; the saved pair comes back the
+// The stored file can predate a rename, so the card marked selected is the id
+// the app would actually paint, not the stale string on disk.
+const selectedTheme = computed(() => resolveThemeId(preferenceStore.theme))
+
+const hovered = ref<string | null>(null)
+// Hovering a card repaints the preview only; the saved theme comes back the
 // moment the pointer leaves, so a look never rewrites a preference.
-const previewPair = computed<ThemePair>(() => hovered.value ?? savedPair.value)
+const previewTheme = computed(() => hovered.value ?? selectedTheme.value)
 
 const query = ref('')
-const appearanceFilter = ref<AppearanceFilter>('all')
-
-const optionsFor = (entries: ThemeEntry[]): PrefSelectOption<string>[] =>
-  entries.map(entry => ({ label: entry.label, value: entry.id }))
-
-const uiOptions = optionsFor(THEMES)
-const mdOptions = optionsFor(THEMES)
-
-const matching = (axis: 'ui' | 'md'): ThemeEntry[] => {
+const visibleThemes = computed<ThemeEntry[]>(() => {
   const needle = query.value.trim().toLowerCase()
+  if (!needle) return THEMES
 
-  return THEMES.filter(theme => {
-    if (appearanceFilter.value !== 'all' && theme.appearance !== appearanceFilter.value) return false
-    if (!needle) return true
-    // The axis list is the same set of ids; filter on what the card claims to
-    // draw so a search never offers a theme with a missing swatch.
-    const colour = theme.swatches[axis]?.editorBgColor ?? ''
-
-    return theme.id.includes(needle) || theme.label.toLowerCase().includes(needle) || colour.includes(needle)
-  })
-}
-
-const visibleUiThemes = computed(() => matching('ui'))
-const visibleMdThemes = computed(() => matching('md'))
+  return THEMES.filter(
+    theme => theme.id.includes(needle) || theme.label.toLowerCase().includes(needle)
+  )
+})
 
 const swatch = (entry: ThemeEntry, axis: 'ui' | 'md', name: string): string =>
   entry.swatches[axis]?.[name] ?? 'transparent'
 
-const setPreference = (type: keyof PreferencesState) => (value: unknown): void => {
-  preferenceStore.SET_SINGLE_PREFERENCE({ type, value })
+const selectTheme = async (id: string): Promise<void> => {
+  const result = await applyThemeSet(id)
+  // A failure or a newer selection leaves the previous theme on screen, so it
+  // must leave the previous preference in place as well.
+  if (result === 'applied') {
+    preferenceStore.SET_SINGLE_PREFERENCE({ type: 'theme', value: id })
+  }
 }
 
-const setAxisTheme = (type: 'uiTheme' | 'mdTheme', id: string): void => {
-  preferenceStore.SET_SINGLE_PREFERENCE({ type, value: id })
+const setPreference = (type: keyof PreferencesState) => (value: unknown): void => {
+  preferenceStore.SET_SINGLE_PREFERENCE({ type, value })
 }
 </script>
 
@@ -300,11 +151,9 @@ const setAxisTheme = (type: 'uiTheme' | 'mdTheme', id: string): void => {
     margin-top: 6px;
   }
 
-  & .filter-row {
+  & .search-row {
     display: flex;
-    gap: 12px;
-    align-items: center;
-    margin: 22px 0 8px;
+    margin: 22px 0 12px;
   }
 
   & .search-input {
@@ -320,29 +169,6 @@ const setAxisTheme = (type: 'uiTheme' | 'mdTheme', id: string): void => {
 
     &:focus {
       border-color: var(--themeColor);
-    }
-  }
-
-  & .appearance-filter {
-    display: flex;
-    gap: 4px;
-    padding: 3px;
-    border-radius: 7px;
-    background: var(--inputBgColor);
-  }
-
-  & .filter-button {
-    padding: 4px 10px;
-    font-size: 12px;
-    color: var(--editorColor80);
-    background: none;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-
-    &.active {
-      color: var(--buttonPrimaryFontColor);
-      background: var(--themeColor);
     }
   }
 
@@ -385,89 +211,50 @@ const setAxisTheme = (type: 'uiTheme' | 'mdTheme', id: string): void => {
     white-space: nowrap;
   }
 
-  & .ui-swatch {
-    display: flex;
+  & .theme-swatch {
+    display: block;
     height: 74px;
+    padding: 10px;
     overflow: hidden;
     border: 1px solid var(--tableBorderColor);
     border-radius: 6px;
   }
 
-  & .ui-swatch-side {
-    width: 26%;
-  }
-
-  & .ui-swatch-body {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 6px;
-    padding: 12px 10px;
-  }
-
-  & .ui-swatch-heading,
-  & .ui-swatch-line,
-  & .ui-swatch-button {
-    display: block;
-    border-radius: 3px;
-    opacity: 0.75;
-  }
-
-  & .ui-swatch-heading {
-    width: 46%;
-    height: 5px;
-  }
-
-  & .ui-swatch-line {
-    width: 72%;
-    height: 4px;
-    opacity: 0.35;
-  }
-
-  & .ui-swatch-button {
-    width: 34px;
-    height: 10px;
-    margin-top: auto;
-    border-radius: 5px;
-  }
-
-  & .md-swatch {
+  & .theme-swatch-page {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    height: 74px;
-    padding: 12px 10px;
-    overflow: hidden;
-    border: 1px solid var(--tableBorderColor);
-    border-radius: 6px;
+    height: 100%;
+    padding: 10px;
+    border-radius: 4px;
   }
 
-  & .md-swatch-heading,
-  & .md-swatch-line,
-  & .md-swatch-link,
-  & .md-swatch-code {
+  & .theme-swatch-heading,
+  & .theme-swatch-line,
+  & .theme-swatch-link,
+  & .theme-swatch-code {
     display: block;
     border-radius: 3px;
   }
 
-  & .md-swatch-heading {
+  & .theme-swatch-heading {
     width: 52%;
     height: 7px;
   }
 
-  & .md-swatch-line {
+  & .theme-swatch-line {
     width: 82%;
     height: 4px;
     opacity: 0.55;
   }
 
-  & .md-swatch-link {
+  & .theme-swatch-link {
     width: 34%;
     height: 4px;
     opacity: 0.8;
   }
 
-  & .md-swatch-code {
+  & .theme-swatch-code {
     width: 100%;
     height: 14px;
     margin-top: auto;

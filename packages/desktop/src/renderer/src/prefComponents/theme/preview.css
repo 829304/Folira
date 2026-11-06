@@ -1,13 +1,14 @@
 /* The sample document's own typography, injected inside the preview's shadow
    root. The generated theme stylesheets only declare custom properties, so the
    element rules a real document gets from Muya have to be restated here; every
-   colour still comes from a public variable so both axes keep control. */
+   colour still comes from a public variable, so the preview follows whatever
+   theme the card points at. */
 
 :host {
   display: block;
 
-  /* The frame shows the interface axis; `.editor-wrapper` inside paints the
-     Markdown one, which is the split a mixed pair is meant to show. */
+  /* The frame carries the interface half of the theme file and
+     `.editor-wrapper` inside paints the Markdown half. */
   padding: 10px;
   border: 1px solid var(--tableBorderColor, rgba(128, 128, 128, 0.25));
   border-radius: 10px;

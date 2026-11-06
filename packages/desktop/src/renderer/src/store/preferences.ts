@@ -91,18 +91,6 @@ export interface PreferencesState {
   plantumlServer: string
 
   theme: string
-  // Empty string follows `theme`, so pre-split preferences keep working.
-  uiTheme: string
-  mdTheme: string
-  followSystemTheme: boolean
-  lightModeTheme: string
-  darkModeTheme: string
-  // Following the system keeps one pair per appearance; an empty axis falls
-  // back to the matching `lightModeTheme` / `darkModeTheme`.
-  lightUiTheme: string
-  lightMdTheme: string
-  darkUiTheme: string
-  darkMdTheme: string
   customCss: string
 
   // ----- Spellchecker -----
@@ -217,18 +205,6 @@ export const usePreferencesStore = defineStore('preferences', {
     plantumlServer: 'https://www.plantuml.com/plantuml',
 
     theme: 'light',
-    // Per-axis overrides; empty falls back to the single theme setting.
-    // The interface above explains why both axes resolve through it.
-    uiTheme: '',
-    mdTheme: '',
-    followSystemTheme: true,
-    lightModeTheme: 'light',
-    darkModeTheme: 'dark',
-    // Empty: resolve to `lightModeTheme` / `darkModeTheme` on that appearance.
-    lightUiTheme: '',
-    lightMdTheme: '',
-    darkUiTheme: '',
-    darkMdTheme: '',
     customCss: '',
 
     spellcheckerEnabled: false,

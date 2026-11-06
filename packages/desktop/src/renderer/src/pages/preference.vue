@@ -16,15 +16,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, nextTick, getCurrentInstance } from 'vue'
+import { computed, onMounted, getCurrentInstance } from 'vue'
 import { usePreferencesStore } from '@/store/preferences'
 import { storeToRefs } from 'pinia'
 import TitleBar from '@/prefComponents/common/titlebar.vue'
 import SideBar from '@/prefComponents/sideBar/index.vue'
-import { applyTheme } from '@/util/theme'
-import { useResolvedThemePair } from '@/composables/useResolvedThemePair'
+import { useResolvedTheme } from '@/composables/useResolvedTheme'
 import { useAppliedTheme } from '@/composables/useAppliedTheme'
-import { firstPaintPair } from '@/util/themeSelection'
 import { isOsx } from '@/util'
 import { registerSettingsComponents } from '@/prefComponents/settingsComponents'
 import { dismissSplash } from '@/util/splash'
@@ -42,8 +40,8 @@ const { titleBarStyle } = storeToRefs(preferencesStore)
 
 // This window is chrome, but it renders the editor preview and the theme
 // picker, so it resolves through the same function the editor uses — otherwise
-// the two windows could show different pairs for the same preferences.
-const activeTheme = useResolvedThemePair()
+// the two windows could show different themes for the same preferences.
+const resolvedTheme = useResolvedTheme()
 
 const showCustomTitleBar = computed<boolean>(() => {
   // Always show the custom title bar on macOS to provide a close button
@@ -54,21 +52,13 @@ const showCustomTitleBar = computed<boolean>(() => {
 })
 
 // Watchers
-// Same shape as the editor: the URL pair paints the first frame, and the store
-// replaces it once its file has been read — including when the stored pair
-// happens to equal the cached one, which never changes the computed value.
+// Same shape as the editor: the URL cache paints the first frame, and the store
+// replaces it once its file has been read — including when the stored id happens
+// to equal the cached one, which never changes the computed value.
 const { preferencesLoaded } = storeToRefs(preferencesStore)
-useAppliedTheme(activeTheme, preferencesLoaded)
+useAppliedTheme(resolvedTheme, preferencesLoaded)
 // Lifecycle
 onMounted(() => {
-  nextTick(() => {
-    const cached = window.marktext?.initialThemePair
-    // The URL pair is what the last frame showed; the resolved pair is what the
-    // preferences file asks for. Prefer the stored one when it has already been
-    // read, and keep the URL pair only for the first paint.
-    applyTheme(firstPaintPair(activeTheme.value, preferencesLoaded.value, cached))
-  })
-
   preferencesStore.ASK_FOR_USER_PREFERENCE()
   // This window shares `index.html`, and therefore its loading screen, with
   // the editor. Its own first content is the settings tree, which is here.

@@ -59,12 +59,12 @@ const bootstrapRenderer = (): void => {
   window.addEventListener('error', handleRendererError)
   window.addEventListener('unhandledrejection', handleRendererError)
 
-  const { debug, initialThemePair, initialState, userDataPath, windowId, type } = parseUrlArgs()
+  const { debug, initialTheme, initialState, userDataPath, windowId, type } = parseUrlArgs()
   // RendererPaths throws when userDataPath is missing; preserve that runtime check.
   const paths = new RendererPaths(userDataPath as string)
   const marktext = {
     initialState,
-    initialThemePair,
+    initialTheme,
     env: {
       debug,
       paths,

@@ -236,21 +236,6 @@ describe('applying one complete theme', () => {
     expect(appliedTheme.value).toBe('nord')
   })
 
-  it('forgets the committed theme once the pair path writes the slots', async() => {
-    const { applyTheme, applyThemeSet } = await import('@/util/theme')
-    await applyThemeSet('light')
-
-    loader.ui.mockImplementation(async(id: string) => `:root { --ui: ${id}; }`)
-    loader.md.mockImplementation(async(id: string) => `.editor-wrapper { --md: ${id}; }`)
-    applyTheme({ ui: 'dark', md: 'dark' })
-    await vi.waitFor(() => expect(sheet(ids.ui)).toContain('dark'))
-
-    await expect(applyThemeSet('light')).resolves.toBe('applied')
-    // One fetch for the kernel, one for the pair path, one for the re-apply.
-    expect(loader.ui).toHaveBeenCalledTimes(3)
-    expect(sheet(ids.ui)).toContain('light')
-  })
-
   it('creates the theme slots before the custom stylesheet', async() => {
     const custom = document.createElement('style')
     custom.id = 'custom-styles'
@@ -263,7 +248,7 @@ describe('applying one complete theme', () => {
     expect(order).toEqual([ids.ui, ids.md, ids.prism, 'custom-styles'])
   })
 
-  it('moves a slot left behind by the pair path back before the custom stylesheet', async() => {
+  it('moves a slot appended elsewhere back before the custom stylesheet', async() => {
     const custom = document.createElement('style')
     custom.id = 'custom-styles'
     document.head.appendChild(custom)

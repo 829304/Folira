@@ -3,87 +3,31 @@ import { readFileSync } from 'fs'
 import { describe, expect, it } from 'vitest'
 
 import {
-  fallbackTheme,
-  firstPaintPair,
-  markdownAppearance,
-  resolveThemePair,
-  type ThemePreferences
+  DEFAULT_THEME_ID,
+  firstPaintTheme,
+  resolveThemeId
 } from '@/util/themeSelection'
 import { THEMES, getTheme } from '@/util/themeColor'
 
-const prefs = (overrides: Partial<ThemePreferences> = {}): ThemePreferences => ({
-  theme: 'light',
-  uiTheme: '',
-  mdTheme: '',
-  followSystemTheme: false,
-  lightModeTheme: 'light',
-  darkModeTheme: 'dark',
-  lightUiTheme: '',
-  lightMdTheme: '',
-  darkUiTheme: '',
-  darkMdTheme: '',
-  ...overrides
-})
-
 describe('theme selection', () => {
-  it('keeps the pre-split single theme on both axes', () => {
-    expect(resolveThemePair(prefs({ theme: 'graphite' }), 'light')).toEqual({
-      ui: 'graphite',
-      md: 'graphite'
-    })
-  })
-
-  it('lets each axis override the single theme', () => {
-    expect(resolveThemePair(prefs({ theme: 'light', uiTheme: 'dark', mdTheme: 'ulysses' }), 'dark')).toEqual({
-      ui: 'dark',
-      md: 'ulysses'
-    })
-  })
-
-  it('resolves one pair per appearance while following the system', () => {
-    const following = prefs({
-      followSystemTheme: true,
-      lightModeTheme: 'light',
-      darkModeTheme: 'one-dark',
-      lightUiTheme: 'ayu-light',
-      lightMdTheme: 'ulysses',
-      darkUiTheme: 'graphite',
-      darkMdTheme: 'dracula'
-    })
-
-    expect(resolveThemePair(following, 'light')).toEqual({ ui: 'ayu-light', md: 'ulysses' })
-    expect(resolveThemePair(following, 'dark')).toEqual({ ui: 'graphite', md: 'dracula' })
-  })
-
-  it('falls back to the mode theme for an axis left empty', () => {
-    const following = prefs({
-      followSystemTheme: true,
-      lightModeTheme: 'light',
-      darkModeTheme: 'one-dark',
-      lightUiTheme: 'ayu-light'
-    })
-
-    expect(resolveThemePair(following, 'light')).toEqual({ ui: 'ayu-light', md: 'light' })
-    expect(resolveThemePair(following, 'dark')).toEqual({ ui: 'one-dark', md: 'one-dark' })
+  it('keeps an id the manifest ships', () => {
+    expect(resolveThemeId('graphite')).toBe('graphite')
   })
 
   it('replaces an id that no longer exists', () => {
-    expect(resolveThemePair(prefs({ theme: 'gone' }), 'light')).toEqual({
-      ui: 'light',
-      md: 'light'
-    })
+    expect(resolveThemeId('gone')).toBe(DEFAULT_THEME_ID)
   })
 
-  it('falls back to a theme of the requested appearance', () => {
-    for (const appearance of ['light', 'dark'] as const) {
-      expect(getTheme(fallbackTheme(appearance))?.appearance).toBe(appearance)
+  it('falls back for an absent or empty id', () => {
+    expect(resolveThemeId(null)).toBe(DEFAULT_THEME_ID)
+    expect(resolveThemeId(undefined)).toBe(DEFAULT_THEME_ID)
+    expect(resolveThemeId('')).toBe(DEFAULT_THEME_ID)
+  })
+
+  it('never resolves to an id outside the manifest', () => {
+    for (const id of ['graphite', 'gone', '', null, undefined]) {
+      expect(getTheme(resolveThemeId(id)), `${String(id)} resolved off-manifest`).toBeDefined()
     }
-  })
-
-  it('reports the appearance Muya should be told about', () => {
-    expect(markdownAppearance('light')).toBe('light')
-    expect(markdownAppearance('one-dark')).toBe('dark')
-    expect(markdownAppearance('gone')).toBeUndefined()
   })
 
   it('generates a swatch for every theme and axis', () => {
@@ -137,37 +81,29 @@ describe('theme assets on disk', () => {
 describe('first frame', () => {
   const renderer = resolve(__dirname, '../../../src/renderer/src')
 
-  it('keeps the cached pair out of the state the store receives', async() => {
-    // The URL pair is the last painted frame, not a choice. `main.ts` hands
-    // `initialState` to the preferences store before mount, so a pair folded in
-    // there would read as "the user picked these" and pin a following system
-    // to one appearance.
-    window.history.replaceState({}, '', '/index.html?wid=2&uith=dracula&mdth=solarized-light&theme=graphite')
+  it('keeps the cached theme out of the state the store receives', async() => {
+    // The URL theme is the last painted frame, not a choice. `main.ts` hands
+    // `initialState` to the preferences store before mount, so a theme folded in
+    // there would read as "the user picked this" and pin the first frame.
+    window.history.replaceState({}, '', '/index.html?wid=2&th=dracula&theme=graphite')
 
     const { parseUrlArgs } = await import('@/util/urlArgs')
     const args = parseUrlArgs()
 
-    expect(args.initialThemePair).toEqual({ ui: 'dracula', md: 'solarized-light' })
-    expect(Object.keys(args.initialState)).not.toContain('uiTheme')
-    expect(Object.keys(args.initialState)).not.toContain('mdTheme')
+    expect(args.initialTheme).toBe('dracula')
+    expect(Object.keys(args.initialState)).not.toContain('theme')
   })
 
-  it('paints the resolved pair once the preferences have loaded', () => {
-    // Same ids, different answer: the stored file decides even when it resolves
-    // to the defaults, so the cached pair cannot outlive the first frame.
-    const resolved = { ui: 'light', md: 'light' }
-    const cached = { ui: 'dark', md: 'dracula' }
-
-    expect(firstPaintPair(resolved, false, cached)).toEqual(cached)
-    expect(firstPaintPair(resolved, true, cached)).toEqual(resolved)
-    expect(firstPaintPair(resolved, false, undefined)).toEqual(resolved)
+  it('paints the resolved theme once the preferences have loaded', () => {
+    // Same answer on both sides: the stored file decides even when it resolves
+    // to the default, so the cached id cannot outlive the first frame.
+    expect(firstPaintTheme('light', false, 'dark')).toBe('dark')
+    expect(firstPaintTheme('light', true, 'dark')).toBe('light')
+    expect(firstPaintTheme('light', false, undefined)).toBe('light')
   })
 
-  it('falls back one axis at a time when the cache is partial', () => {
-    const resolved = { ui: 'light', md: 'light' }
-
-    expect(firstPaintPair(resolved, false, { ui: 'dark' })).toEqual({ ui: 'dark', md: 'light' })
-    expect(firstPaintPair(resolved, false, { md: 'dracula' })).toEqual({ ui: 'light', md: 'dracula' })
+  it('ignores a cached id the manifest no longer ships', () => {
+    expect(firstPaintTheme('light', false, 'gone')).toBe('light')
   })
 
   it('feeds the store only the initial state', () => {
@@ -186,15 +122,13 @@ describe('first frame', () => {
 
   // Preference-arrival behavior is exercised by theme-loading.spec.ts.
 
-  it('keeps both theme settings reachable from the settings search', () => {
+  it('keeps the theme setting reachable from the settings search', () => {
     const schema = JSON.parse(
       readFileSync(resolve(__dirname, '../../../src/shared/preferences-schema.json'), 'utf8')
     ) as Record<string, { description: string }>
 
-    for (const key of ['uiTheme', 'mdTheme']) {
-      expect(schema[key]?.description, `${key} is hidden from the search index`).not.toMatch(
-        /--internal$/
-      )
-    }
+    expect(schema.theme?.description, 'theme is hidden from the search index').not.toMatch(
+      /--internal$/
+    )
   })
 })

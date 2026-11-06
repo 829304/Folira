@@ -61,9 +61,6 @@ export interface IUserPreferences {
   searchIncludeHidden?: boolean
   searchNoIgnore?: boolean
   searchFollowSymlinks?: boolean
-  followSystemTheme?: boolean
-  lightModeTheme?: string
-  darkModeTheme?: string
   lastOpenedFolder?: string
   autoNormalizeLineEndings?: boolean
   watcherUsePolling?: boolean

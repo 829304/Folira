@@ -16,61 +16,61 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('the splash theme gate', () => {
-  it('opens as soon as the first theme settles', async() => {
-    const { settleSplashTheme, whenSplashThemeReady } = await import('@/util/splash')
+const gone = async(): Promise<boolean> => {
+  await vi.advanceTimersByTimeAsync(FADE_MS + 50)
+  return document.getElementById('splash') === null
+}
 
-    const ready = whenSplashThemeReady()
+describe('the splash gate', () => {
+  it('reveals when both the content and the first theme are in', async() => {
+    const { dismissSplash, settleSplashTheme } = await import('@/util/splash')
+
+    dismissSplash()
+    expect(splash.classList.contains('is-done')).toBe(false)
+
     settleSplashTheme()
-
-    await expect(ready).resolves.toBeUndefined()
+    expect(splash.classList.contains('is-done')).toBe(true)
+    await expect(gone()).resolves.toBe(true)
   })
 
-  it('opens at the deadline when no theme ever arrives', async() => {
-    const { whenSplashThemeReady } = await import('@/util/splash')
+  it('stays up while only content is ready', async() => {
+    const { dismissSplash } = await import('@/util/splash')
 
-    let opened = false
-    const ready = whenSplashThemeReady().then(() => {
-      opened = true
-    })
-
+    dismissSplash()
     await vi.advanceTimersByTimeAsync(SAFETY_MS - 1)
-    expect(opened).toBe(false)
+
+    expect(splash.classList.contains('is-done')).toBe(false)
+  })
+
+  it('stays up while only the theme is ready', async() => {
+    const { settleSplashTheme } = await import('@/util/splash')
+
+    settleSplashTheme()
+    await vi.advanceTimersByTimeAsync(SAFETY_MS - 1)
+
+    expect(splash.classList.contains('is-done')).toBe(false)
+  })
+
+  it('opens at the deadline when the theme never settles', async() => {
+    const { dismissSplash } = await import('@/util/splash')
+
+    dismissSplash()
+    await vi.advanceTimersByTimeAsync(SAFETY_MS - 1)
+    expect(splash.classList.contains('is-done')).toBe(false)
 
     await vi.advanceTimersByTimeAsync(1)
-    await ready
-    expect(opened).toBe(true)
+    expect(splash.classList.contains('is-done')).toBe(true)
   })
 
-  it('counts the deadline from load, not from the first wait', async() => {
-    const { whenSplashThemeReady } = await import('@/util/splash')
+  it('counts the deadline from load, not from the first dismiss', async() => {
+    const { dismissSplash } = await import('@/util/splash')
 
-    // Spend most of the budget before anyone asks for the gate.
+    // Spend most of the budget before any content is ready.
     await vi.advanceTimersByTimeAsync(SAFETY_MS - 500)
-
-    let opened = false
-    const ready = whenSplashThemeReady().then(() => {
-      opened = true
-    })
+    dismissSplash()
 
     await vi.advanceTimersByTimeAsync(500)
-    await ready
-    expect(opened).toBe(true)
-  })
-
-  it('lets everyone through when the theme settled before any wait', async() => {
-    const { settleSplashTheme, whenSplashThemeReady } = await import('@/util/splash')
-
-    settleSplashTheme()
-
-    await expect(whenSplashThemeReady()).resolves.toBeUndefined()
-    expect(vi.getTimerCount()).toBe(0)
-  })
-
-  it('serves every waiter from one promise', async() => {
-    const { whenSplashThemeReady } = await import('@/util/splash')
-
-    expect(whenSplashThemeReady()).toBe(whenSplashThemeReady())
+    expect(splash.classList.contains('is-done')).toBe(true)
   })
 
   it('hides the splash when the safety net fires', async() => {
@@ -80,8 +80,7 @@ describe('the splash theme gate', () => {
     await vi.advanceTimersByTimeAsync(SAFETY_MS)
 
     expect(splash.classList.contains('is-done')).toBe(true)
-    await vi.advanceTimersByTimeAsync(FADE_MS + 50)
-    expect(document.getElementById('splash')).toBeNull()
+    await expect(gone()).resolves.toBe(true)
   })
 
   it('hides the splash at once when forced', async() => {
@@ -90,8 +89,7 @@ describe('the splash theme gate', () => {
     forceDismissSplash()
 
     expect(splash.classList.contains('is-done')).toBe(true)
-    await vi.advanceTimersByTimeAsync(FADE_MS + 50)
-    expect(document.getElementById('splash')).toBeNull()
+    await expect(gone()).resolves.toBe(true)
   })
 
   it('survives a second settle and a second dismiss', async() => {
@@ -104,17 +102,6 @@ describe('the splash theme gate', () => {
       dismissSplash()
     }).not.toThrow()
 
-    await vi.advanceTimersByTimeAsync(FADE_MS + 50)
-    expect(document.getElementById('splash')).toBeNull()
-  })
-
-  it('still hides the splash through the legacy entry point', async() => {
-    const { dismissSplash } = await import('@/util/splash')
-
-    dismissSplash()
-
-    expect(splash.classList.contains('is-done')).toBe(true)
-    await vi.advanceTimersByTimeAsync(FADE_MS + 50)
-    expect(document.getElementById('splash')).toBeNull()
+    await expect(gone()).resolves.toBe(true)
   })
 })

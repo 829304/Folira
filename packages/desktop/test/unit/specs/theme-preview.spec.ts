@@ -1,13 +1,13 @@
-// The settings preview must show a theme pair without becoming part of it.
+// The settings preview must show one theme without becoming part of it.
 //
 // Two failure modes matter here and both are invisible in a screenshot: a
 // stylesheet that escapes the preview and repaints the settings page, and a
-// preview that resolves the body palette from the interface axis, so a light
-// chrome with a dark body renders light-on-light.
+// preview that commits a theme whose stylesheets did not all arrive, so the
+// sample keeps the old palette under the new name.
 
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   composePreviewCss,
@@ -15,6 +15,11 @@ import {
   PREVIEW_SAMPLE,
   scopeThemeCss
 } from '@/util/themePreview'
+
+const getTheme = vi.hoisted(() => vi.fn())
+vi.mock('@/util/themeColor', async(importOriginal) => ({
+  ...await importOriginal<object>(), getTheme
+}))
 
 const themesDir = resolve(__dirname, '../../../src/renderer/src/assets/themes')
 const readTheme = (axis: 'ui' | 'md', id: string): string =>
@@ -54,7 +59,7 @@ describe('preview stylesheet', () => {
     expect(css).toContain(':host { --a: 1; }')
   })
 
-  it('applies base, then the interface theme, then the body theme, then Prism', () => {
+  it('applies base, then the interface file, then the body file, then Prism', () => {
     const css = composePreviewCss({ base: BASE, ui: UI, md: MD, prism: PRISM, chrome: CHROME })
 
     expect(css.indexOf('--fui-editorBgColor: #ffffff')).toBeLessThan(
@@ -71,6 +76,30 @@ describe('preview stylesheet', () => {
   })
 })
 
+describe('preview loadability', () => {
+  beforeEach(() => {
+    getTheme.mockReturnValue({ prism: 'default' })
+  })
+
+  it('needs both axis stylesheets from the same theme', () => {
+    expect(isPreviewLoadable('light', '', MD, PRISM)).toBe(false)
+    expect(isPreviewLoadable('light', UI, '  ', PRISM)).toBe(false)
+    expect(isPreviewLoadable('light', UI, MD, PRISM)).toBe(true)
+  })
+
+  it('requires syntax colours only when the manifest promises them', () => {
+    expect(isPreviewLoadable('light', UI, MD, '')).toBe(false)
+
+    getTheme.mockReturnValue({ prism: null })
+    expect(isPreviewLoadable('light', UI, MD, '')).toBe(true)
+  })
+
+  it('treats a theme missing from the manifest as having no syntax palette', () => {
+    getTheme.mockReturnValue(undefined)
+    expect(isPreviewLoadable('gone', UI, MD, '')).toBe(true)
+  })
+})
+
 describe('preview isolation', () => {
   const source = readFileSync(
     resolve(__dirname, '../../../src/renderer/src/prefComponents/theme/preview.vue'),
@@ -83,26 +112,30 @@ describe('preview isolation', () => {
     expect(source).not.toContain('document.body')
   })
 
-  it('keeps the pair on screen when a stylesheet cannot be loaded', () => {
-    expect(source).toContain('isPreviewLoadable')
-    expect(isPreviewLoadable('', MD)).toBe(false)
-    expect(isPreviewLoadable(UI, '  ')).toBe(false)
-    expect(isPreviewLoadable(UI, MD)).toBe(true)
-  })
-
-  it('keeps the pair on screen when a stylesheet load rejects', () => {
+  it('keeps the rendered theme on screen when a stylesheet load rejects', () => {
     // A missing file resolves to an empty string, but a failed fetch rejects.
     // Left uncaught, that becomes an unhandled rejection every time a hover
     // lands on a theme that cannot be read.
     expect(source).toContain('try {')
     expect(source).toContain('catch (error)')
     expect(source).toContain('warned')
+    expect(source).toContain('isPreviewLoadable')
+  })
+
+  it('ignores stylesheets from a theme that has been superseded', () => {
+    expect(source).toContain('const token = ++request')
+    expect(source).toContain('token !== request')
+  })
+
+  it('watches the single theme prop', () => {
+    expect(source).toContain('theme: string')
+    expect(source).toContain('watch(() => props.theme, render)')
   })
 })
 
-describe('preview of a mixed pair', () => {
-  it('paints the body from the Markdown axis, not the interface one', () => {
-    const ui = readTheme('ui', 'light')
+describe('preview of one theme', () => {
+  it('paints the frame and the body from the same id', () => {
+    const ui = readTheme('ui', 'dracula')
     const md = readTheme('md', 'dracula')
     const css = composePreviewCss({
       base: readFileSync(resolve(themesDir, 'base.css'), 'utf8'),
@@ -115,10 +148,9 @@ describe('preview of a mixed pair', () => {
     const hostBg = declaredValue(css, ':host', '--editorBgColor')
     const bodyBg = declaredValue(css, '.editor-wrapper', '--editorBgColor')
 
-    // The frame follows the interface theme…
+    // The frame follows the interface file…
     expect(hostBg).toContain('var(--fui-editorBgColor')
-    // …and the page follows the body theme, so a light chrome still renders
-    // dark text on a dark page.
+    // …and the page follows the Markdown file of the same theme.
     expect(bodyBg).toContain('var(--fmd-editorBgColor')
     expect(md).toContain('--fmd-editorBgColor: #282a36')
     expect(ui).not.toContain('--fmd-editorBgColor')
