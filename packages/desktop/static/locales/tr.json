@@ -893,6 +893,8 @@
     "moveFailedTitle": "Dosya taşınamıyor",
     "importFailedTitle": "Dosya içe aktarılamıyor",
     "openFolderFailedTitle": "Klasör açılamıyor",
+    "themeLoadFailedTitle": "Tema uygulanamadı",
+    "themeLoadFailedMessage": "Folira önceki temayı korudu: {theme} yüklenemedi.",
     "pathFailedMessage": "{path}: {msg}",
     "deleteFailedTitle": "Silme hatası",
     "pasteForbiddenTitle": "Yapıştırma engellendi",

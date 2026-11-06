@@ -893,6 +893,8 @@
     "moveFailedTitle": "Não é possível mover o ficheiro",
     "importFailedTitle": "Não é possível importar o ficheiro",
     "openFolderFailedTitle": "Não é possível abrir a pasta",
+    "themeLoadFailedTitle": "Não foi possível aplicar o tema",
+    "themeLoadFailedMessage": "O Folira manteve o tema anterior: não foi possível carregar {theme}.",
     "pathFailedMessage": "{path}: {msg}",
     "deleteFailedTitle": "Erro ao excluir",
     "pasteForbiddenTitle": "Colagem não permitida",

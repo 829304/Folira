@@ -893,6 +893,8 @@
     "moveFailedTitle": "파일을 옮길 수 없습니다",
     "importFailedTitle": "파일을 가져올 수 없습니다",
     "openFolderFailedTitle": "폴더를 열 수 없습니다",
+    "themeLoadFailedTitle": "테마를 적용할 수 없습니다",
+    "themeLoadFailedMessage": "Folira가 이전 테마를 유지했습니다: {theme}을(를) 불러오지 못했습니다.",
     "pathFailedMessage": "{path}: {msg}",
     "deleteFailedTitle": "삭제 오류",
     "pasteForbiddenTitle": "붙여넣기 불가",

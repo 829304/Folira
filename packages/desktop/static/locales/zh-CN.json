@@ -893,6 +893,8 @@
     "moveFailedTitle": "无法移动文件",
     "importFailedTitle": "无法导入文件",
     "openFolderFailedTitle": "无法打开文件夹",
+    "themeLoadFailedTitle": "无法应用主题",
+    "themeLoadFailedMessage": "Folira 保留了上一个主题：{theme} 加载失败。",
     "pathFailedMessage": "{path}：{msg}",
     "deleteFailedTitle": "删除失败",
     "pasteForbiddenTitle": "无法粘贴",

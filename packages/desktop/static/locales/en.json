@@ -893,6 +893,8 @@
     "moveFailedTitle": "Cannot move file",
     "importFailedTitle": "Cannot import file",
     "openFolderFailedTitle": "Cannot open folder",
+    "themeLoadFailedTitle": "Cannot apply theme",
+    "themeLoadFailedMessage": "Folira kept the previous theme: {theme} could not be loaded.",
     "pathFailedMessage": "{path}: {msg}",
     "deleteFailedTitle": "Error while deleting",
     "pasteForbiddenTitle": "Paste Forbidden",

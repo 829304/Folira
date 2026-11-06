@@ -893,6 +893,8 @@
     "moveFailedTitle": "No se puede mover el archivo",
     "importFailedTitle": "No se puede importar el archivo",
     "openFolderFailedTitle": "No se puede abrir la carpeta",
+    "themeLoadFailedTitle": "No se puede aplicar el tema",
+    "themeLoadFailedMessage": "Folira mantuvo el tema anterior: no se pudo cargar {theme}.",
     "pathFailedMessage": "{path}: {msg}",
     "deleteFailedTitle": "Error al eliminar",
     "pasteForbiddenTitle": "Pegado no permitido",

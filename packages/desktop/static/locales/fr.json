@@ -893,6 +893,8 @@
     "moveFailedTitle": "Impossible de déplacer le fichier",
     "importFailedTitle": "Impossible d'importer le fichier",
     "openFolderFailedTitle": "Impossible d'ouvrir le dossier",
+    "themeLoadFailedTitle": "Impossible d'appliquer le thème",
+    "themeLoadFailedMessage": "Folira a conservé le thème précédent : {theme} n'a pas pu être chargé.",
     "pathFailedMessage": "{path} : {msg}",
     "deleteFailedTitle": "Erreur lors de la suppression",
     "pasteForbiddenTitle": "Collage impossible",

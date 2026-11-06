@@ -893,6 +893,8 @@
     "moveFailedTitle": "Datei kann nicht verschoben werden",
     "importFailedTitle": "Datei kann nicht importiert werden",
     "openFolderFailedTitle": "Ordner kann nicht geöffnet werden",
+    "themeLoadFailedTitle": "Design kann nicht angewendet werden",
+    "themeLoadFailedMessage": "Folira behält das vorherige Design: {theme} konnte nicht geladen werden.",
     "pathFailedMessage": "{path}: {msg}",
     "deleteFailedTitle": "Fehler beim Löschen",
     "pasteForbiddenTitle": "Einfügen nicht möglich",
