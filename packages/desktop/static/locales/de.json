@@ -375,9 +375,6 @@
         "sequenceTheme": "Sequenzdiagramm-Theme",
         "plantumlServer": "PlantUML-Server-URL",
         "theme": "Das in Folira verwendete Theme auswählen",
-        "followSystemTheme": "Systemdesign folgen",
-        "lightModeTheme": "Design, das verwendet werden soll, wenn sich das System im hellen Modus befindet",
-        "darkModeTheme": "Design, das verwendet werden soll, wenn sich das System im dunklen Modus befindet",
         "spellcheckerEnabled": "Ob Rechtschreibprüfung aktiviert ist",
         "spellcheckerNoUnderline": "Rechtschreibfehler nicht unterstreichen",
         "spellcheckerLanguage": "Die Rechtschreibprüfungs-Sprache",
@@ -386,9 +383,7 @@
         "imageRelativeDirectoryBase": "Wohin relative Bilder kopiert werden",
         "imageRelativeDirectoryName": "Der relative Bildordner-Name",
         "fileSortOrder": "Sortierreihenfolge für Dateien in geöffneten Ordnern: aufsteigend oder absteigend.",
-        "openedFilesInSidebar": "Ob geöffnete Dateien in der Seitenleiste angezeigt werden sollen.",
-        "uiTheme": "Oberflächen-Theme",
-        "mdTheme": "Markdown-Theme"
+        "openedFilesInSidebar": "Ob geöffnete Dateien in der Seitenleiste angezeigt werden sollen."
       }
     },
     "categories": {
@@ -640,22 +635,13 @@
     },
     "theme": {
       "title": "Design",
-      "followSystemTheme": "Systemdesign folgen",
-      "modeThemes": "Design-Auswahl",
-      "lightModeTheme": "Helles Modus-Design",
-      "darkModeTheme": "Dunkles Modus-Design",
       "customCss": "Benutzerdefiniertes CSS",
       "importCustomThemes": "Benutzerdefinierte Designs importieren",
       "importTheme": "Design importieren",
       "openFolder": "Ordner öffnen",
       "openThemesFolder": "Design-Ordner öffnen",
-      "interfaceTheme": "Oberflächen-Theme",
-      "markdownTheme": "Markdown-Theme",
       "preview": "Vorschau",
       "searchThemes": "Themes durchsuchen",
-      "allThemes": "Alle",
-      "lightThemes": "Hell",
-      "darkThemes": "Dunkel",
       "noThemes": "Kein Theme gefunden"
     },
     "keybindings": {

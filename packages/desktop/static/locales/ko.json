@@ -375,9 +375,6 @@
         "sequenceTheme": "시퀀스 다이어그램 테마",
         "plantumlServer": "PlantUML 서버 URL",
         "theme": "Folira에서 사용할 테마 선택",
-        "followSystemTheme": "시스템 테마 따르기",
-        "lightModeTheme": "시스템이 라이트 모드일 때 사용할 테마",
-        "darkModeTheme": "시스템이 다크 모드일 때 사용할 테마",
         "spellcheckerEnabled": "맞춤법 검사가 활성화되어 있는지 여부",
         "spellcheckerNoUnderline": "맞춤법 오류에 밑줄을 그지 않음",
         "spellcheckerLanguage": "맞춤법 검사기 언어",
@@ -386,9 +383,7 @@
         "imageRelativeDirectoryBase": "상대 이미지가 복사되는 위치",
         "imageRelativeDirectoryName": "상대 이미지 폴더 이름",
         "fileSortOrder": "열린 폴더의 파일 정렬 순서: 오름차순 또는 내림차순",
-        "openedFilesInSidebar": "사이드바에 열린 파일을 표시할지 여부",
-        "uiTheme": "인터페이스 테마",
-        "mdTheme": "본문 테마"
+        "openedFilesInSidebar": "사이드바에 열린 파일을 표시할지 여부"
       }
     },
     "categories": {
@@ -640,22 +635,13 @@
     },
     "theme": {
       "title": "테마",
-      "followSystemTheme": "시스템 테마 따르기",
-      "modeThemes": "테마 선택",
-      "lightModeTheme": "라이트 모드 테마",
-      "darkModeTheme": "다크 모드 테마",
       "customCss": "사용자 정의 CSS",
       "importCustomThemes": "사용자 정의 테마 가져오기",
       "importTheme": "테마 가져오기",
       "openFolder": "폴더 열기",
       "openThemesFolder": "테마 폴더 열기",
-      "interfaceTheme": "인터페이스 테마",
-      "markdownTheme": "본문 테마",
       "preview": "미리보기",
       "searchThemes": "테마 검색",
-      "allThemes": "전체",
-      "lightThemes": "라이트",
-      "darkThemes": "다크",
       "noThemes": "일치하는 테마가 없습니다"
     },
     "keybindings": {

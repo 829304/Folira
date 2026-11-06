@@ -375,9 +375,6 @@
         "sequenceTheme": "Tema do diagrama de sequência",
         "plantumlServer": "URL do servidor PlantUML",
         "theme": "Selecionar o tema usado no Folira",
-        "followSystemTheme": "Seguir tema do sistema",
-        "lightModeTheme": "Tema a ser usado quando o sistema está no modo claro",
-        "darkModeTheme": "Tema a ser usado quando o sistema está no modo escuro",
         "spellcheckerEnabled": "Se a verificação ortográfica está habilitada",
         "spellcheckerNoUnderline": "Não sublinhar erros ortográficos",
         "spellcheckerLanguage": "O idioma do verificador ortográfico",
@@ -386,9 +383,7 @@
         "imageRelativeDirectoryBase": "Onde as imagens relativas são copiadas",
         "imageRelativeDirectoryName": "O nome da pasta de imagem relativa",
         "fileSortOrder": "Ordem de classificação dos arquivos nas pastas abertas: ascendente ou descendente.",
-        "openedFilesInSidebar": "Se os arquivos abertos são mostrados na barra lateral.",
-        "uiTheme": "Tema da interface",
-        "mdTheme": "Tema Markdown"
+        "openedFilesInSidebar": "Se os arquivos abertos são mostrados na barra lateral."
       }
     },
     "categories": {
@@ -640,22 +635,13 @@
     },
     "theme": {
       "title": "Tema",
-      "followSystemTheme": "Seguir tema do sistema",
-      "modeThemes": "Seleção de Tema",
-      "lightModeTheme": "Tema do modo claro",
-      "darkModeTheme": "Tema do modo escuro",
       "customCss": "CSS Personalizado",
       "importCustomThemes": "Importar temas personalizados",
       "importTheme": "Importar Tema",
       "openFolder": "Abrir Pasta",
       "openThemesFolder": "Abrir pasta de temas",
-      "interfaceTheme": "Tema da interface",
-      "markdownTheme": "Tema Markdown",
       "preview": "Pré-visualização",
       "searchThemes": "Pesquisar temas",
-      "allThemes": "Todos",
-      "lightThemes": "Claro",
-      "darkThemes": "Escuro",
       "noThemes": "Nenhum tema corresponde"
     },
     "keybindings": {

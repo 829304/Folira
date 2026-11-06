@@ -374,9 +374,6 @@
         "sequenceTheme": "Sequence diagram theme",
         "plantumlServer": "PlantUML server URL",
         "theme": "Select the theme used in Folira",
-        "followSystemTheme": "Follow System Theme",
-        "lightModeTheme": "Theme to use when system is in light mode",
-        "darkModeTheme": "Theme to use when system is in dark mode",
         "spellcheckerEnabled": "Whether spell checking is enabled",
         "spellcheckerNoUnderline": "Don't underline spelling mistakes",
         "spellcheckerLanguage": "The spell checker language",
@@ -386,9 +383,7 @@
         "imageRelativeDirectoryName": "The relative image folder name",
         "autoNormalizeLineEndings": "Automatically normalize line endings when opening files. When disabled, files are opened as-is.",
         "fileSortOrder": "Sort order for files in opened folders: ascending or descending.",
-        "openedFilesInSidebar": "Whether to show opened files in the sidebar.",
-        "uiTheme": "Interface theme",
-        "mdTheme": "Markdown theme"
+        "openedFilesInSidebar": "Whether to show opened files in the sidebar."
       }
     },
     "categories": {
@@ -640,22 +635,13 @@
     },
     "theme": {
       "title": "Theme",
-      "followSystemTheme": "Follow System Theme",
-      "modeThemes": "Theme Selection",
-      "lightModeTheme": "Light mode theme",
-      "darkModeTheme": "Dark mode theme",
       "customCss": "Custom CSS",
       "importCustomThemes": "Import custom themes",
       "importTheme": "Import Theme",
       "openFolder": "Open Folder",
       "openThemesFolder": "Open themes folder",
-      "interfaceTheme": "Interface theme",
-      "markdownTheme": "Markdown theme",
       "preview": "Preview",
       "searchThemes": "Search themes",
-      "allThemes": "All",
-      "lightThemes": "Light",
-      "darkThemes": "Dark",
       "noThemes": "No theme matches"
     },
     "keybindings": {

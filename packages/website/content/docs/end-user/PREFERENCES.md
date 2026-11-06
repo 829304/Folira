@@ -67,12 +67,9 @@ Preferences can be controlled and modified in the settings window or via the `pr
 
 #### Theme
 
-| Key               | Type    | Default | Description                                                                                                                  |
-| ----------------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| theme             | String  | `light` | The current theme id. See [Themes](THEMES.md) for the full list.                                                             |
-| followSystemTheme | Boolean | `false` | Follow the system light/dark mode and switch automatically.                                                                  |
-| lightModeTheme    | String  | `light` | Theme id used when the system is in light mode (only when `followSystemTheme` is `true`).                                    |
-| darkModeTheme     | String  | `dark`  | Theme id used when the system is in dark mode (only when `followSystemTheme` is `true`).                                     |
+| Key   | Type   | Default   | Description                                                                                            |
+| ----- | ------ | --------- | ------------------------------------------------------------------------------------------------------ |
+| theme | String | `light`   | The theme id. It selects the chrome, the page and the syntax palette together. See [Themes](THEMES.md). |
 
 #### Spelling
 

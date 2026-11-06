@@ -375,9 +375,6 @@
         "sequenceTheme": "Tema del diagrama de secuencia",
         "plantumlServer": "URL del servidor PlantUML",
         "theme": "Seleccionar el tema usado en Folira",
-        "followSystemTheme": "Seguir tema del sistema",
-        "lightModeTheme": "Tema a usar cuando el sistema está en modo claro",
-        "darkModeTheme": "Tema a usar cuando el sistema está en modo oscuro",
         "spellcheckerEnabled": "Si la verificación ortográfica está habilitada",
         "spellcheckerNoUnderline": "No subrayar errores ortográficos",
         "spellcheckerLanguage": "El idioma del verificador ortográfico",
@@ -386,9 +383,7 @@
         "imageRelativeDirectoryBase": "Dónde se copian las imágenes relativas",
         "imageRelativeDirectoryName": "El nombre de la carpeta de imagen relativa",
         "fileSortOrder": "El orden de clasificación de los archivos en las carpetas abiertas: ascendente o descendente",
-        "openedFilesInSidebar": "Si mostrar los archivos abiertos en la barra lateral",
-        "uiTheme": "Tema de la interfaz",
-        "mdTheme": "Tema de Markdown"
+        "openedFilesInSidebar": "Si mostrar los archivos abiertos en la barra lateral"
       }
     },
     "categories": {
@@ -640,22 +635,13 @@
     },
     "theme": {
       "title": "Tema",
-      "followSystemTheme": "Seguir tema del sistema",
-      "modeThemes": "Selección de Tema",
-      "lightModeTheme": "Tema de modo claro",
-      "darkModeTheme": "Tema de modo oscuro",
       "customCss": "CSS Personalizado",
       "importCustomThemes": "Importar temas personalizados",
       "importTheme": "Importar Tema",
       "openFolder": "Abrir Carpeta",
       "openThemesFolder": "Abrir carpeta de temas",
-      "interfaceTheme": "Tema de la interfaz",
-      "markdownTheme": "Tema de Markdown",
       "preview": "Vista previa",
       "searchThemes": "Buscar temas",
-      "allThemes": "Todos",
-      "lightThemes": "Claro",
-      "darkThemes": "Oscuro",
       "noThemes": "Ningún tema coincide"
     },
     "keybindings": {

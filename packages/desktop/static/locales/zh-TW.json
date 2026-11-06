@@ -375,9 +375,6 @@
         "sequenceTheme": "序列圖主題",
         "plantumlServer": "PlantUML 伺服器 URL",
         "theme": "選擇 Folira 中使用的主題",
-        "followSystemTheme": "跟隨系統主題",
-        "lightModeTheme": "系統處於淺色模式時使用的主題",
-        "darkModeTheme": "系統處於深色模式時使用的主題",
         "spellcheckerEnabled": "是否啟用拼字檢查",
         "spellcheckerNoUnderline": "不要為拼字錯誤加上底線",
         "spellcheckerLanguage": "拼字檢查器語言",
@@ -386,9 +383,7 @@
         "imageRelativeDirectoryBase": "相對圖片的複製位置",
         "imageRelativeDirectoryName": "相對圖片資料夾名稱",
         "fileSortOrder": "開啟資料夾中檔案的排序順序：遞增或遞減",
-        "openedFilesInSidebar": "是否在側邊欄中顯示已開啟的檔案",
-        "uiTheme": "介面主題",
-        "mdTheme": "內文主題"
+        "openedFilesInSidebar": "是否在側邊欄中顯示已開啟的檔案"
       }
     },
     "categories": {
@@ -640,22 +635,13 @@
     },
     "theme": {
       "title": "主題",
-      "followSystemTheme": "跟隨系統主題",
-      "modeThemes": "主題選擇",
-      "lightModeTheme": "淺色模式主題",
-      "darkModeTheme": "深色模式主題",
       "customCss": "自訂 CSS",
       "importCustomThemes": "匯入自訂主題",
       "importTheme": "匯入主題",
       "openFolder": "開啟資料夾",
       "openThemesFolder": "開啟主題資料夾",
-      "interfaceTheme": "介面主題",
-      "markdownTheme": "內文主題",
       "preview": "預覽",
       "searchThemes": "搜尋主題",
-      "allThemes": "全部",
-      "lightThemes": "淺色",
-      "darkThemes": "深色",
       "noThemes": "沒有符合的主題"
     },
     "keybindings": {

@@ -373,9 +373,6 @@
         "isGitlabCompatibilityEnabled": "GitLab uyumluluk modunu etkinleştir",
         "sequenceTheme": "Dizi diyagramı teması",
         "theme": "Folira'te kullanılan temayı seçin",
-        "followSystemTheme": "Sistem Temasını Takip Et",
-        "lightModeTheme": "Sistem açık moddayken kullanılacak tema",
-        "darkModeTheme": "Sistem koyu moddayken kullanılacak tema",
         "spellcheckerEnabled": "Yazım denetiminin etkinleştirilip etkinleştirilmeyeceği",
         "spellcheckerNoUnderline": "Yazım hatalarının altını çizme",
         "spellcheckerLanguage": "Yazım denetleyici dili",
@@ -386,9 +383,7 @@
         "plantumlServer": "PlantUML sunucu URL'si",
         "autoNormalizeLineEndings": "Dosyaları açarken yeni satır karakterlerini otomatik olarak normalleştir. Devre dışı bırakıldığında dosyalar olduğu gibi açılır.",
         "fileSortOrder": "Açık klasörlerdeki dosyaların sıralama düzeni: artan veya azalan.",
-        "openedFilesInSidebar": "Açık dosyaların kenar çubuğunda gösterilip gösterilmeyeceği.",
-        "uiTheme": "Arayüz teması",
-        "mdTheme": "Markdown teması"
+        "openedFilesInSidebar": "Açık dosyaların kenar çubuğunda gösterilip gösterilmeyeceği."
       }
     },
     "categories": {
@@ -640,22 +635,13 @@
     },
     "theme": {
       "title": "Tema",
-      "followSystemTheme": "Sistem Temasını Takip Et",
-      "modeThemes": "Tema Seçimi",
-      "lightModeTheme": "Açık mod teması",
-      "darkModeTheme": "Koyu mod teması",
       "customCss": "Özel CSS",
       "importCustomThemes": "Özel temaları içe aktar",
       "importTheme": "Temayı İçe Aktar",
       "openFolder": "Klasör Aç",
       "openThemesFolder": "Temalar klasörünü aç",
-      "interfaceTheme": "Arayüz teması",
-      "markdownTheme": "Markdown teması",
       "preview": "Önizleme",
       "searchThemes": "Tema ara",
-      "allThemes": "Tümü",
-      "lightThemes": "Açık",
-      "darkThemes": "Koyu",
       "noThemes": "Eşleşen tema yok"
     },
     "keybindings": {
