@@ -148,18 +148,23 @@ pub fn merge_json_file(path: String, patch: serde_json::Value) -> Result<(), Str
 /// those keys forever unless something deletes them: every write merges its own
 /// patch, so nothing ever rewrites the file as a whole. Returns whether the file
 /// changed, and leaves it untouched when none of the keys are there.
+///
+/// Only a missing file is a quiet no-op. An unreadable or unparseable one is an
+/// error the caller logs, because "there was nothing to clean" and "the check
+/// could not run" must not look alike.
 #[tauri::command]
 pub fn prune_json_file(path: String, keys: Vec<String>) -> Result<bool, String> {
     let path = Path::new(&path);
-    let Ok(text) = fs::read_to_string(path) else {
-        // Nothing stored means nothing to clean; a missing file is not an error.
-        return Ok(false);
+    let text = match fs::read_to_string(path) {
+        Ok(text) => text,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(error.to_string()),
     };
-    let Ok(serde_json::Value::Object(mut stored)) =
-        serde_json::from_str::<serde_json::Value>(text.trim_start_matches('\u{feff}'))
-    else {
-        // A corrupt file is left for the next merge to replace, as above.
-        return Ok(false);
+
+    let parsed = serde_json::from_str::<serde_json::Value>(text.trim_start_matches('\u{feff}'))
+        .map_err(|error| error.to_string())?;
+    let serde_json::Value::Object(mut stored) = parsed else {
+        return Err("the preferences file must hold a JSON object".to_owned());
     };
 
     let before = stored.len();
@@ -428,6 +433,45 @@ mod tests {
             vec!["uiTheme".to_owned()]
         )
         .unwrap());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn keeps_an_unreadable_file_and_reports_the_failure() {
+        let dir = temp_dir("prune-broken");
+        let path = dir.join("preferences.json");
+        let original = b"{ \"theme\": \"nord\"";
+        fs::write(&path, original).unwrap();
+
+        let result = prune_json_file(
+            path.to_string_lossy().into_owned(),
+            vec!["uiTheme".to_owned()],
+        );
+
+        // A half-written file is left for the next merge to repair, but the
+        // caller can tell this apart from "nothing to clean".
+        assert!(result.is_err());
+        assert_eq!(fs::read(&path).unwrap(), original);
+
+        let array = dir.join("array.json");
+        fs::write(&array, b"[1, 2]").unwrap();
+        assert!(prune_json_file(
+            array.to_string_lossy().into_owned(),
+            vec!["uiTheme".to_owned()]
+        )
+        .is_err());
+        assert_eq!(fs::read_to_string(&array).unwrap(), "[1, 2]");
+
+        // A path that exists but cannot be read is a failure too, not "nothing
+        // to clean": the permission branch must not hide behind the error.
+        let inside = dir.join("folder.json");
+        fs::create_dir(&inside).unwrap();
+        assert!(prune_json_file(
+            inside.to_string_lossy().into_owned(),
+            vec!["uiTheme".to_owned()]
+        )
+        .is_err());
+        assert!(inside.is_dir());
         let _ = fs::remove_dir_all(&dir);
     }
 

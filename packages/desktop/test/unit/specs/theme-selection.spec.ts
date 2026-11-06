@@ -131,4 +131,21 @@ describe('first frame', () => {
       /--internal$/
     )
   })
+
+  it('highlights the theme the window paints, not the one it asked for', () => {
+    // The settings page must not label a theme the editor is not showing: a
+    // failed load keeps the previous look, and another window's broadcast is
+    // only a target here. `usePaintedThemeSelection` is the seam that reads the
+    // committed theme; a component that reads the preference instead would
+    // regress the behaviour without any unit to catch it, so this checks the
+    // page's only selection source.
+    const page = readFileSync(
+      resolve(renderer, 'prefComponents/theme/index.vue'),
+      'utf8'
+    )
+
+    expect(page).toContain('usePaintedThemeSelection()')
+    expect(page).not.toContain('paintedTheme()')
+    expect(page).not.toMatch(/selectedTheme[^\n]*preferenceStore\.theme/)
+  })
 })

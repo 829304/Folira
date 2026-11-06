@@ -24,10 +24,14 @@ The two source halves are an implementation detail, not a user choice: the
 generator requires a `ui/<id>.css` **and** a `md/<id>.css` for every id, and a
 theme only ever ships as the pair plus the palette its manifest entry names.
 
-Theme files declare variables and nothing else. They never carry selectors, so
-a theme cannot restyle a component, move the writing column, or change how code
-blocks are laid out — those stay the app's decisions and the user's
-preferences.
+Theme files are mostly variables, and the generator only requires that: a theme
+has to declare the public variables its half owns. Most of the inherited themes
+still carry a tail of their own selector rules (32 of the 33 ids do — only
+`ui/light.css` and `md/light.css` are pure variables; One Dark alone has 25
+rules for scrollbars, dialogs, buttons, the title bar and the side bar). The
+generator keeps those tails as written, so do not delete them while converting
+a theme to variables only. What no theme may do is move the writing column or
+change layout: those stay the app's decisions and the user's preferences.
 
 ## The public variables
 

@@ -91,18 +91,19 @@ import { useI18n } from 'vue-i18n'
 
 import { usePreferencesStore } from '@/store/preferences'
 import type { PreferencesState } from '@/store/preferences'
+import { usePaintedThemeSelection } from '@/composables/usePaintedThemeSelection'
 import { applyThemeSet } from '@/util/theme'
 import { THEMES, type ThemeEntry } from '@/util/themeColor'
-import { resolveThemeId } from '@/util/themeSelection'
 import ThemePreview from './preview.vue'
 
 const { t } = useI18n()
 const preferenceStore = usePreferencesStore()
 const { customCss } = storeToRefs(preferenceStore)
 
-// The stored file can predate a rename, so the card marked selected is the id
-// the app would actually paint, not the stale string on disk.
-const selectedTheme = computed(() => resolveThemeId(preferenceStore.theme))
+// The card shows what this window is actually painting, not the choice it is
+// aiming at: another window may have picked a theme whose sheets fail to load
+// here, and the preference stays that target while the paint stays the old one.
+const selectedTheme = usePaintedThemeSelection()
 
 const hovered = ref<string | null>(null)
 // Hovering a card repaints the preview only; the saved theme comes back the

@@ -8,6 +8,7 @@ import {
   railscastsThemes
 } from '../config'
 import { getTheme, loadMdCss, loadPrismCss, loadUiCss } from './themeColor'
+import { DEFAULT_THEME_ID } from './themeSelection'
 import { rememberTheme } from '@/tauri-bridge/theme'
 import { settleSplashTheme } from './splash'
 import { isLinux } from './index'
@@ -56,6 +57,14 @@ const paintPalette = (theme: string): void => {
  * chrome must keep describing what is on screen rather than what was requested.
  */
 export const appliedTheme = shallowRef<string | null>(null)
+
+/**
+ * The theme the window is painting, with the default standing in until the first
+ * commit lands. UI that shows "which theme is on" — the settings page selection,
+ * the diagram palette — reads this, never the stored preference, which is a
+ * target another window can change while this one fails to load it.
+ */
+export const paintedTheme = (): string => appliedTheme.value ?? DEFAULT_THEME_ID
 
 export type ThemeApplyResult = 'applied' | 'superseded' | 'failed'
 

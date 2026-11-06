@@ -104,6 +104,43 @@ describe('applying one complete theme', () => {
     expect(notify.mock.calls[0][0]).toMatchObject({ type: 'error' })
   })
 
+  it('keeps reporting the painted theme when another window picks one that fails here', async() => {
+    const { applyThemeSet, appliedTheme, paintedTheme } = await import('@/util/theme')
+    await applyThemeSet('light')
+
+    // The other window's choice arrives as a preference first; this window then
+    // tries it and fails, exactly like a broken sheet on this machine.
+    loader.md.mockRejectedValueOnce(new Error('network'))
+    await expect(applyThemeSet('dark')).resolves.toBe('failed')
+
+    expect(appliedTheme.value, 'the paint did not change').toBe('light')
+    expect(paintedTheme(), 'the settings page must highlight what is on screen').toBe('light')
+  })
+
+  it('falls back to the default before the first commit lands', async() => {
+    const { paintedTheme } = await import('@/util/theme')
+
+    expect(paintedTheme()).toBe('light')
+  })
+
+  it('tracks the paint in the selection the settings page renders', async() => {
+    const { applyThemeSet, appliedTheme } = await import('@/util/theme')
+    const { usePaintedThemeSelection } = await import('@/composables/usePaintedThemeSelection')
+    const selection = usePaintedThemeSelection()
+
+    expect(selection.value, 'nothing painted yet').toBe('light')
+
+    await applyThemeSet('nord')
+    expect(selection.value).toBe('nord')
+
+    // A failed load leaves the canvas alone, so the selection must stay put even
+    // though the preference (the target) already moved on.
+    loader.md.mockRejectedValueOnce(new Error('network'))
+    await expect(applyThemeSet('dark')).resolves.toBe('failed')
+    expect(appliedTheme.value).toBe('nord')
+    expect(selection.value).toBe('nord')
+  })
+
   it('opens the splash gate on a failure too', async() => {
     const { applyThemeSet } = await import('@/util/theme')
     loader.md.mockRejectedValueOnce(new Error('network'))
