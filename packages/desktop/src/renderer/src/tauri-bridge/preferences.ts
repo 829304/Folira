@@ -44,7 +44,9 @@ interface Store {
    *
    * Our own echo carries the stamp we wrote under, which is also the stamp the
    * winner announced. Without this mark the echo would put the losing value back
-   * into the visible store while the file holds the winner's.
+   * into the visible store while the file holds the winner's. Invariant: when a
+   * key has a mark, it equals `versions[key]`, because only the branch that sets
+   * both can write it; it is compared only while `at === knownAt`.
    */
   tied: Record<string, number>
 }

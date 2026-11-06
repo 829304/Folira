@@ -145,6 +145,19 @@ describe('ordering ties and the data channel', () => {
     expect(await store.getStoredPreference('fontSize')).toBe(18)
   })
 
+  it('adopts the echo of the write that follows a lost tie', async() => {
+    // Losing a tie must not leave the key permanently deaf to its own echoes: a
+    // later local write takes a new stamp and its echo has to reach the store
+    // again, or every menu toggle after one tie would go unseen.
+    const store = await context()
+    const lost = await store.setStoredPreferences({ fontSize: 24 })
+    store.rememberStoredPreferences({ fontSize: 18 }, lost, 'j')
+    const next = await store.setStoredPreferences({ fontSize: 20 })
+    const accepted = store.rememberStoredPreferences({ fontSize: 20 }, next, 'i')
+    expect(accepted).toEqual({ fontSize: 20 })
+    expect(await store.getStoredPreference('fontSize')).toBe(20)
+  })
+
   it('adopts its own echo so the sender sees the change', async() => {
     const store = await context()
     const at = await store.setStoredPreferences({ autoSave: true })
