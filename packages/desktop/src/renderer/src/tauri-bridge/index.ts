@@ -33,6 +33,7 @@ import {
   pickFolderPreference,
   sendStoredUserData,
   announcePreferences,
+  announceUserData,
   setStoredPreferences,
   setStoredUserData
 } from './preferences'
@@ -335,9 +336,11 @@ const handleSend = (channel: string, args: unknown[]): void => {
       console.error('[renderer]', ...args)
       return
     case 'mt::set-user-data':
+      // `dataCenter.json` has its own cache in every window, so the change is
+      // announced on its own channel instead of borrowing the preference one.
       fire(
         setStoredUserData(args[0]).then((at) =>
-          announcePreferences(args[0] as Record<string, unknown> | undefined, at)
+          announceUserData(args[0] as Record<string, unknown> | undefined, at)
         )
       )
       return

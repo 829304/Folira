@@ -140,7 +140,8 @@ describe('independent preference contexts and actual close guard', () => {
     await vi.waitFor(() =>
       expect(emit).toHaveBeenCalledWith('mt::user-preference', {
         patch: { autoSave: false },
-        at: expect.any(Number)
+        at: expect.any(Number),
+        from: expect.any(String)
       })
     )
     await store.flushStoredPreferences()

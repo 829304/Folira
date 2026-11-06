@@ -94,3 +94,35 @@ describe('serialized preference echoes must not discard local writes', () => {
     expect(writes).toEqual([{ fontSize: 24 }])
   })
 })
+
+describe('ordering ties and the data channel', () => {
+  it('treats a same-millisecond announcement from another window as later', async() => {
+    const store = await context()
+    const at = await store.setStoredPreferences({ fontSize: 24 })
+    store.rememberStoredPreferences({ fontSize: 18 }, at, 'another-window')
+    await store.flushStoredPreferences()
+    // The other window won the tie, so this one must not write its own value.
+    expect(writes).toEqual([])
+    expect(await store.getStoredPreference('fontSize')).toBe(18)
+  })
+
+  it('keeps the local value when an older announcement arrives', async() => {
+    const store = await context()
+    const at = await store.setStoredPreferences({ fontSize: 24 })
+    store.rememberStoredPreferences({ fontSize: 18 }, at - 5, 'another-window')
+    // Disk and the visible copy both come from the newer local edit.
+    expect(await store.getStoredPreference('fontSize')).toBe(24)
+    await store.flushStoredPreferences()
+    expect(disk.fontSize).toBe(24)
+    expect(writes).toEqual([{ fontSize: 24 }])
+  })
+
+  it('announces a data change on its own channel', async() => {
+    const store = await context()
+    store.announceUserData({ cliScript: '/bin/up' }, Date.now())
+    expect(emit).toHaveBeenCalledTimes(1)
+    const [channel, message] = emit.mock.calls[0] as [string, Bag]
+    expect(channel).toBe('mt::user-data')
+    expect(message.patch).toEqual({ cliScript: '/bin/up' })
+  })
+})

@@ -122,6 +122,32 @@ class DiagramPreview extends Parent {
             // be current: drawing straight into the node would let an older
             // render overwrite a newer one while it was still in flight.
             const staging = createStagingNode(this.domNode!);
+            // The deadline covers the whole render, not just the wait for the
+            // `<svg>`: a renderer whose promise never settles would otherwise
+            // leave this block on "Loading..." with no timer at all, and the
+            // offscreen node attached for the life of the editor.
+            let stopObserving = () => {};
+            const timer = setTimeout(() => {
+                if (request !== this._request) {
+                    staging.remove();
+                    return;
+                }
+
+                this._cancelPublish = null;
+                // Invalidate the ticket so a drawing that arrives later cannot
+                // publish over the error.
+                this._request += 1;
+                stopObserving();
+                staging.remove();
+                this.domNode!.innerHTML = `<div class="mu-diagram-error">&lt; ${this.muya.i18n.t(
+                    'Diagram Timed Out',
+                )} &gt;</div>`;
+            }, DRAWING_TIMEOUT);
+            this._cancelPublish = () => {
+                stopObserving();
+                clearTimeout(timer);
+                staging.remove();
+            };
 
             try {
                 await renderDiagram({
@@ -135,6 +161,7 @@ class DiagramPreview extends Parent {
                 });
             }
             catch (error) {
+                clearTimeout(timer);
                 staging.remove();
                 if (request !== this._request)
                     return;
@@ -153,11 +180,19 @@ class DiagramPreview extends Parent {
             }
 
             if (request !== this._request) {
+                clearTimeout(timer);
                 staging.remove();
                 return;
             }
 
-            this._publishWhenDrawn(request, staging, i18n.t('Diagram'));
+            stopObserving = this._publishWhenDrawn(request, staging, i18n.t('Diagram'), () => {
+                clearTimeout(timer);
+            });
+            this._cancelPublish = () => {
+                stopObserving();
+                clearTimeout(timer);
+                staging.remove();
+            };
         }
         else {
             this.domNode!.innerHTML = `<div class="${CLASS_NAMES.MU_EMPTY}">&lt; ${i18n.t(
@@ -166,15 +201,7 @@ class DiagramPreview extends Parent {
         }
     }
 
-    /**
-     * Move a finished drawing into the preview.
-     *
-     * flowchart.js and sequence-diagram-js draw through Raphael, which measures
-     * text once the fonts are ready: `drawSVG` can return before the `<svg>`
-     * exists. Publishing then would move an empty container away and leave the
-     * late drawing in a node nothing shows, so the staging node stays attached
-     * until the element arrives.
-     */
+    /** Move a finished drawing into the preview. */
     private _publish(request: number, staging: HTMLElement, label: string): void {
         if (request !== this._request) {
             staging.remove();
@@ -187,12 +214,29 @@ class DiagramPreview extends Parent {
         this._cancelFinalize = finalizeRenderedDiagram(this.domNode!, label);
     }
 
-    private _publishWhenDrawn(request: number, staging: HTMLElement, label: string): void {
+    /**
+     * Publish the drawing once it exists, and return the observer's stop
+     * function.
+     *
+     * flowchart.js and sequence-diagram-js draw through Raphael, which measures
+     * text once the fonts are ready: `drawSVG` can return before the `<svg>`
+     * exists. Publishing then would move an empty container away and leave the
+     * late drawing in a node nothing shows, so the staging node stays attached
+     * until the element arrives — `onDrawn` clears the caller's deadline, which
+     * has been running since the node was created.
+     */
+    private _publishWhenDrawn(
+        request: number,
+        staging: HTMLElement,
+        label: string,
+        onDrawn: () => void,
+    ): () => void {
         const drawn = () => staging.querySelector('svg, img') != null;
 
         if (drawn()) {
+            onDrawn();
             this._publish(request, staging, label);
-            return;
+            return () => {};
         }
 
         let stop = () => {};
@@ -201,33 +245,14 @@ class DiagramPreview extends Parent {
                 return;
             this._cancelPublish = null;
             stop();
+            onDrawn();
             this._publish(request, staging, label);
         });
-        // WebFontLoader gives the fonts three seconds and the fallback drawing
-        // follows, so this deadline only catches a renderer that never draws at
-        // all. The placeholder is an error, not "Loading..." forever, and the
-        // staging node goes with it so nothing is left hanging off the body.
-        const timer = setTimeout(() => {
-            if (request !== this._request)
-                return;
-            this._cancelPublish = null;
-            stop();
-            staging.remove();
-            this.domNode!.innerHTML = `<div class="mu-diagram-error">&lt; ${this.muya.i18n.t(
-                'Diagram Timed Out',
-            )} &gt;</div>`;
-        }, DRAWING_TIMEOUT);
         stop = () => {
             observer.disconnect();
-            clearTimeout(timer);
         };
         observer.observe(staging, { childList: true, subtree: true });
-        // A superseded render must take its offscreen node with it, or every edit
-        // leaves one more detached svg behind.
-        this._cancelPublish = () => {
-            stop();
-            staging.remove();
-        };
+        return stop;
     }
 }
 

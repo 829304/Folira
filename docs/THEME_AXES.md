@@ -117,11 +117,12 @@ rather than repointed, because one entry point cannot show two axes.
 - `composables/useSystemAppearance.ts`: a `ref<'light' | 'dark'>` driven by
   `matchMedia('(prefers-color-scheme: dark)')`, falling back to `light` when
   the API is absent.
-- `store/preferences.ts`: the four fields; `migrateLegacyThemeFields()` runs
-  once, on the bag read from disk only, and only when the file does not carry
-  the current `preferencesVersion`. A pre-split file keeps its single theme
-  (`followSystemTheme: false`) instead of being repainted on a dark OS the
-  first time this build starts.
+- `store/preferences.ts`: the four fields. A pre-split file used to be migrated
+  once, on the bag read from disk, so that it kept its single theme
+  (`followSystemTheme: false`) instead of being repainted on a dark OS the first
+  time this build started. That compatibility layer was removed before the first
+  release — no shipped build ever wrote such a file — so the fields are read as
+  they are.
 - Replace every `xTheme || theme` with the resolver: `pages/app.vue`
   (including the `addStyles` call), `pages/preference.vue`,
   `editorWithTabs/editor.vue` (diagram palette) and

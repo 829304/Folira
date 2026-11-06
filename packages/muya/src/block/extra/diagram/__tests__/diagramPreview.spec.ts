@@ -605,3 +605,30 @@ describe('diagramPreview — slow fonts and staging cancellation regressions', (
         expect(vi.getTimerCount()).toBe(0);
     });
 });
+
+describe('diagramPreview — a render that never settles', () => {
+    it('shows the deadline error and removes the offscreen node', async () => {
+        vi.useFakeTimers();
+        // mermaid is the path that awaits the renderer, so a promise that never
+        // resolves is the shape a hung renderer has here.
+        loadRendererMock.mockResolvedValue({
+            parse: () => ({}),
+            initialize: () => {},
+            render: () => new Promise(() => {}),
+        });
+
+        const { preview, i18n } = makePreview('graph TD; A-->B', 'mermaid');
+        void preview.update('graph TD; A-->B');
+        for (let tick = 0; tick < 8; tick += 1) await Promise.resolve();
+
+        expect(preview.domNode!.textContent).toBe(i18n.t('Loading...'));
+
+        // The deadline has been running since the staging node was created, so a
+        // render that never settles still ends in a readable error.
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(preview.domNode!.textContent).toContain(i18n.t('Diagram Timed Out'));
+        expect(document.body.querySelectorAll('div[style*="-10000px"]')).toHaveLength(0);
+        vi.useRealTimers();
+    });
+});

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import bus from '../bus'
 import { setLanguage } from '../i18n'
-import { rememberStoredPreferences } from '../tauri-bridge/preferences'
+import { rememberStoredPreferences, rememberStoredUserData } from '../tauri-bridge/preferences'
 
 // Finite-value unions where the runtime currently constrains the field.
 // We keep these as plain strings everywhere else to avoid forcing prematurely
@@ -284,8 +284,8 @@ export const usePreferencesStore = defineStore('preferences', {
      * Apply the bag read from `dataCenter.json`.
      *
      * It shares the store fields with the preferences file (image folder, upload
-     * history) but has no theme fields at all, so it must not go through the
-     * migration — that would read "no marker" as "pre-split file".
+     * history) but is a different file, so it is applied as it is — never merged
+     * into the preferences cache.
      */
     LOAD_STORED_USER_DATA(stored: Record<string, unknown>): void {
       this.APPLY_PREFERENCE(stored as Partial<PreferencesState>)
@@ -354,18 +354,20 @@ export const usePreferencesStore = defineStore('preferences', {
 
     SET_USER_PREFERENCE(
       preference: Partial<PreferencesState> | Record<string, unknown>,
-      at?: number
+      at?: number,
+      from?: string
     ): void {
       const incoming = preference as Record<string, unknown>
 
       // Another window changed a preference. The bridge keeps its own copy of
       // the stored values to answer `getStoredPreference` without a round trip,
       // and a menu toggle reads the value it is about to flip: leaving that copy
-      // behind would flip the old value back on the first click. The stamp says
-      // whether the announcement is newer than anything this window still owes.
-      rememberStoredPreferences(incoming, at)
+      // behind would flip the old value back on the first click. The bridge
+      // returns what it accepted, so an announcement older than a local edit
+      // does not move the visible value either.
+      const accepted = rememberStoredPreferences(incoming, at, from)
 
-      this.APPLY_PREFERENCE(incoming)
+      this.APPLY_PREFERENCE(accepted as Partial<PreferencesState>)
     },
 
     SET_MODE({ type, checked }: ModeTogglePayload): void {
@@ -392,11 +394,21 @@ export const usePreferencesStore = defineStore('preferences', {
       })
 
       window.electron.ipcRenderer.on('mt::user-preference', (_e, message) => {
-        const { patch, at } = message as {
+        const { patch, at, from } = message as {
           patch: Partial<PreferencesState>
           at?: number
+          from?: string
         }
-        this.SET_USER_PREFERENCE(patch, at)
+        this.SET_USER_PREFERENCE(patch, at, from)
+      })
+
+      // `dataCenter.json` is cached separately, so its announcement has its own
+      // channel and its own store: replaying it here would put a data key into
+      // the preferences cache.
+      window.electron.ipcRenderer.on('mt::user-data', (_e, message) => {
+        const { patch } = message as { patch: Record<string, unknown> }
+        rememberStoredUserData(patch)
+        Object.assign(this, patch)
       })
     },
 

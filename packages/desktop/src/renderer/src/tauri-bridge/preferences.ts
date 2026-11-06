@@ -28,6 +28,8 @@ interface Store {
   writeTimer: ReturnType<typeof setTimeout> | null
   /** The write in flight, so a close waits for it instead of racing it. */
   writing: Promise<void> | null
+  /** Failed writes since the last success, so a stuck file is not retried forever. */
+  failures: number
 }
 
 const createStore = (): Store => ({
@@ -37,11 +39,21 @@ const createStore = (): Store => ({
   pendingAt: {},
   loading: null,
   writeTimer: null,
-  writing: null
+  writing: null,
+  failures: 0
 })
 
 const preferences = createStore()
 const userData = createStore()
+
+/**
+ * Identifies this window in an announcement.
+ *
+ * Two windows can stamp the same millisecond, and a stamp alone cannot then say
+ * which edit was later. The sender's id can, and it costs nothing: each window
+ * runs its own copy of this module.
+ */
+const WINDOW_ID = Math.random().toString(36).slice(2)
 
 /** Point both stores at the user-data directory reported by `boot_info`. */
 export const initPreferenceStores = (userDataDir: string): void => {
@@ -91,6 +103,8 @@ const read = (store: Store): Promise<Bag> => {
 // Preference edits arrive one key at a time (every toggle in the settings
 // window is its own `mt::set-user-preference`), so coalesce them.
 const WRITE_DELAY = 300
+/** How often a failed write retries before it waits for the next edit. */
+const WRITE_RETRIES = 3
 
 const scheduleWrite = (store: Store): void => {
   if (!store.path) return
@@ -134,10 +148,16 @@ const flush = async(store: Store): Promise<void> => {
   store.writing = settled
   try {
     await write
+    store.failures = 0
   } catch (err) {
     // Keep the keys so the next edit retries them rather than dropping them.
     store.pending = { ...patch, ...store.pending }
     store.pendingAt = { ...queuedAt, ...store.pendingAt }
+    // Retry a few times on our own: the announcement has already taken these
+    // keys away from the other windows, so leaving them parked until the next
+    // unrelated edit (or the close handler) is the only copy going stale.
+    store.failures += 1
+    if (store.failures < WRITE_RETRIES) scheduleWrite(store)
     throw err
   } finally {
     if (store.writing === settled) store.writing = null
@@ -197,8 +217,25 @@ export const announcePreferences = (
   at = Date.now()
 ): void => {
   if (!patch) return
-  emit('mt::user-preference', { patch, at }).catch((err) =>
+  emit('mt::user-preference', { patch, at, from: WINDOW_ID }).catch((err) =>
     console.warn('[tauri-bridge] cannot announce a preference change:', err)
+  )
+}
+
+/**
+ * Announce a change to `dataCenter.json`.
+ *
+ * A separate channel, because the two files are cached separately: replaying a
+ * data key into the preferences cache would answer `getStoredPreference` with a
+ * value the preferences file does not have.
+ */
+export const announceUserData = (
+  patch: Record<string, unknown> | undefined,
+  at = Date.now()
+): void => {
+  if (!patch) return
+  emit('mt::user-data', { patch, at, from: WINDOW_ID }).catch((err) =>
+    console.warn('[tauri-bridge] cannot announce a user-data change:', err)
   )
 }
 
@@ -239,7 +276,10 @@ export const setStoredUserData = (patch: unknown): Promise<number> => {
  * second pass covers the edit that arrived while the first write was in flight.
  */
 export const flushStoredPreferences = async(): Promise<void> => {
-  await Promise.all([drain(preferences), drain(userData)])
+  // Both files must be attempted: `Promise.all` would stop at the first
+  // rejection and let the close handler destroy the window while the other
+  // drain is still waiting on a write.
+  await Promise.allSettled([drain(preferences), drain(userData)])
 }
 
 const drain = async(store: Store): Promise<void> => {
@@ -256,27 +296,55 @@ const drain = async(store: Store): Promise<void> => {
  * false` kept answering `false` after the settings window turned it on — and
  * the first click wrote `true` again instead of turning it off.
  */
-export const rememberStoredPreferences = (patch: unknown, at?: number): void => {
-  if (!patch || typeof patch !== 'object') return
+export const rememberStoredPreferences = (
+  patch: unknown,
+  at?: number,
+  from?: string
+): Record<string, unknown> => {
+  if (!patch || typeof patch !== 'object') return {}
   const announced = patch as Bag
+  const accepted: Bag = {}
 
-  // A key queued before the announcement is stale: writing it later would put
-  // the older value back after the newer one had already landed. Only a stamp
-  // can tell that apart — the sender's own echo carries the same value, and an
-  // array comes back from IPC as a different object with equal content, so a
-  // value or reference comparison either drops a live edit or keeps a dead one.
-  // A write already on the wire cannot be recalled.
-  if (typeof at === 'number') {
-    Object.keys(announced).forEach((key) => {
-      const queuedAt = preferences.pendingAt[key]
-      if (queuedAt !== undefined && at > queuedAt) {
-        delete preferences.pending[key]
-        delete preferences.pendingAt[key]
-      }
-    })
-  }
+  Object.keys(announced).forEach((key) => {
+    const queuedAt = preferences.pendingAt[key]
 
-  Object.assign(preferences.values, announced)
+    // A key this window queued *after* the announcement must keep its value and
+    // its queue entry; writing the announced one over it would show an older
+    // value in this session while disk gets the newer one. An own echo carries
+    // the same stamp and the same value, so it is adopted and its queue entry
+    // stays.
+    if (typeof at === 'number' && queuedAt !== undefined && at < queuedAt) return
+
+    // The announcement wins the queue entry when it is strictly newer, or when
+    // it carries the same millisecond from another window — a stamp alone
+    // cannot order those two, and the later writer would otherwise be whoever
+    // reaches the file last.
+    if (
+      typeof at === 'number' &&
+      queuedAt !== undefined &&
+      (at > queuedAt || (at === queuedAt && from !== undefined && from !== WINDOW_ID))
+    ) {
+      delete preferences.pending[key]
+      delete preferences.pendingAt[key]
+    }
+
+    accepted[key] = announced[key]
+  })
+
+  Object.assign(preferences.values, accepted)
+  return accepted
+}
+
+/**
+ * Record a `dataCenter.json` change another window announced.
+ *
+ * Data keys never go through the preferences cache, so there is one store to
+ * update and no queue here: the file is written by whichever window made the
+ * change, and a stale cache only affects the current session.
+ */
+export const rememberStoredUserData = (patch: unknown): void => {
+  if (!patch || typeof patch !== 'object') return
+  Object.assign(userData.values, patch as Bag)
 }
 
 /** Read one preference without waiting for a round trip through the store. */

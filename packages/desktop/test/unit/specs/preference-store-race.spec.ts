@@ -99,7 +99,7 @@ describe('preference store', () => {
     expect(source).not.toContain("invoke('output_file'")
   })
 
-  it('keeps a patch whose write failed, and sends it with the next edit', async() => {
+  it('retries a failed write on its own, then carries on', async() => {
     const merge = vi.fn()
     invoke.mockImplementation((command: string, args: unknown) => {
       if (command === 'path_exists') return Promise.resolve(true)
@@ -117,13 +117,13 @@ describe('preference store', () => {
     await setStoredPreferences({ fontSize: 20 })
     await vi.runAllTimersAsync()
 
-    // The dropped write is retried, not lost: a second window's keys would
-    // otherwise be gone for good.
-    expect(merge).toHaveBeenCalledTimes(2)
+    // The dropped write is retried, not lost: the announcement already took
+    // these keys away from the other windows, so nothing else would send them.
+    expect(merge).toHaveBeenCalledTimes(3)
     expect((merge.mock.calls[1][1] as { patch: object }).patch).toEqual({
-      autoSave: false,
-      fontSize: 20
+      autoSave: false
     })
+    expect((merge.mock.calls[2][1] as { patch: object }).patch).toEqual({ fontSize: 20 })
   })
 
   it('counts a patch as pending before the stored file has been read', async() => {
