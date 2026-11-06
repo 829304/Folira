@@ -305,12 +305,19 @@ export const sendStoredUserData = async(dispatchLocal: DispatchLocal): Promise<v
  *
  * Two edits in the same millisecond would otherwise share a stamp, and an
  * ordering decision between them would come down to arrival order instead of
- * the order the user actually made them.
+ * the order the user actually made them. Accepted announcements also push the
+ * clock forward: a window that has seen a stamp must not mint a smaller one, or
+ * its next edit would look older than the value every other window already has.
  */
 let lastStamp = 0
 const nextStamp = (): number => {
   lastStamp = Math.max(Date.now(), lastStamp + 1)
   return lastStamp
+}
+
+/** Take a stamp another window used, so later local edits sort after it. */
+const observeStamp = (at: number): void => {
+  if (at > lastStamp) lastStamp = at
 }
 
 /**
@@ -418,7 +425,10 @@ export const rememberStoredPreferences = (
       delete preferences.pendingAt[key]
     }
 
-    if (typeof at === 'number') preferences.versions[key] = at
+    if (typeof at === 'number') {
+      observeStamp(at)
+      preferences.versions[key] = at
+    }
     accepted[key] = announced[key]
   })
 

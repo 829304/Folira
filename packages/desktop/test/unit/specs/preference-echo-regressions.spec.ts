@@ -145,6 +145,16 @@ describe('ordering ties and the data channel', () => {
     expect(await store.getStoredPreference('fontSize')).toBe(18)
   })
 
+  it('mints a later stamp after seeing another window ahead of the clock', async() => {
+    // A window that has accepted a stamp must not produce a smaller one: its next
+    // edit would look older than the value every other window already holds.
+    const store = await context()
+    const ahead = Date.now() + 5_000
+    store.rememberStoredPreferences({ fontSize: 18 }, ahead, 'j')
+    const at = await store.setStoredPreferences({ fontSize: 20 })
+    expect(at).toBeGreaterThan(ahead)
+  })
+
   it('adopts the echo of the write that follows a lost tie', async() => {
     // Losing a tie must not leave the key permanently deaf to its own echoes: a
     // later local write takes a new stamp and its echo has to reach the store
