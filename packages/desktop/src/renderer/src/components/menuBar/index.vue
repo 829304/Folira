@@ -93,19 +93,9 @@ const isTauriEnv = isTauri()
 const sections = MENU_STRUCTURE
 const isMaximized = ref(false)
 
-const { sourceCode, typewriter, focus, theme, autoSave } = storeToRefs(usePreferencesStore())
+const { sourceCode, typewriter, focus, autoSave } = storeToRefs(usePreferencesStore())
 const { showSideBar, showTabBar, rightColumn } = storeToRefs(useLayoutStore())
 const { currentFile } = storeToRefs(useEditorStore())
-
-/** Mirrors `tauri-bridge/theme.ts`; importing the shim from a component would
- *  drag the whole bridge into this chunk. */
-const themeChoice = (): string => {
-  try {
-    return localStorage.getItem('mt-tauri-theme-choice') || 'system'
-  } catch {
-    return 'system'
-  }
-}
 
 /**
  * Whether a menu entry is currently active.
@@ -135,18 +125,11 @@ const isChecked = (id: string): boolean => {
     case 'lineending:crlf':
       return currentFile.value?.lineEnding === 'crlf'
     default:
-      // `theme:system` is the follow-the-OS choice rather than a theme id, so
-      // it is ticked by the stored choice, not by the theme in effect.
-      if (id.startsWith('theme:')) {
-        const choice = id.slice('theme:'.length)
-        if (choice === 'system') return themeChoice() === 'system'
-        return themeChoice() !== 'system' && theme.value === choice
-      }
       return false
   }
 }
 
-// Locale strings carry a Windows access-key mnemonic — '&Theme' (Latin) or
+// Locale strings carry a Windows access-key mnemonic — '&File' (Latin) or
 // '主题(&T)' (CJK). Native menus consume it; strip it for the HTML menu bar.
 const label = (key: string): string =>
   t(key)

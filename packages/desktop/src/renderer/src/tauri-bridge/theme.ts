@@ -4,16 +4,11 @@
 // that file has been read, so the applied id is mirrored here where it can be
 // read synchronously. Every successful commit ends up in `applyThemeSet`, which
 // calls `rememberTheme`, so the mirror can never name a theme the window is not
-// showing.
+// showing. It is a cache for one frame: it never turns into a stored preference.
 
-import { DEFAULT_THEME_ID } from '@/util/themeSelection'
+import { DEFAULT_THEME_ID, resolveThemeId } from '@/util/themeSelection'
 
 const THEME_KEY = 'mt-tauri-theme'
-// Written by versions that split the chrome from the body. Read once, then
-// superseded by the single id the next commit records.
-const LEGACY_PAIR_KEY = 'mt-tauri-theme-pair'
-// Written by versions that only had one theme, possibly "system".
-const LEGACY_CHOICE_KEY = 'mt-tauri-theme-choice'
 
 /** Record the theme this window is showing, for the next first paint. */
 export function rememberTheme(theme: string): void {
@@ -24,62 +19,16 @@ export function rememberTheme(theme: string): void {
   }
 }
 
-function legacyFromPair(): string | null {
-  try {
-    const raw = localStorage.getItem(LEGACY_PAIR_KEY)
-    if (!raw) return null
-
-    const parsed = JSON.parse(raw) as { md?: unknown }
-    return typeof parsed?.md === 'string' ? parsed.md : null
-  } catch {
-    return null
-  }
-}
-
-function legacyFromChoice(): string | null {
-  try {
-    const choice = localStorage.getItem(LEGACY_CHOICE_KEY)
-    // "system" named a follow-the-OS mode that no longer exists; the default is
-    // a better guess than the OS reading, which the user never chose.
-    return choice && choice !== 'system' ? choice : null
-  } catch {
-    return null
-  }
-}
-
-/**
- * The theme an older build recorded outside the preferences file.
- *
- * Versions before the single-theme switch kept the native Theme menu's answer in
- * `localStorage` only, so a preferences file from them has no `theme` key at all.
- * The migration reads the value here before falling back to the system
- * appearance. `'system'` is returned as-is: the caller decides what the OS asked
- * for, because only it knows whether that reading still applies.
- */
-export function legacyThemeChoice(): string | null {
-  try {
-    const pair = legacyFromPair()
-    if (pair) return pair
-
-    return localStorage.getItem(LEGACY_CHOICE_KEY)
-  } catch {
-    return null
-  }
-}
-
 /**
  * The theme to paint before the preferences file is read.
  *
- * The caller validates the id: a stale cache may name a theme that has since
- * been renamed, and `firstPaintTheme` falls back to the resolved one then.
+ * A cache written by a build whose themes have since been renamed can name an id
+ * that no longer exists, so it is validated here and falls back to the default.
  */
 export function resolveInitialTheme(): string {
-  let stored: string | null = null
   try {
-    stored = localStorage.getItem(THEME_KEY)
+    return resolveThemeId(localStorage.getItem(THEME_KEY))
   } catch {
-    /* treat as empty */
+    return DEFAULT_THEME_ID
   }
-
-  return stored || legacyFromPair() || legacyFromChoice() || DEFAULT_THEME_ID
 }

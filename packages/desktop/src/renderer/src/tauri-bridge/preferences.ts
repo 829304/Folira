@@ -15,8 +15,6 @@ import { open as showOpenDialog } from '@tauri-apps/plugin-dialog'
 import pathe from 'pathe'
 
 import { DEPRECATED_PREFERENCE_KEYS } from '@shared/types/preferences'
-import { migrateLegacyThemeId, upgradeThemeId } from '@/util/themeSelection'
-import { legacyThemeChoice } from './theme'
 
 type Bag = Record<string, unknown>
 
@@ -94,44 +92,15 @@ export const initPreferenceStores = (userDataDir: string): void => {
 }
 
 /**
- * Records the theme id derived from an older preferences file.
+ * Reads the stored bag, dropping the keys the retired two-axis themes used.
  *
- * The caller decides that a migration is due; this only writes the result the
- * way a normal edit would, so the other window's broadcasts are ordered against
- * it instead of winning by default. A stamp already accepted for `theme` means
- * this window has a newer answer — the user changed the theme while the file
- * was being read — and that answer stays.
+ * The migration that used to run here only ever served the development builds,
+ * so nothing is inferred any more: a valid `theme` is used as stored, a missing
+ * or unknown one falls back to the default, and the legacy keys are deleted
+ * once.
  */
-const adoptMigratedTheme = (store: Store, theme: string | null): void => {
-  if (theme === null || store.versions.theme !== undefined) return
-
-  const at = nextStamp()
-  store.values.theme = theme
-  store.pending.theme = theme
-  store.pendingAt.theme = at
-  store.versions.theme = at
-  scheduleWrite(store)
-}
-
 const loadFromDisk = async(store: Store, isPreferences: boolean): Promise<Bag> => {
   try {
-    // The theme migration belongs to the preferences store alone: `dataCenter`
-    // never carried a theme, and writing one there would let a stale channel
-    // repaint the window after the real preferences had already arrived.
-    const remembered = isPreferences ? legacyThemeChoice() : null
-    const shouldMigrate = (bag: Bag): boolean => {
-      // A file with any of the old keys predates the single-theme switch, even
-      // when it also carries a `theme`: the old builds wrote their base theme
-      // there while the user's real choice lived in the other fields. A
-      // `theme: 'system'` residue only came from development builds, but it
-      // still names a look this build cannot render.
-      if (DEPRECATED_PREFERENCE_KEYS.some(key => key in bag)) return true
-      if (bag.theme === 'system') return true
-      if ('theme' in bag) return false
-
-      return remembered !== null
-    }
-
     const exists = await invoke('path_exists', { path: store.path })
     if (exists) {
       const raw = await invoke('read_file', { path: store.path, encoding: 'utf8' })
@@ -142,30 +111,16 @@ const loadFromDisk = async(store: Store, isPreferences: boolean): Promise<Bag> =
         // this read was in flight is newer than the file and must survive it.
         store.values = { ...bag, ...store.values }
 
-        // A file from a build before the single-theme switch carries the pair or
-        // the older "follow the system" trio, or nothing at all: those builds
-        // only persisted user overrides and kept the default in the store, while
-        // the native Theme menu wrote its answer to `localStorage`. Turn
-        // whatever it has into the one id this build understands before the
-        // prune drops the keys: after that the choice cannot be recovered.
+        // The keys of the retired two-axis themes are dropped from the file the
+        // first time it is read. Nothing is inferred from them: a file that only
+        // has them keeps no theme at all and falls back to the default, which is
+        // what a fresh profile does too.
         const legacy = DEPRECATED_PREFERENCE_KEYS.filter(key => key in bag)
-        if (isPreferences && shouldMigrate(bag)) {
-          const migrated = bag.theme === 'system' || legacy.length > 0 ? migrateLegacyThemeId(bag) : null
-
-          // The keys can be present without naming any theme this build ships,
-          // in which case the remembered menu answer is still the better guess.
-          adoptMigratedTheme(store, migrated ?? (remembered !== null ? upgradeThemeId(remembered) : null))
-        }
-
         if (isPreferences && legacy.length > 0) {
           legacy.forEach((key) => { delete store.values[key] })
           queuePrune(store, legacy)
         }
       }
-    } else if (isPreferences && remembered !== null && store.versions.theme === undefined) {
-      // The file is gone but the menu answer is not: restore what the old build
-      // was showing instead of resetting to the default.
-      adoptMigratedTheme(store, upgradeThemeId(remembered))
     }
   } catch (err) {
     // A hand-edited file with a syntax error must not stop the app from

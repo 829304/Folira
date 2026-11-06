@@ -1,13 +1,11 @@
 import { resolve } from 'path'
 import { readFileSync } from 'fs'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import {
   DEFAULT_THEME_ID,
   firstPaintTheme,
-  migrateLegacyThemeId,
-  resolveThemeId,
-  upgradeThemeId
+  resolveThemeId
 } from '@/util/themeSelection'
 import { THEMES, getTheme } from '@/util/themeColor'
 
@@ -132,72 +130,5 @@ describe('first frame', () => {
     expect(schema.theme?.description, 'theme is hidden from the search index').not.toMatch(
       /--internal$/
     )
-  })
-})
-
-describe('migrating the theme an older build stored', () => {
-  const original = window.matchMedia
-
-  const prefersDark = (dark: boolean): void => {
-    Object.assign(window, {
-      matchMedia: (query: string) => ({ matches: dark && query.includes('dark'), media: query })
-    })
-  }
-
-  afterEach(() => {
-    Object.assign(window, { matchMedia: original })
-  })
-
-  it('keeps the look of a file that followed the system', () => {
-    prefersDark(true)
-    expect(migrateLegacyThemeId({
-      theme: 'light',
-      followSystemTheme: true,
-      lightModeTheme: 'light',
-      darkModeTheme: 'one-dark'
-    })).toBe('one-dark')
-  })
-
-  it('reads the light half when the system asks for a light interface', () => {
-    prefersDark(false)
-    expect(migrateLegacyThemeId({
-      theme: 'light',
-      followSystemTheme: true,
-      lightModeTheme: 'graphite',
-      darkModeTheme: 'one-dark'
-    })).toBe('graphite')
-  })
-
-  it('keeps an explicit choice older builds stored in theme', () => {
-    expect(migrateLegacyThemeId({
-      theme: 'dracula',
-      followSystemTheme: false,
-      lightModeTheme: 'light',
-      darkModeTheme: 'dark'
-    })).toBe('dracula')
-  })
-
-  it('reads the Markdown half of a file from the two-axis builds', () => {
-    expect(migrateLegacyThemeId({ uiTheme: 'graphite', mdTheme: 'nord' })).toBe('nord')
-  })
-
-  it('leaves a file that already speaks the single-theme format alone', () => {
-    expect(migrateLegacyThemeId({ theme: 'nord', autoSave: true })).toBeNull()
-  })
-
-  it('keeps the recorded menu answer over the stale theme of a two-axis file', () => {
-    // Dev builds wrote `theme` as a leftover default next to the pair; the pair's
-    // Markdown half is what the window was actually showing.
-    expect(migrateLegacyThemeId({ theme: 'light', uiTheme: 'graphite', mdTheme: 'nord' })).toBe('nord')
-  })
-
-  it('does not migrate a pair the manifest no longer ships', () => {
-    prefersDark(false)
-    expect(migrateLegacyThemeId({ uiTheme: 'gone', mdTheme: 'alsogone' })).toBeNull()
-  })
-
-  it('falls back to the light theme when the system cannot be asked', () => {
-    Object.assign(window, { matchMedia: undefined })
-    expect(upgradeThemeId(null)).toBe('light')
   })
 })

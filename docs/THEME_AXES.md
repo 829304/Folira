@@ -83,34 +83,23 @@ first launch that finds it: the deprecated keys are ignored, then removed from
 disk by `prune_json_file` behind the queued writes. The seed file
 `static/preference.json` carries none of them either.
 
-### Upgrading a profile from v1.0.2
+### Profiles written by development builds
 
-The released v1.0.2 did not write the follow-the-system default to the file —
-only a user override landed there — and its native Theme menu recorded the
-answer in `localStorage` (`mt-tauri-theme-choice`). Both facts are read once, on
-the first launch of this build:
+Folira has not shipped, so there is nothing to upgrade from: the profiles that
+still carry the two-axis keys were written by development builds, and no
+migration runs. A valid `theme` is used as stored, a missing or unknown one
+resolves to `light`, and the deprecated keys are ignored and then deleted from
+disk by `prune_json_file`. A file that only had the old keys therefore ends up
+on the default, exactly like a fresh install — including the old "follow the
+system" trio, which used to name a dark theme on a dark desktop.
 
-1. A file with any deprecated key is migrated from those keys. A two-axis file
-   takes its pair (`mdTheme`, else `uiTheme`); a file that followed the system
-   takes the half matching the current OS appearance; an explicit `theme` is
-   kept when no pair is present. A `theme: 'system'` residue counts as "follow
-   the system". When the old keys name no theme this build ships, the remembered
-   menu answer is used instead.
-2. A file with no theme and no deprecated keys, or no file at all, is upgraded
-   from the remembered menu answer. `'system'` there means the OS appearance the
-   old build painted.
-3. A profile with neither — any profile that carries no usable evidence, whether
-   a fresh install or a v1.0.2 that only ever saved unrelated settings — keeps
-   `light`. That is the documented default, and it is the one case where the old
-   look (following a dark system) is not reproduced.
+The first-paint cache in `localStorage` (`mt-tauri-theme`) is not evidence
+either: it feeds one frame before the preferences arrive and never becomes a
+stored preference. Keys from the retired builds (`mt-tauri-theme-pair`,
+`mt-tauri-theme-choice`) are not read.
 
-The migration runs on the preferences store only: `dataCenter.json` never held
-a theme, and writing one there would let that channel repaint the window with a
-stale value after the real preferences had arrived.
-
-The result is written as `theme` with a normal stamp before the prune runs, so
-the choice survives the deletion of the keys it came from, and a broadcast that
-already changed `theme` in this window wins over the migration.
+Resetting a development profile only needs the theme keys removed; fonts, the
+custom CSS and anything else in `preferences.json` are unrelated and stay.
 
 ## The settings page
 

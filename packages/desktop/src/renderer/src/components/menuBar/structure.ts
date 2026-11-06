@@ -4,7 +4,7 @@
 // `dispatch_menu` command, so behavior is identical to a native menu click.
 
 export interface MenuBarItem {
-  /** Dispatch id, e.g. 'edit:undo', 'cmd:file.save', 'theme:dark'. */
+  /** Dispatch id, e.g. 'edit:undo', 'cmd:file.save', 'viewmode:sourceCode'. */
   id: string
   /** i18n key for the label. */
   labelKey: string
