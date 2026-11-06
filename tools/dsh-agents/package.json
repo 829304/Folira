@@ -1,0 +1,15 @@
+{
+  "name": "folira-agent-presets",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Folira's DSH agent presets: theme, editor, test and review agents.",
+  "main": "index.js",
+  "dsh": {
+    "bundle": {
+      "patch": [
+        "./cordis.patch.yml"
+      ]
+    }
+  }
+}
