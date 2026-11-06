@@ -279,7 +279,7 @@ const merge = async(store: Store, patch: unknown, at: number): Promise<void> => 
   await read(store)
 }
 
-type DispatchLocal = (channel: string, args: unknown[]) => void
+type DispatchLocal = (channel: string, args: unknown[]) => number
 
 /**
  * Announce a preference change to every window.

@@ -10,7 +10,7 @@ import { installTabShortcuts } from '../../../src/renderer/src/tauri-bridge/shor
 
 type Dispatch = ReturnType<typeof makeDispatch>
 
-const makeDispatch = () => vi.fn<(channel: string, args: unknown[]) => void>()
+const makeDispatch = () => vi.fn<(channel: string, args: unknown[]) => number>(() => 0)
 
 const press = (init: KeyboardEventInit): void => {
   window.dispatchEvent(new KeyboardEvent('keydown', { ...init, cancelable: true }))

@@ -70,7 +70,28 @@ export const requestClose = (dispatchLocal: DispatchLocal): void => {
   if (closeConfirmed || closing || asking) return
 
   asking = true
-  dispatchLocal('mt::ask-for-close', [])
+  try {
+    // Nothing answers during start-up: the guard is installed before the Vue
+    // app registers `mt::ask-for-close`, and a quit that lands in that window
+    // would otherwise latch `asking` and make the window unclosable.
+    if (dispatchLocal('mt::ask-for-close', []) === 0) abandonRequest()
+  } catch (err) {
+    // A handler that throws never replies either.
+    abandonRequest()
+    throw err
+  }
+}
+
+/**
+ * Give up on a question nobody answered.
+ *
+ * `asking` stays true until the renderer replies, so an unanswered request has
+ * to lower it — and tell Rust the quit it may have started is off — or every
+ * later close is vetoed forever.
+ */
+const abandonRequest = (): void => {
+  asking = false
+  cancelQuit().catch((err) => console.warn('[tauri-bridge] cannot cancel the pending quit:', err))
 }
 
 /**

@@ -46,9 +46,10 @@ async function boot(saved = false, pathname = '') {
     }
   })
   const dispatched: Array<{ name: string; args: unknown[] }> = []
-  const dispatch = (name: string, args: unknown[]) => {
+  const dispatch = (name: string, args: unknown[]): number => {
     dispatched.push({ name, args })
     handlers.get(name)?.({}, ...args)
+    return handlers.has(name) ? 1 : 0
   }
   const store = (await import('@/store/editor')).useEditorStore()
   const preferences = (await import('@/store/preferences')).usePreferencesStore()

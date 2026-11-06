@@ -471,11 +471,16 @@ type Listener = (event: unknown, ...args: unknown[]) => void
 const localListeners = new Map<string, Set<Listener>>()
 const listenerDisposers = new Map<string, Set<() => void>>()
 
-const dispatchLocal = (channel: string, args: unknown[]): void => {
+const dispatchLocal = (channel: string, args: unknown[]): number => {
   const listeners = localListeners.get(channel)
-  if (!listeners) return
+  if (!listeners) return 0
   // Copy first: a `once` listener removes itself from the live set.
-  for (const listener of [...listeners]) listener({}, ...args)
+  let delivered = 0
+  for (const listener of [...listeners]) {
+    listener({}, ...args)
+    delivered += 1
+  }
+  return delivered
 }
 
 const registerEvent = (channel: string, listener: Listener, once: boolean): (() => void) => {

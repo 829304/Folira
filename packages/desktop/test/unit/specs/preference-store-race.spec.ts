@@ -228,10 +228,12 @@ describe('preference store', () => {
     const store = usePreferencesStore()
 
     store.SEED_USER_PREFERENCE({ theme: null, hideScrollbar: false })
-    await bridge.sendStoredPreferences((channel: string, args: unknown[]) => {
+    await bridge.sendStoredPreferences((channel: string, args: unknown[]): number => {
       if (channel === 'mt::stored-user-preference') {
         store.LOAD_STORED_PREFERENCES(args[0] as Record<string, unknown>)
+        return 1
       }
+      return 0
     })
 
     expect(store.theme).toBe('dracula')

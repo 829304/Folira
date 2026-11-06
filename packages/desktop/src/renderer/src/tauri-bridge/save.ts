@@ -36,7 +36,7 @@ export interface UnsavedFile {
 }
 
 /** Emit a push event onto the bridge's local bus (index.ts owns the bus). */
-export type DispatchLocal = (channel: string, args: unknown[]) => void
+export type DispatchLocal = (channel: string, args: unknown[]) => number
 
 // Mirrors main/config.ts LINE_ENDING_REG.
 const LINE_ENDING_REG = /(?:\r\n|\n)/g

@@ -90,7 +90,7 @@ describe('announcing a preference change', () => {
     const { initPreferenceStores, pickFolderPreference } = await load()
     initPreferenceStores('/data')
 
-    await pickFolderPreference('imageFolderPath', () => {})
+    await pickFolderPreference('imageFolderPath', () => 0)
     await settle()
 
     expect(announced()).toEqual([{ imageFolderPath: '/picked/folder' }])

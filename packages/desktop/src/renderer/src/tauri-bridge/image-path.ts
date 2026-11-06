@@ -37,7 +37,9 @@ export const askForImageAutoPath = async(
 ): Promise<void> => {
   const { id, src, pathname } = (request ?? {}) as AutoPathRequest
   const channel = `mt::response-of-image-path-${id}`
-  const reply = (entries: DirEntry[]): void => dispatchLocal(channel, [entries])
+  const reply = (entries: DirEntry[]): void => {
+    dispatchLocal(channel, [entries])
+  }
 
   if (!id) return
   if (!src || typeof src !== 'string' || !pathname) {

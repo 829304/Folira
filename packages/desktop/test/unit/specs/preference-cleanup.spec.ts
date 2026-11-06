@@ -198,7 +198,7 @@ describe('cleaning a file written before the single theme', () => {
 
   it('never touches the user-data file', async() => {
     const store = await context({ uiTheme: 'graphite', autoSave: true }, { recent: [] })
-    await store.sendStoredUserData(() => undefined)
+    await store.sendStoredUserData(() => 0)
     await store.getStoredPreference('autoSave')
     await store.flushStoredPreferences()
     await vi.waitFor(() => expect(calls).toContain('prune_json_file'))
