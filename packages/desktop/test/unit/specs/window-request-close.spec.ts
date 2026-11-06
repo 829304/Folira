@@ -8,15 +8,20 @@ import type * as WindowBridge from '../../../src/renderer/src/tauri-bridge/windo
 const spies = vi.hoisted(() => ({
   invoke: vi.fn(async() => undefined),
   listeners: new Map<string, unknown>(),
-  onCloseRequested: vi.fn(async() => () => undefined)
+  onCloseRequested: vi.fn(async() => () => undefined),
+  destroy: vi.fn(async() => undefined),
+  watched: vi.fn((): string[] => []),
+  restore: vi.fn((_paths: string[]) => undefined)
 }))
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: spies.invoke }))
 vi.mock('@tauri-apps/api/window', () => ({
-  getCurrentWindow: () => ({ onCloseRequested: spies.onCloseRequested, destroy: vi.fn(async() => undefined) })
+  getCurrentWindow: () => ({ onCloseRequested: spies.onCloseRequested, destroy: spies.destroy })
 }))
 vi.mock('../../../src/renderer/src/tauri-bridge/open-files', () => ({
-  clearTrackedOpenFiles: vi.fn(() => spies.listeners.clear())
+  clearTrackedOpenFiles: vi.fn(() => spies.listeners.clear()),
+  trackedOpenFiles: spies.watched,
+  restoreTrackedOpenFiles: spies.restore
 }))
 vi.mock('../../../src/renderer/src/tauri-bridge/preferences', () => ({
   flushStoredPreferences: vi.fn(async() => undefined)
@@ -66,6 +71,17 @@ describe('requestClose', () => {
     expect(spies.invoke).toHaveBeenCalledWith('cancel_quit')
   })
 
+  it('puts the watched files back when the destroy fails', async() => {
+    const { closeWindow } = await loadWindow()
+    spies.destroy.mockRejectedValueOnce(new Error('WebView2 is busy'))
+    spies.watched.mockReturnValueOnce(['/note.md'])
+
+    await expect(closeWindow()).rejects.toThrow('WebView2 is busy')
+
+    // The window is still open and in use; without its watchers an external edit
+    // would never reach it again.
+    expect(spies.restore).toHaveBeenCalledWith(['/note.md'])
+  })
   it('lets the editor give the question back', async() => {
     const { abandonCloseRequest, requestClose } = await loadWindow()
     const dispatch = vi.fn(() => 1)

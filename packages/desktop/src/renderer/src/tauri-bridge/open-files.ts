@@ -80,6 +80,25 @@ export const untrackOpenFile = (pathname: string | null | undefined): void => {
   syncWatch()
 }
 
+/** The paths being watched, for a caller that may have to put them back. */
+export const trackedOpenFiles = (): string[] => [...openPaths]
+
+/**
+ * Watch the given paths again.
+ *
+ * A window that fails to go away is still in use, so the watchers it dropped on
+ * the way out have to come back; without them external edits and deletions stop
+ * reaching the editor even though the window is alive.
+ */
+export const restoreTrackedOpenFiles = (paths: string[]): void => {
+  let added = false
+  for (const pathname of paths) {
+    if (openPaths.has(pathname)) continue
+    openPaths.add(pathname)
+    added = true
+  }
+  if (added) syncWatch()
+}
 export const clearTrackedOpenFiles = (): void => {
   if (openPaths.size === 0) return
   openPaths.clear()
