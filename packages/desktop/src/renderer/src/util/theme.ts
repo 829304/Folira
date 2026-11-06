@@ -161,36 +161,61 @@ const ensureThemeStyle = (id: string): HTMLStyleElement => {
   return element
 }
 
-const reportThemeFailure = async(theme: string): Promise<void> => {
-  let title = 'Theme could not be applied'
-  let message = `Folira kept the previous theme: ${theme} could not be loaded.`
-  try {
-    const { t } = await import('@/i18n')
-    title = t('notifications.themeLoadFailedTitle')
-    message = t('notifications.themeLoadFailedMessage', { theme })
-  } catch (error) {
-    console.error('[theme] cannot localise the failure:', error)
+/**
+ * Announce a failure without holding the theme result behind it.
+ *
+ * `notify` resolves when the reader answers the notification, and a notification
+ * that just fades away never answers at all; awaiting it would keep
+ * `applyThemeSet` from ever returning. The announcement is therefore a detached
+ * side effect, and it asks `isCurrent` after each lazy import: a newer selection
+ * may own the window by then and has no business showing this failure.
+ *
+ * @internal Exported so the guard can be tested without racing the real import cache.
+ */
+export const announceThemeFailure = (theme: string, isCurrent: () => boolean): void => {
+  const announce = async(): Promise<void> => {
+    let title = 'Theme could not be applied'
+    let message = `Folira kept the previous theme: ${theme} could not be loaded.`
+    try {
+      const { t } = await import('@/i18n')
+      title = t('notifications.themeLoadFailedTitle')
+      message = t('notifications.themeLoadFailedMessage', { theme })
+    } catch (error) {
+      console.error('[theme] cannot localise the failure:', error)
+    }
+
+    if (!isCurrent()) return
+
+    try {
+      const notification = (await import('@/services/notification')).default
+      if (!isCurrent()) return
+      await notification.notify({ title, type: 'error', message })
+    } catch (error) {
+      console.error('[theme] cannot report the failure:', error)
+    }
   }
 
-  try {
-    const notification = (await import('@/services/notification')).default
-    await notification.notify({ title, type: 'error', message })
-  } catch (error) {
+  announce().catch((error: unknown) => {
     console.error('[theme] cannot report the failure:', error)
-  }
+  })
 }
 
 /**
  * End a failed attempt.
  *
- * The splash gate opens on failure as well as on success: a theme that cannot be
+ * A newer attempt that arrived while the sheets were loading owns the window
+ * now, so this one reports `superseded` and says nothing — and leaves the
+ * splash gate alone, because the winner has not committed its sheets yet.
+ * A failure that still owns the attempt opens the gate: a theme that cannot be
  * loaded would otherwise hold the window under the splash until the startup
- * deadline. A newer attempt that arrived while the failure was being reported
- * owns the gate now, so this one stays quiet and reports `superseded`.
+ * deadline.
  */
-function settleFailure(token: number): ThemeApplyResult {
+function settleFailure(theme: string, token: number): ThemeApplyResult {
   if (token !== themeApplyRequest) return 'superseded'
+
+  announceThemeFailure(theme, () => token === themeApplyRequest)
   settleSplashTheme()
+
   return 'failed'
 }
 
@@ -215,8 +240,7 @@ export const applyThemeSet = async(theme: string): Promise<ThemeApplyResult> => 
   } catch (error) {
     if (token !== themeApplyRequest) return 'superseded'
     console.error(`[theme] cannot load ${theme}:`, error)
-    await reportThemeFailure(theme)
-    return settleFailure(token)
+    return settleFailure(theme, token)
   }
 
   if (token !== themeApplyRequest) return 'superseded'
@@ -226,10 +250,7 @@ export const applyThemeSet = async(theme: string): Promise<ThemeApplyResult> => 
   // always required; syntax colours only when the manifest promises a palette,
   // because a null `prism` is a legitimate theme without highlighting.
   const wantsPrism = (getTheme(theme)?.prism ?? null) !== null
-  if (!ui.trim() || !md.trim() || (wantsPrism && !prism.trim())) {
-    await reportThemeFailure(theme)
-    return settleFailure(token)
-  }
+  if (!ui.trim() || !md.trim() || (wantsPrism && !prism.trim())) return settleFailure(theme, token)
 
   const uiEl = ensureThemeStyle(UI_THEME_STYLE_ID)
   const mdEl = ensureThemeStyle(MD_THEME_STYLE_ID)

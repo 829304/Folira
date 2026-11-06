@@ -80,7 +80,7 @@ describe('applying one complete theme', () => {
     expect(appliedTheme.value).toBe('light')
     expect(sheet(ids.ui)).toContain('--ui: light')
     expect(sheet(ids.md)).toContain('--md: light')
-    expect(notify).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(notify).toHaveBeenCalledTimes(1))
     expect(notify.mock.calls[0][0]).toMatchObject({ type: 'error' })
   })
 
@@ -101,7 +101,7 @@ describe('applying one complete theme', () => {
 
     expect(appliedTheme.value).toBeNull()
     expect(sheet(ids.ui)).toBe('')
-    expect(notify).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(notify).toHaveBeenCalledTimes(1))
   })
 
   it('accepts a theme that declares no syntax palette', async() => {
@@ -191,18 +191,40 @@ describe('applying one complete theme', () => {
     expect(splash.settle).toHaveBeenCalledTimes(1)
   })
 
-  it('reports superseded when a new attempt arrives while the failure is announced', async() => {
+  it('returns the failure without waiting for the notice to be answered', async() => {
     const { applyThemeSet } = await import('@/util/theme')
-    const announced = deferred()
-    notify.mockReturnValueOnce(announced.promise)
+    // A notification that fades away never answers; the failure must not wait.
+    notify.mockReturnValueOnce(new Promise(() => {}))
     loader.ui.mockRejectedValueOnce(new Error('broken'))
 
-    const first = applyThemeSet('dark')
-    await vi.waitFor(() => expect(notify).toHaveBeenCalledTimes(1))
+    await expect(applyThemeSet('dark')).resolves.toBe('failed')
 
-    await expect(applyThemeSet('light')).resolves.toBe('applied')
-    announced.release('')
-    await expect(first).resolves.toBe('superseded')
+    expect(splash.settle).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(notify).toHaveBeenCalledTimes(1))
+  })
+
+  it('asks whether the attempt is still current before showing the notice', async() => {
+    const { announceThemeFailure } = await import('@/util/theme')
+    const states = [true, false]
+
+    announceThemeFailure('dark', () => Boolean(states.shift()))
+    await vi.waitFor(() => expect(states).toHaveLength(0))
+
+    // The first answer came before the notice module was ready; the second one
+    // saw a newer theme and kept the failure quiet.
+    expect(notify).not.toHaveBeenCalled()
+  })
+
+  it('survives a rejected notice', async() => {
+    const { applyThemeSet } = await import('@/util/theme')
+    const warn = vi.spyOn(console, 'error').mockImplementation(() => {})
+    notify.mockRejectedValueOnce(new Error('no toast'))
+    loader.ui.mockRejectedValueOnce(new Error('broken'))
+
+    await expect(applyThemeSet('dark')).resolves.toBe('failed')
+    await vi.waitFor(() => expect(warn).toHaveBeenCalledWith('[theme] cannot report the failure:', expect.any(Error)))
+
+    warn.mockRestore()
   })
 
   it('applies again after a failure', async() => {
