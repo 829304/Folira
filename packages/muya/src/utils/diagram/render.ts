@@ -82,6 +82,12 @@ export function finalizeRenderedDiagram(target: HTMLElement, fallbackLabel: stri
     };
 }
 
+// flowchart.js and sequence-diagram-js draw through Raphael, which measures text
+// once the fonts are ready: `drawSVG` returns before the `<svg>` exists, so a
+// caller that moves the result straight away can move an empty container. The
+// render owners watch their own target for the element instead of waiting here,
+// because a renderer that never draws must not hold the call open.
+
 const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/;
 
 // Use a per-render init directive; global Mermaid initialization would race live previews.

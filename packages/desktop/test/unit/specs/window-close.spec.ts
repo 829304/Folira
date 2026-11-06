@@ -29,6 +29,18 @@ describe('closing a window', () => {
     expect(destroy).toBeGreaterThan(flush)
   })
 
+  it('vetoes every close request until the last one actually destroys', () => {
+    // The first request starts the close and then waits on the write; a second
+    // request in that window must still be vetoed. Returning without
+    // `preventDefault()` let Tauri destroy the webview with the patch unsent.
+    expect(bridgeWindow).toContain('closing ??=')
+    const flush = bridgeWindow.indexOf('await writePendingPreferences()')
+    const confirmed = bridgeWindow.indexOf('closeConfirmed = true')
+    const destroy = bridgeWindow.indexOf('await getCurrentWindow().destroy()')
+    expect(confirmed).toBeGreaterThan(flush)
+    expect(destroy).toBeGreaterThan(confirmed)
+  })
+
   it('still asks the editor about unsaved files before closing it', () => {
     expect(bridgeWindow).toContain("windowType !== 'editor'")
     expect(bridgeWindow).toContain("dispatchLocal('mt::ask-for-close', [])")

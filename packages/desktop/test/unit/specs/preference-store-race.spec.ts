@@ -64,7 +64,7 @@ describe('preference store', () => {
     expect(writes, 'the patch should have been written').toHaveLength(1)
     expect(writes[0][1]).toEqual({
       path: '/user-data/preferences.json',
-      patch: { preferencesVersion: 2, sideBarVisibility: true }
+      patch: { sideBarVisibility: true }
     })
   })
 
@@ -122,7 +122,6 @@ describe('preference store', () => {
     expect(merge).toHaveBeenCalledTimes(2)
     expect((merge.mock.calls[1][1] as { patch: object }).patch).toEqual({
       autoSave: false,
-      preferencesVersion: 2,
       fontSize: 20
     })
   })
@@ -147,10 +146,7 @@ describe('preference store', () => {
 
     const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
     expect(writes, 'the close should have written the edit').toHaveLength(1)
-    expect((writes[0][1] as { patch: object }).patch).toEqual({
-      followSystemTheme: false,
-      preferencesVersion: 2
-    })
+    expect((writes[0][1] as { patch: object }).patch).toEqual({ followSystemTheme: false })
 
     readRelease.release(JSON.stringify(STORED))
     await editing
@@ -208,8 +204,8 @@ describe('preference store', () => {
     })
 
     const bridge = await loadModule()
-    // The stored bag predates the version marker, so loading it writes the
-    // migrated copy back; the shell this test lacks only needs to swallow it.
+    // The store subscribes to the preference channels on import; the shell this
+    // test lacks only has to swallow that.
     ;(window as unknown as {
       electron: { ipcRenderer: { send: () => void; on: () => void } }
     }).electron = {
@@ -231,5 +227,56 @@ describe('preference store', () => {
 
     expect(store.theme).toBe('dracula')
     expect(store.fontSize).toBe(18)
+  })
+
+  it('keeps the defaults when the window URL carries no font', async() => {
+    // A missing parameter is a `null`, not a request to clear the field, and a
+    // first run has no file to restore it from. The URL also hands numbers over
+    // as text, which would leave `codeFontSize` a string for every comparison
+    // downstream.
+    vi.useRealTimers()
+    const pinia = await import('pinia')
+    pinia.setActivePinia(pinia.createPinia())
+    const { usePreferencesStore } = await import('../../../src/renderer/src/store/preferences')
+    const store = usePreferencesStore()
+
+    store.SEED_USER_PREFERENCE({
+      theme: null,
+      codeFontFamily: null,
+      codeFontSize: null,
+      hideScrollbar: false
+    })
+    store.LOAD_STORED_PREFERENCES({})
+
+    expect(store.codeFontFamily).toBe('DejaVu Sans Mono')
+    expect(store.codeFontSize).toBe(14)
+
+    store.SEED_USER_PREFERENCE({ codeFontSize: '17', codeFontFamily: 'Consolas' })
+
+    expect(store.codeFontSize).toBe(17)
+    expect(store.codeFontFamily).toBe('Consolas')
+  })
+
+  it('drops a queued value another window has since changed', async() => {
+    // The settings window queues `autoSave: true`, the editor turns it off and
+    // writes `false` first. The queued `true` must not land on top of it.
+    invoke.mockImplementation((command: string) => {
+      if (command === 'path_exists') return Promise.resolve(true)
+      if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
+      if (command === 'merge_json_file') return Promise.resolve(undefined)
+      return Promise.resolve(undefined)
+    })
+
+    const { setStoredPreferences, rememberStoredPreferences, flushStoredPreferences } =
+      await loadModule()
+
+    // Queued but not yet written: the debounce is what the second window beats.
+    const queued = setStoredPreferences({ autoSave: true })
+    rememberStoredPreferences({ autoSave: false })
+    await flushStoredPreferences()
+    await queued
+
+    const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
+    expect(writes).toHaveLength(0)
   })
 })

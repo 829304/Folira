@@ -20,9 +20,27 @@ import {
   type UnsavedFile
 } from './save'
 
-// Set once the renderer has agreed to close, so the second pass through
-// `onCloseRequested` is allowed through instead of asking again.
+// Set only once the window is about to be destroyed, so every close request
+// that arrives before that is still vetoed.
 let closeConfirmed = false
+
+// The close that is already under way. A second request during the flush must
+// wait for it rather than start over.
+let closing: Promise<void> | null = null
+
+const flushAndDestroy = (): Promise<void> => {
+  closing ??= (async() => {
+    clearTrackedOpenFiles()
+    await writePendingPreferences()
+    await rememberWindowState()
+    // A request that lands between the flush and this line would otherwise
+    // destroy the window without ever seeing the destroyed flag set.
+    closeConfirmed = true
+    await getCurrentWindow().destroy()
+  })()
+
+  return closing
+}
 
 /**
  * Only the editor answers `mt::ask-for-close` — it is the editor store that
@@ -35,10 +53,10 @@ export const installCloseGuard = (dispatchLocal: DispatchLocal, windowType: stri
     getCurrentWindow()
       .onCloseRequested(async(event) => {
         if (closeConfirmed) return
-        closeConfirmed = true
+        // Veto first, then flush: a second request while the write is in flight
+        // would otherwise let Tauri destroy the window with the patch unsent.
         event.preventDefault()
-        await writePendingPreferences()
-        await getCurrentWindow().destroy()
+        await flushAndDestroy()
       })
       .catch((err) => console.warn('[tauri-bridge] cannot guard window close:', err))
     return
@@ -48,6 +66,9 @@ export const installCloseGuard = (dispatchLocal: DispatchLocal, windowType: stri
     .onCloseRequested((event) => {
       if (closeConfirmed) return
       event.preventDefault()
+      // The renderer is already flushing a close it agreed to; asking again
+      // would reopen the save dialog on a window that is on its way out.
+      if (closing) return
       dispatchLocal('mt::ask-for-close', [])
     })
     .catch((err) => console.warn('[tauri-bridge] cannot guard window close:', err))
@@ -79,11 +100,7 @@ const rememberWindowState = async(): Promise<void> => {
 }
 
 export const closeWindow = async(): Promise<void> => {
-  closeConfirmed = true
-  clearTrackedOpenFiles()
-  await writePendingPreferences()
-  await rememberWindowState()
-  await getCurrentWindow().destroy()
+  await flushAndDestroy()
 }
 
 /**

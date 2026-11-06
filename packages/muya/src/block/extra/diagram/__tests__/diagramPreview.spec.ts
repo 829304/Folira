@@ -147,7 +147,13 @@ describe('diagramPreview — clickHandler routing', () => {
     });
 
     it('resets preview eligibility during loading and after failure or empty content', async () => {
-        loadRendererMock.mockResolvedValue({ parse: () => ({ drawSVG: vi.fn() }) });
+        loadRendererMock.mockResolvedValue({
+            parse: () => ({
+                drawSVG: (target: HTMLElement) => {
+                    target.innerHTML = '<svg width="10" height="10"></svg>';
+                },
+            }),
+        });
         const { preview, muya } = makePreview('', 'flowchart');
         const emit = vi.fn();
         Object.assign(muya, { isReadOnly: true, eventCenter: { emit } });
@@ -407,5 +413,53 @@ describe('diagramPreview — overlapping updates', () => {
         expect(preview.domNode!.querySelector(`.${CLASS_NAMES.MU_EMPTY}`)).not.toBeNull();
         expect(preview.domNode!.querySelector('svg')).toBeNull();
         expect(emit).not.toHaveBeenCalled();
+    });
+});
+
+// Raphael measures text once the fonts are ready, so `drawSVG` can return before
+// the `<svg>` exists. Publishing the staging node straight away moved an empty
+// container away and left the drawing in a node nothing rendered.
+describe('diagramPreview — drawing deferred by font loading', () => {
+    it('publishes the svg once it appears after drawSVG returned', async () => {
+        loadRendererMock.mockResolvedValue({
+            parse: () => ({
+                drawSVG: (target: HTMLElement) => {
+                    setTimeout(() => {
+                        target.innerHTML = '<svg width="10" height="10"><title>Late</title></svg>';
+                    }, 0);
+                },
+            }),
+        });
+
+        const { preview } = makePreview('st=>start: go', 'flowchart');
+        await preview.update('st=>start: go');
+
+        expect(preview.domNode!.querySelector('svg')).toBeNull();
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        expect(preview.domNode!.querySelector('title')?.textContent).toBe('Late');
+        expect(preview.domNode!.getAttribute('aria-label')).toBe('Late');
+    });
+
+    it('drops the late drawing when a newer update has taken over', async () => {
+        loadRendererMock.mockResolvedValue({
+            parse: () => ({
+                drawSVG: (target: HTMLElement) => {
+                    setTimeout(() => {
+                        target.innerHTML = '<svg width="10" height="10"><title>Old</title></svg>';
+                    }, 0);
+                },
+            }),
+        });
+
+        const { preview } = makePreview('', 'flowchart');
+        await preview.update('old');
+        await preview.update('');
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        expect(preview.domNode!.querySelector('svg')).toBeNull();
+        expect(preview.domNode!.querySelector(`.${CLASS_NAMES.MU_EMPTY}`)).not.toBeNull();
     });
 });

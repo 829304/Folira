@@ -13,7 +13,6 @@ import { invoke } from '@tauri-apps/api/core'
 import { emit } from '@tauri-apps/api/event'
 import { open as showOpenDialog } from '@tauri-apps/plugin-dialog'
 import pathe from 'pathe'
-import { PREFERENCES_VERSION, PREFERENCES_VERSION_KEY } from '@shared/types/preferences'
 
 type Bag = Record<string, unknown>
 
@@ -190,9 +189,9 @@ export const announcePreferences = (patch: Record<string, unknown> | undefined):
 /**
  * Answer `mt::ask-for-user-preference` / `mt::ask-for-user-data`.
  *
- * These are the files as stored, which is the only payload that may predate the
- * two-axis split, so they travel on their own channel: the store migrates them
- * on arrival and must never do that to a patch from `announcePreferences`.
+ * These are the files as stored, for a window that has not read them yet; a
+ * patch from `announcePreferences` carries one edit and travels on a channel of
+ * its own so the store can tell the two apart.
  */
 export const sendStoredPreferences = async(dispatchLocal: DispatchLocal): Promise<void> => {
   dispatchLocal('mt::stored-user-preference', [await read(preferences)])
@@ -202,17 +201,8 @@ export const sendStoredUserData = async(dispatchLocal: DispatchLocal): Promise<v
   dispatchLocal('mt::stored-user-data', [await read(userData)])
 }
 
-/**
- * Persist a preference patch.
- *
- * Every write carries the file version, so a file this build has touched can
- * always be told apart from one that predates the two-axis split.
- */
 export const setStoredPreferences = (patch: unknown): Promise<void> =>
-  merge(preferences, {
-    [PREFERENCES_VERSION_KEY]: PREFERENCES_VERSION,
-    ...(patch as Record<string, unknown>)
-  })
+  merge(preferences, patch)
 
 export const setStoredUserData = (patch: unknown): Promise<void> => merge(userData, patch)
 
@@ -243,7 +233,20 @@ const drain = async(store: Store): Promise<void> => {
  */
 export const rememberStoredPreferences = (patch: unknown): void => {
   if (!patch || typeof patch !== 'object') return
-  Object.assign(preferences.values, patch as Bag)
+  const announced = patch as Bag
+
+  // A key this window still owed with an older value is stale: writing it later
+  // would put that value back after the newer one had already landed. An
+  // announcement carrying the same value — the sender's own echo — leaves the
+  // queued write alone, or the edit would never reach the disk. Only the pending
+  // copy is dropped; a write already on the wire cannot be recalled.
+  Object.keys(announced).forEach((key) => {
+    if (key in preferences.pending && preferences.pending[key] !== announced[key]) {
+      delete preferences.pending[key]
+    }
+  })
+
+  Object.assign(preferences.values, announced)
 }
 
 /** Read one preference without waiting for a round trip through the store. */

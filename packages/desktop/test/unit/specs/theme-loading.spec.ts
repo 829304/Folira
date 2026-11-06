@@ -45,7 +45,7 @@ describe('theme preference arrival and stylesheet completion', () => {
     await settle()
     css.ui.mockResolvedValue(':root { --ui: stored; }')
     const { store, vue } = await startup()
-    store.LOAD_STORED_PREFERENCES({ preferencesVersion: 2, followSystemTheme: false, theme: 'light' })
+    store.LOAD_STORED_PREFERENCES({ followSystemTheme: false, theme: 'light' })
     await vue.nextTick()
     await settle()
     expect(document.getElementById('ag-theme-ui')?.innerHTML).toContain('stored')
@@ -54,7 +54,7 @@ describe('theme preference arrival and stylesheet completion', () => {
   it('applies loaded preferences even when resolving the same default theme ID', async() => {
     const { store, vue } = await startup()
     expect(css.ui).not.toHaveBeenCalled()
-    store.LOAD_STORED_PREFERENCES({ preferencesVersion: 2 })
+    store.LOAD_STORED_PREFERENCES({})
     await vue.nextTick()
     await settle()
     expect(css.ui).toHaveBeenCalledExactlyOnceWith('light')

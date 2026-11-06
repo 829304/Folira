@@ -30,7 +30,7 @@ async function context() {
 }
 beforeEach(() => {
   vi.useFakeTimers()
-  disk = { '/data/preferences.json': { preferencesVersion: 2, autoSave: false, fontSize: 16 }, '/data/dataCenter.json': {} }
+  disk = { '/data/preferences.json': { autoSave: false, fontSize: 16 }, '/data/dataCenter.json': {} }
   destroy.mockReset().mockResolvedValue(undefined)
   emit.mockReset().mockResolvedValue(undefined)
   invoke.mockReset().mockImplementation(async(command: string, args: { path: string; patch?: Bag }) => {
@@ -49,7 +49,7 @@ describe('independent preference contexts and actual close guard', () => {
     await editor.setStoredPreferences({ sideBarVisibility: true })
     await settings.setStoredPreferences({ theme: 'dracula' })
     await Promise.all([editor.flushStoredPreferences(), settings.flushStoredPreferences()])
-    expect(disk['/data/preferences.json']).toEqual({ preferencesVersion: 2, autoSave: false, fontSize: 16, sideBarVisibility: true, theme: 'dracula' })
+    expect(disk['/data/preferences.json']).toEqual({ autoSave: false, fontSize: 16, sideBarVisibility: true, theme: 'dracula' })
   })
 
   it('updates both independently loaded caches through a global announcement without echo writes', async() => {

@@ -10,6 +10,10 @@ import Parent from '../../base/parent';
 
 const debug = logger('diagramPreview:');
 
+// How long an offscreen staging node waits for the drawing Raphael defers until
+// the fonts are ready.
+const DRAWING_TIMEOUT = 2000;
+
 // Offscreen but laid out, so renderers that measure their container (Vega sizes
 // itself from it) still get a width. `visibility` would not affect layout, but
 // the node must be in the document for fonts and measurements to resolve.
@@ -27,6 +31,7 @@ class DiagramPreview extends Parent {
     private _type: string;
     private _rendered = false;
     private _cancelFinalize: (() => void) | null = null;
+    private _cancelPublish: (() => void) | null = null;
     private _request = 0;
     static override blockName = 'diagram-preview';
 
@@ -103,6 +108,8 @@ class DiagramPreview extends Parent {
         // describe whatever this one puts in its place.
         this._cancelFinalize?.();
         this._cancelFinalize = null;
+        this._cancelPublish?.();
+        this._cancelPublish = null;
         this.domNode!.removeAttribute('role');
         this.domNode!.removeAttribute('aria-label');
 
@@ -150,16 +157,63 @@ class DiagramPreview extends Parent {
                 return;
             }
 
-            this.domNode!.replaceChildren(...Array.from(staging.childNodes));
-            staging.remove();
-            this._rendered = true;
-            this._cancelFinalize = finalizeRenderedDiagram(this.domNode!, i18n.t('Diagram'));
+            this._publishWhenDrawn(request, staging, i18n.t('Diagram'));
         }
         else {
             this.domNode!.innerHTML = `<div class="${CLASS_NAMES.MU_EMPTY}">&lt; ${i18n.t(
                 'Empty Diagram',
             )} &gt;</div>`;
         }
+    }
+
+    /**
+     * Move a finished drawing into the preview.
+     *
+     * flowchart.js and sequence-diagram-js draw through Raphael, which measures
+     * text once the fonts are ready: `drawSVG` can return before the `<svg>`
+     * exists. Publishing then would move an empty container away and leave the
+     * late drawing in a node nothing shows, so the staging node stays attached
+     * until the element arrives.
+     */
+    private _publish(request: number, staging: HTMLElement, label: string): void {
+        if (request !== this._request) {
+            staging.remove();
+            return;
+        }
+
+        this.domNode!.replaceChildren(...Array.from(staging.childNodes));
+        staging.remove();
+        this._rendered = true;
+        this._cancelFinalize = finalizeRenderedDiagram(this.domNode!, label);
+    }
+
+    private _publishWhenDrawn(request: number, staging: HTMLElement, label: string): void {
+        const drawn = () => staging.querySelector('svg, img') != null;
+
+        if (drawn()) {
+            this._publish(request, staging, label);
+            return;
+        }
+
+        let stop = () => {};
+        const observer = new MutationObserver(() => {
+            if (!drawn())
+                return;
+            stop();
+            this._publish(request, staging, label);
+        });
+        // A renderer that never draws must not keep the offscreen node forever.
+        const timer = setTimeout(() => {
+            stop();
+            if (request === this._request)
+                staging.remove();
+        }, DRAWING_TIMEOUT);
+        stop = () => {
+            observer.disconnect();
+            clearTimeout(timer);
+        };
+        observer.observe(staging, { childList: true, subtree: true });
+        this._cancelPublish = stop;
     }
 }
 

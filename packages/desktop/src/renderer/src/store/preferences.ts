@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { PREFERENCES_VERSION, PREFERENCES_VERSION_KEY } from '@shared/types/preferences'
 import bus from '../bus'
 import { setLanguage } from '../i18n'
 import { rememberStoredPreferences } from '../tauri-bridge/preferences'
@@ -154,25 +153,6 @@ interface ModeTogglePayload {
   checked: boolean
 }
 
-/**
- * Bring a stored preferences bag up to the two-axis shape.
- *
- * A file written before the split only knows `theme`. Turning on "follow the
- * system" for it would repaint those users on a dark OS before they ever saw the
- * new setting, so the single theme stays until the user saves a pair of its own.
- * The marker is the file version: theme fields cannot stand in for it, because a
- * user who never opened the theme page stores none of them.
- */
-export function migrateLegacyThemeFields(raw: Record<string, unknown>): Record<string, unknown> {
-  // A first run has no file; the bridge hands over an empty bag. Nothing there
-  // predates the split, and turning the system theme off would override the
-  // default for a user who has never stored a theme.
-  if (Object.keys(raw).length === 0) return raw
-  if (raw[PREFERENCES_VERSION_KEY] === PREFERENCES_VERSION) return raw
-
-  return { ...raw, followSystemTheme: false }
-}
-
 export const usePreferencesStore = defineStore('preferences', {
   state: (): PreferencesState => ({
     autoSave: false,
@@ -292,26 +272,12 @@ export const usePreferencesStore = defineStore('preferences', {
     /**
      * Apply the bag read from `preferences.json`.
      *
-     * Only the stored file can predate the two-axis split; a broadcast patch
-     * carries one field the user just changed and must never be mistaken for a
-     * legacy file.
+     * Only a stored bag means the file has been read; a broadcast patch from
+     * another window must not count as the first load.
      */
     LOAD_STORED_PREFERENCES(preference: Partial<PreferencesState> | Record<string, unknown>): void {
-      const raw = (preference ?? {}) as Record<string, unknown>
-      const migrated = migrateLegacyThemeFields(raw)
-
-      // Only a stored bag means the file has been read; a broadcast patch from
-      // another window must not count as the first load.
       this.preferencesLoaded = true
-      this.APPLY_PREFERENCE(migrated as Partial<PreferencesState>)
-
-      // Writing the migrated bag back is what lets the next launch skip the
-      // migration. Without it the file keeps its old shape and is migrated
-      // again on every start, so the store and the disk disagree until the user
-      // happens to change something else.
-      if (migrated !== raw) {
-        window.electron.ipcRenderer.send('mt::set-user-preference', migrated)
-      }
+      this.APPLY_PREFERENCE((preference ?? {}) as Partial<PreferencesState>)
     },
 
     /**
@@ -360,10 +326,30 @@ export const usePreferencesStore = defineStore('preferences', {
      * Apply the values the window URL was opened with.
      *
      * They only exist to paint the first frame from the previous session's
-     * theme; the stored file replaces all of them moments later.
+     * theme; the stored file replaces all of them moments later. A missing
+     * parameter arrives as `null`, and the URL carries numbers as text, so this
+     * has to drop what the store would only take as a regression.
      */
     SEED_USER_PREFERENCE(startup: Partial<PreferencesState> | Record<string, unknown>): void {
-      this.APPLY_PREFERENCE(startup)
+      const incoming = startup as Record<string, unknown>
+      const kept: Record<string, unknown> = {}
+
+      Object.keys(incoming).forEach((key) => {
+        const value = incoming[key]
+        if (value === null || typeof value === 'undefined') return
+
+        const fallback = (this as unknown as Record<string, unknown>)[key]
+        if (typeof fallback === 'number') {
+          const parsed = typeof value === 'string' ? Number(value) : value
+          if (typeof parsed !== 'number' || !Number.isFinite(parsed)) return
+          kept[key] = parsed
+          return
+        }
+
+        kept[key] = value
+      })
+
+      this.APPLY_PREFERENCE(kept)
     },
 
     SET_USER_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
