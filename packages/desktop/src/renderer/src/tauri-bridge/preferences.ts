@@ -15,6 +15,7 @@ import { open as showOpenDialog } from '@tauri-apps/plugin-dialog'
 import pathe from 'pathe'
 
 import { DEPRECATED_PREFERENCE_KEYS } from '@shared/types/preferences'
+import { migrateLegacyThemeId } from '@/util/themeSelection'
 
 type Bag = Record<string, unknown>
 
@@ -102,9 +103,22 @@ const loadFromDisk = async(store: Store): Promise<Bag> => {
         store.values = { ...(parsed as Bag), ...store.values }
 
         // A file from a build before the single-theme switch still carries the
-        // old pair. Drop it from this window's bag now, so nothing reads it, and
-        // rewrite the file without it once the queued writes have landed.
+        // old pair, or the older "follow the system" trio. Turn it into the one
+        // id the new store understands before dropping the keys: once the prune
+        // rewrites the file the old fields are gone and the choice they encoded
+        // cannot be recovered.
         const legacy = DEPRECATED_PREFERENCE_KEYS.filter(key => key in (parsed as Bag))
+        const migrated = legacy.length > 0 ? migrateLegacyThemeId(parsed as Bag) : null
+        if (migrated !== null) {
+          // Stamp it like a normal edit so a broadcast for the same key from the
+          // other window is ordered against it instead of winning by default.
+          const at = nextStamp()
+          store.values.theme = migrated
+          store.pending.theme = migrated
+          store.pendingAt.theme = at
+          store.versions.theme = at
+          scheduleWrite(store)
+        }
         if (legacy.length > 0) {
           legacy.forEach((key) => { delete store.values[key] })
           queuePrune(store, legacy)

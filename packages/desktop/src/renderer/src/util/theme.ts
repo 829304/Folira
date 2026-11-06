@@ -153,10 +153,14 @@ function settleFailure(theme: string, token: number): ThemeApplyResult {
  * The token is taken before the cache check so that re-selecting a theme still
  * invalidates an attempt that is in flight for a different one.
  */
-export const applyThemeSet = async(theme: string): Promise<ThemeApplyResult> => {
+export const applyThemeSet = async(theme: string, options: { settleSplash?: boolean } = {}): Promise<ThemeApplyResult> => {
   const token = ++themeApplyRequest
+  const settles = options.settleSplash !== false
 
-  if (appliedTheme.value === theme && appliedSheets) return 'applied'
+  if (appliedTheme.value === theme && appliedSheets) {
+    if (settles) settleSplashTheme()
+    return 'applied'
+  }
 
   let ui = ''
   let md = ''
@@ -195,8 +199,11 @@ export const applyThemeSet = async(theme: string): Promise<ThemeApplyResult> => 
   // Mirror the committed id for the next first paint. Recorded after the commit
   // so the cache can never name a theme that failed to load.
   rememberTheme(theme)
-  // The splash may leave as soon as the first palette is on screen.
-  settleSplashTheme()
+  // The splash may leave as soon as the first palette is on screen, but only
+  // when this commit is the stored theme: the first frame can be a guess from
+  // the cache, and revealing the window on a guess lets the real theme swap in
+  // afterwards, which reads as a flash.
+  if (settles) settleSplashTheme()
 
   return 'applied'
 }

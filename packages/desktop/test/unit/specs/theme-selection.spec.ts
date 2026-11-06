@@ -1,10 +1,11 @@
 import { resolve } from 'path'
 import { readFileSync } from 'fs'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import {
   DEFAULT_THEME_ID,
   firstPaintTheme,
+  migrateLegacyThemeId,
   resolveThemeId
 } from '@/util/themeSelection'
 import { THEMES, getTheme } from '@/util/themeColor'
@@ -130,5 +131,56 @@ describe('first frame', () => {
     expect(schema.theme?.description, 'theme is hidden from the search index').not.toMatch(
       /--internal$/
     )
+  })
+})
+
+describe('migrating the theme an older build stored', () => {
+  const original = window.matchMedia
+
+  const prefersDark = (dark: boolean): void => {
+    Object.assign(window, {
+      matchMedia: (query: string) => ({ matches: dark && query.includes('dark'), media: query })
+    })
+  }
+
+  afterEach(() => {
+    Object.assign(window, { matchMedia: original })
+  })
+
+  it('keeps the look of a file that followed the system', () => {
+    prefersDark(true)
+    expect(migrateLegacyThemeId({
+      theme: 'light',
+      followSystemTheme: true,
+      lightModeTheme: 'light',
+      darkModeTheme: 'one-dark'
+    })).toBe('one-dark')
+  })
+
+  it('reads the light half when the system asks for a light interface', () => {
+    prefersDark(false)
+    expect(migrateLegacyThemeId({
+      theme: 'light',
+      followSystemTheme: true,
+      lightModeTheme: 'graphite',
+      darkModeTheme: 'one-dark'
+    })).toBe('graphite')
+  })
+
+  it('keeps an explicit choice older builds stored in theme', () => {
+    expect(migrateLegacyThemeId({
+      theme: 'dracula',
+      followSystemTheme: false,
+      lightModeTheme: 'light',
+      darkModeTheme: 'dark'
+    })).toBe('dracula')
+  })
+
+  it('reads the Markdown half of a file from the two-axis builds', () => {
+    expect(migrateLegacyThemeId({ uiTheme: 'graphite', mdTheme: 'nord' })).toBe('nord')
+  })
+
+  it('leaves a file that already speaks the single-theme format alone', () => {
+    expect(migrateLegacyThemeId({ theme: 'nord', autoSave: true })).toBeNull()
   })
 })

@@ -15,6 +15,6 @@ export function useAppliedTheme(resolved: Ref<string>, loaded: Ref<boolean>): vo
   const cached = window.marktext?.initialTheme ?? null
 
   watch([resolved, loaded], ([theme, ready]) => {
-    applyThemeSet(firstPaintTheme(theme, ready, cached))
+    applyThemeSet(firstPaintTheme(theme, ready, cached), { settleSplash: ready })
   }, { immediate: true })
 }

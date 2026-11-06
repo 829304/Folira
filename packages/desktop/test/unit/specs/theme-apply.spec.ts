@@ -70,6 +70,16 @@ describe('applying one complete theme', () => {
     expect(splash.settle).toHaveBeenCalledTimes(1)
   })
 
+  it('does not lift the splash for a guess the file has not confirmed', async() => {
+    const { applyThemeSet } = await import('@/util/theme')
+
+    await expect(applyThemeSet('dark', { settleSplash: false })).resolves.toBe('applied')
+
+    expect(splash.settle, 'a cached guess must not reveal the window').not.toHaveBeenCalled()
+
+    await applyThemeSet('light')
+    expect(splash.settle).toHaveBeenCalledTimes(1)
+  })
   it('leaves the previous theme in place when a sheet cannot be imported', async() => {
     const { applyThemeSet, appliedTheme } = await import('@/util/theme')
     await applyThemeSet('light')

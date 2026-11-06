@@ -150,12 +150,12 @@ describe('preference store', () => {
     const { setStoredPreferences, flushStoredPreferences } = await loadModule()
 
     // The read never resolves during the close: the write must not need it.
-    const editing = setStoredPreferences({ followSystemTheme: false })
+    const editing = setStoredPreferences({ autoSave: false })
     await flushStoredPreferences()
 
     const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
     expect(writes, 'the close should have written the edit').toHaveLength(1)
-    expect((writes[0][1] as { patch: object }).patch).toEqual({ followSystemTheme: false })
+    expect((writes[0][1] as { patch: object }).patch).toEqual({ autoSave: false })
 
     readRelease.release(JSON.stringify(STORED))
     await editing

@@ -139,3 +139,30 @@ describe('cleaning preferences a previous build wrote', () => {
     expect(closed).toBe(true)
   })
 })
+
+describe('migrating a file that asked to follow the system', () => {
+  const original = window.matchMedia
+
+  afterEach(() => {
+    Object.assign(window, { matchMedia: original })
+  })
+
+  it('writes the theme the old file was showing before dropping its keys', async() => {
+    Object.assign(window, {
+      matchMedia: (query: string) => ({ matches: query.includes('dark'), media: query })
+    })
+    const store = await context({
+      theme: 'light',
+      followSystemTheme: true,
+      lightModeTheme: 'light',
+      darkModeTheme: 'one-dark'
+    })
+
+    // Reading the file is what notices the legacy keys on a real launch.
+    await store.getStoredPreference('autoSave')
+    await store.flushStoredPreferences()
+    await vi.waitFor(() => expect(calls).toContain('prune_json_file'))
+
+    expect(disk).toEqual({ theme: 'one-dark' })
+  })
+})

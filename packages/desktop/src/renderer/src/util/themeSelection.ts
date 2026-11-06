@@ -31,3 +31,50 @@ export function firstPaintTheme(resolved: string, loaded: boolean, cached?: stri
 
   return cached && getTheme(cached) ? cached : resolved
 }
+
+/** Whether the system asks for a dark interface right now. */
+const systemPrefersDark = (): boolean => window.matchMedia?.('(prefers-color-scheme: dark)').matches === true
+
+/**
+ * The theme a preferences file from an older build asked for, or `null` when the
+ * file already speaks the single-theme format.
+ *
+ * Files written before the themes were merged carry the pair fields (`uiTheme`,
+ * `mdTheme`) or the older "follow the system" trio (`followSystemTheme`,
+ * `lightModeTheme`, `darkModeTheme`). The old renderer decided the look from
+ * those fields — following the system meant picking one of the two pairs at
+ * load time — so reading them here, once, keeps the upgrade from silently
+ * brightening a dark desktop. The caller writes the result as `theme` before
+ * the deprecated keys are pruned: after the prune the information is gone.
+ */
+export function migrateLegacyThemeId(bag: Record<string, unknown>): string | null {
+  const legacyKeys = ['followSystemTheme', 'lightModeTheme', 'darkModeTheme', 'uiTheme', 'mdTheme']
+  const speaksLegacy = legacyKeys.some(key => key in bag) || bag.theme === 'system'
+
+  if (!speaksLegacy) return null
+
+  const known = (id: unknown): string | null => (typeof id === 'string' && getTheme(id) ? id : null)
+  const pick = (id: unknown, appearance: 'light' | 'dark'): string => known(id) ?? (getTheme(appearance) ? appearance : DEFAULT_THEME_ID)
+  const follows = bag.followSystemTheme === true || bag.theme === 'system'
+
+  if (follows) {
+    const appearance = systemPrefersDark() ? 'dark' : 'light'
+
+    return pick(appearance === 'dark' ? bag.darkModeTheme : bag.lightModeTheme, appearance)
+  }
+
+  // An explicit choice older builds stored in `theme` is still the id this
+  // build wants; the pair fields only describe the look for files from the
+  // short-lived two-axis builds, which never shipped.
+  const explicit = known(bag.theme)
+
+  if (explicit) return explicit
+
+  const pair = known(bag.mdTheme) ?? known(bag.uiTheme)
+
+  if (pair) return pick(pair, getTheme(pair)?.appearance ?? 'light')
+
+  if ('followSystemTheme' in bag) return pick(bag.theme, 'light')
+
+  return null
+}

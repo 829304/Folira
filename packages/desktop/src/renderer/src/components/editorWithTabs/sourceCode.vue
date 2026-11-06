@@ -394,6 +394,14 @@ onMounted(() => {
   editor.value = codeMirrorInstance
   tabId.value = id
 
+  // The palette is committed once the theme's sheets are on screen, which can
+  // happen after this instance exists — a source tab opened while the first
+  // theme is still loading must still end up with the right skin.
+  watch(mdTheme, (theme) => {
+    const skin = railscastsThemes.includes(theme) ? 'railscasts' : oneDarkThemes.includes(theme) ? 'one-dark' : 'default'
+    codeMirrorInstance.setOption('theme', skin)
+  })
+
   listenChange()
 })
 
