@@ -80,6 +80,16 @@ describe('applying one complete theme', () => {
     await applyThemeSet('light')
     expect(splash.settle).toHaveBeenCalledTimes(1)
   })
+  it('does not announce a guess that fails before the file arrives', async() => {
+    const { applyThemeSet } = await import('@/util/theme')
+    loader.md.mockRejectedValueOnce(new Error('network'))
+
+    await expect(applyThemeSet('dark', { settleSplash: false })).resolves.toBe('failed')
+
+    expect(splash.settle, 'the real theme has not been tried yet').not.toHaveBeenCalled()
+    expect(notify, 'a guess is not worth a notice').not.toHaveBeenCalled()
+  })
+
   it('leaves the previous theme in place when a sheet cannot be imported', async() => {
     const { applyThemeSet, appliedTheme } = await import('@/util/theme')
     await applyThemeSet('light')

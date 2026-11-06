@@ -15,24 +15,32 @@ const deferred = () => {
 }
 
 let disk: Bag
+let userData: Bag
+let exists: boolean
 const calls: string[] = []
+
+const USER_DATA = '/data/dataCenter.json'
 
 beforeEach(() => {
   vi.resetModules()
   vi.useFakeTimers()
   disk = {}
+  userData = {}
+  exists = true
   calls.length = 0
+  localStorage.clear()
   emit.mockReset().mockResolvedValue(undefined)
   invoke.mockReset().mockImplementation(async(command: string, args: Bag) => {
     calls.push(command)
-    if (command === 'path_exists') return true
-    if (command === 'read_file') return JSON.stringify(disk)
+    const bag = args.path === USER_DATA ? userData : disk
+    if (command === 'path_exists') return exists
+    if (command === 'read_file') return JSON.stringify(bag)
     if (command === 'merge_json_file') {
-      Object.assign(disk, clone(args.patch ?? {}))
+      Object.assign(bag, clone(args.patch ?? {}))
       return
     }
     if (command === 'prune_json_file') {
-      for (const key of args.keys as string[]) delete disk[key]
+      for (const key of args.keys as string[]) delete bag[key]
     }
   })
 })
@@ -43,8 +51,9 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function context(data: Bag) {
+async function context(data: Bag, dataCenter: Bag = {}) {
   disk = data
+  userData = dataCenter
   const store = await import('@/tauri-bridge/preferences')
   store.initPreferenceStores('/data')
   return store
@@ -52,10 +61,12 @@ async function context(data: Bag) {
 
 describe('cleaning preferences a previous build wrote', () => {
   it('removes the old theme pair from the file', async() => {
+    // A two-axis file kept the pair in `uiTheme`/`mdTheme`; `theme` was a
+    // leftover default the pair-era builds no longer updated.
     const store = await context({
-      theme: 'nord',
+      theme: 'light',
       uiTheme: 'graphite',
-      mdTheme: 'light',
+      mdTheme: 'nord',
       followSystemTheme: false,
       lightModeTheme: 'light',
       preferencesVersion: 2
@@ -80,14 +91,14 @@ describe('cleaning preferences a previous build wrote', () => {
   })
 
   it('writes the queued keys before rewriting the file', async() => {
-    const store = await context({ theme: 'nord', uiTheme: 'graphite' })
+    const store = await context({ theme: 'light', uiTheme: 'graphite' })
 
     await store.setStoredPreferences({ fontSize: 18 })
     await store.flushStoredPreferences()
     await vi.waitFor(() => expect(calls).toContain('prune_json_file'))
 
     expect(calls.indexOf('merge_json_file')).toBeLessThan(calls.indexOf('prune_json_file'))
-    expect(disk).toEqual({ theme: 'nord', fontSize: 18 })
+    expect(disk).toEqual({ theme: 'graphite', fontSize: 18 })
   })
 
   it('keeps saving preferences when the cleanup fails', async() => {
@@ -119,7 +130,7 @@ describe('cleaning preferences a previous build wrote', () => {
 
   it('waits for the cleanup before letting the window close', async() => {
     const pending = deferred()
-    invoke.mockImplementation(async(command: string, args: Bag) => {
+    invoke.mockImplementation(async(command: string, _args: Bag) => {
       calls.push(command)
       if (command === 'path_exists') return true
       if (command === 'read_file') return JSON.stringify(disk)
@@ -164,5 +175,97 @@ describe('migrating a file that asked to follow the system', () => {
     await vi.waitFor(() => expect(calls).toContain('prune_json_file'))
 
     expect(disk).toEqual({ theme: 'one-dark' })
+    await expect(store.getStoredPreference('theme')).resolves.toBe('one-dark')
+  })
+})
+
+describe('upgrading a profile written before the single theme', () => {
+  const original = window.matchMedia
+
+  afterEach(() => {
+    Object.assign(window, { matchMedia: original })
+  })
+
+  const systemAppearance = (dark: boolean) => ({
+    matchMedia: (query: string) => ({ matches: dark && query.includes('dark'), media: query })
+  })
+
+  it('keeps the theme the old menu remembered when the file has none', async() => {
+    Object.assign(window, systemAppearance(false))
+    localStorage.setItem('mt-tauri-theme-choice', 'nord')
+
+    const store = await context({ autoSave: true })
+    await store.getStoredPreference('autoSave')
+    await store.flushStoredPreferences()
+    await vi.waitFor(() => expect(disk.theme).toBe('nord'))
+
+    await expect(store.getStoredPreference('theme')).resolves.toBe('nord')
+  })
+
+  it('reads a recorded follow-the-system choice as the system appearance', async() => {
+    Object.assign(window, systemAppearance(true))
+    localStorage.setItem('mt-tauri-theme-choice', 'system')
+
+    const store = await context({ autoSave: true })
+    await store.getStoredPreference('autoSave')
+    await store.flushStoredPreferences()
+    await vi.waitFor(() => expect(disk.theme).toBe('dark'))
+  })
+
+  it('does not invent a theme for a fresh install', async() => {
+    exists = false
+
+    const store = await context({})
+    await store.getStoredPreference('autoSave')
+    await vi.waitFor(() => expect(calls).toContain('path_exists'))
+
+    expect(disk.theme).toBeUndefined()
+  })
+
+  it('restores the remembered choice when the file is missing', async() => {
+    exists = false
+    localStorage.setItem('mt-tauri-theme-choice', 'dracula')
+
+    const store = await context({})
+    await store.getStoredPreference('autoSave')
+    await store.flushStoredPreferences()
+    await vi.waitFor(() => expect(disk.theme).toBe('dracula'))
+
+    await expect(store.getStoredPreference('theme')).resolves.toBe('dracula')
+  })
+
+  it('never writes the theme into the user-data file', async() => {
+    Object.assign(window, systemAppearance(false))
+    localStorage.setItem('mt-tauri-theme-choice', 'nord')
+
+    const store = await context({ autoSave: true }, { recent: [] })
+    await store.sendStoredUserData(() => undefined)
+    await store.getStoredPreference('autoSave')
+    await store.flushStoredPreferences()
+    await vi.waitFor(() => expect(disk.theme).toBe('nord'))
+
+    expect(userData).toEqual({ recent: [] })
+  })
+
+  it('migrates a residue that only asked to follow the system', async() => {
+    Object.assign(window, systemAppearance(true))
+
+    const store = await context({ theme: 'system', autoSave: true })
+    await store.getStoredPreference('autoSave')
+    await store.flushStoredPreferences()
+
+    await expect(store.getStoredPreference('theme')).resolves.toBe('dark')
+    await vi.waitFor(() => expect(disk.theme).toBe('dark'))
+  })
+
+  it('falls back to the remembered choice when the old keys name no theme', async() => {
+    localStorage.setItem('mt-tauri-theme-choice', 'dracula')
+
+    const store = await context({ preferencesVersion: 2, autoSave: true })
+    await store.getStoredPreference('autoSave')
+    await store.flushStoredPreferences()
+
+    await expect(store.getStoredPreference('theme')).resolves.toBe('dracula')
+    await vi.waitFor(() => expect(disk.theme).toBe('dracula'))
   })
 })

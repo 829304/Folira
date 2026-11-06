@@ -33,7 +33,26 @@ export function firstPaintTheme(resolved: string, loaded: boolean, cached?: stri
 }
 
 /** Whether the system asks for a dark interface right now. */
-const systemPrefersDark = (): boolean => window.matchMedia?.('(prefers-color-scheme: dark)').matches === true
+export const systemPrefersDark = (): boolean => window.matchMedia?.('(prefers-color-scheme: dark)').matches === true
+
+/**
+ * The theme a profile from before the single-theme switch was showing.
+ *
+ * Those builds never wrote the follow-the-system default to the file: only a
+ * user override landed there, and the native Theme menu recorded its answer in
+ * `localStorage`. An explicit id therefore wins, `'system'` means "whatever the
+ * OS said", and an upgrade with no recorded choice keeps the OS appearance the
+ * old build painted — which is also what the defaults produced.
+ */
+export function upgradeThemeId(remembered: string | null): string {
+  const known = remembered && getTheme(remembered) ? remembered : null
+
+  if (known) return known
+
+  const appearance = systemPrefersDark() ? 'dark' : 'light'
+
+  return getTheme(appearance) ? appearance : DEFAULT_THEME_ID
+}
 
 /**
  * The theme a preferences file from an older build asked for, or `null` when the
@@ -63,16 +82,17 @@ export function migrateLegacyThemeId(bag: Record<string, unknown>): string | nul
     return pick(appearance === 'dark' ? bag.darkModeTheme : bag.lightModeTheme, appearance)
   }
 
-  // An explicit choice older builds stored in `theme` is still the id this
-  // build wants; the pair fields only describe the look for files from the
-  // short-lived two-axis builds, which never shipped.
-  const explicit = known(bag.theme)
-
-  if (explicit) return explicit
-
+  // Files from the short-lived two-axis builds carry `theme` as a leftover
+  // default next to the pair they really used, so the pair decides first. Files
+  // from the older single-theme builds have no pair and store the real choice in
+  // `theme`.
   const pair = known(bag.mdTheme) ?? known(bag.uiTheme)
 
   if (pair) return pick(pair, getTheme(pair)?.appearance ?? 'light')
+
+  const explicit = known(bag.theme)
+
+  if (explicit) return explicit
 
   if ('followSystemTheme' in bag) return pick(bag.theme, 'light')
 

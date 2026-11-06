@@ -129,15 +129,21 @@ export const announceThemeFailure = (theme: string, isCurrent: () => boolean): v
  * A newer attempt that arrived while the sheets were loading owns the window
  * now, so this one reports `superseded` and says nothing — and leaves the
  * splash gate alone, because the winner has not committed its sheets yet.
- * A failure that still owns the attempt opens the gate: a theme that cannot be
- * loaded would otherwise hold the window under the splash until the startup
- * deadline.
+ * A failure that still owns the attempt opens the gate when the caller armed
+ * it: a theme that cannot be loaded would otherwise hold the window under the
+ * splash until the startup deadline. A guess that fails before the preferences
+ * file arrives does not, because the real theme is still on its way.
  */
-function settleFailure(theme: string, token: number): ThemeApplyResult {
+function settleFailure(theme: string, token: number, settles: boolean): ThemeApplyResult {
   if (token !== themeApplyRequest) return 'superseded'
 
-  announceThemeFailure(theme, () => token === themeApplyRequest)
-  settleSplashTheme()
+  // A guess that fails before the preferences arrive is not worth a notice: the
+  // real theme is already loading, and the window would flash an error for a
+  // stylesheet the user never chose.
+  if (settles) {
+    announceThemeFailure(theme, () => token === themeApplyRequest)
+    settleSplashTheme()
+  }
 
   return 'failed'
 }
@@ -170,7 +176,7 @@ export const applyThemeSet = async(theme: string, options: { settleSplash?: bool
   } catch (error) {
     if (token !== themeApplyRequest) return 'superseded'
     console.error(`[theme] cannot load ${theme}:`, error)
-    return settleFailure(theme, token)
+    return settleFailure(theme, token, settles)
   }
 
   if (token !== themeApplyRequest) return 'superseded'
@@ -180,7 +186,7 @@ export const applyThemeSet = async(theme: string, options: { settleSplash?: bool
   // always required; syntax colours only when the manifest promises a palette,
   // because a null `prism` is a legitimate theme without highlighting.
   const wantsPrism = (getTheme(theme)?.prism ?? null) !== null
-  if (!ui.trim() || !md.trim() || (wantsPrism && !prism.trim())) return settleFailure(theme, token)
+  if (!ui.trim() || !md.trim() || (wantsPrism && !prism.trim())) return settleFailure(theme, token, settles)
 
   const uiEl = ensureThemeStyle(UI_THEME_STYLE_ID)
   const mdEl = ensureThemeStyle(MD_THEME_STYLE_ID)

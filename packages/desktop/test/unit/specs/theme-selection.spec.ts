@@ -6,7 +6,8 @@ import {
   DEFAULT_THEME_ID,
   firstPaintTheme,
   migrateLegacyThemeId,
-  resolveThemeId
+  resolveThemeId,
+  upgradeThemeId
 } from '@/util/themeSelection'
 import { THEMES, getTheme } from '@/util/themeColor'
 
@@ -182,5 +183,21 @@ describe('migrating the theme an older build stored', () => {
 
   it('leaves a file that already speaks the single-theme format alone', () => {
     expect(migrateLegacyThemeId({ theme: 'nord', autoSave: true })).toBeNull()
+  })
+
+  it('keeps the recorded menu answer over the stale theme of a two-axis file', () => {
+    // Dev builds wrote `theme` as a leftover default next to the pair; the pair's
+    // Markdown half is what the window was actually showing.
+    expect(migrateLegacyThemeId({ theme: 'light', uiTheme: 'graphite', mdTheme: 'nord' })).toBe('nord')
+  })
+
+  it('does not migrate a pair the manifest no longer ships', () => {
+    prefersDark(false)
+    expect(migrateLegacyThemeId({ uiTheme: 'gone', mdTheme: 'alsogone' })).toBeNull()
+  })
+
+  it('falls back to the light theme when the system cannot be asked', () => {
+    Object.assign(window, { matchMedia: undefined })
+    expect(upgradeThemeId(null)).toBe('light')
   })
 })

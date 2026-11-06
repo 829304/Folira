@@ -48,6 +48,26 @@ function legacyFromChoice(): string | null {
 }
 
 /**
+ * The theme an older build recorded outside the preferences file.
+ *
+ * Versions before the single-theme switch kept the native Theme menu's answer in
+ * `localStorage` only, so a preferences file from them has no `theme` key at all.
+ * The migration reads the value here before falling back to the system
+ * appearance. `'system'` is returned as-is: the caller decides what the OS asked
+ * for, because only it knows whether that reading still applies.
+ */
+export function legacyThemeChoice(): string | null {
+  try {
+    const pair = legacyFromPair()
+    if (pair) return pair
+
+    return localStorage.getItem(LEGACY_CHOICE_KEY)
+  } catch {
+    return null
+  }
+}
+
+/**
  * The theme to paint before the preferences file is read.
  *
  * The caller validates the id: a stale cache may name a theme that has since

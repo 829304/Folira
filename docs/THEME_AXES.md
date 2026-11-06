@@ -83,6 +83,35 @@ first launch that finds it: the deprecated keys are ignored, then removed from
 disk by `prune_json_file` behind the queued writes. The seed file
 `static/preference.json` carries none of them either.
 
+### Upgrading a profile from v1.0.2
+
+The released v1.0.2 did not write the follow-the-system default to the file —
+only a user override landed there — and its native Theme menu recorded the
+answer in `localStorage` (`mt-tauri-theme-choice`). Both facts are read once, on
+the first launch of this build:
+
+1. A file with any deprecated key is migrated from those keys. A two-axis file
+   takes its pair (`mdTheme`, else `uiTheme`); a file that followed the system
+   takes the half matching the current OS appearance; an explicit `theme` is
+   kept when no pair is present. A `theme: 'system'` residue counts as "follow
+   the system". When the old keys name no theme this build ships, the remembered
+   menu answer is used instead.
+2. A file with no theme and no deprecated keys, or no file at all, is upgraded
+   from the remembered menu answer. `'system'` there means the OS appearance the
+   old build painted.
+3. A profile with neither — any profile that carries no usable evidence, whether
+   a fresh install or a v1.0.2 that only ever saved unrelated settings — keeps
+   `light`. That is the documented default, and it is the one case where the old
+   look (following a dark system) is not reproduced.
+
+The migration runs on the preferences store only: `dataCenter.json` never held
+a theme, and writing one there would let that channel repaint the window with a
+stale value after the real preferences had arrived.
+
+The result is written as `theme` with a normal stamp before the prune runs, so
+the choice survives the deletion of the keys it came from, and a broadcast that
+already changed `theme` in this window wins over the migration.
+
 ## The settings page
 
 One grid of complete themes, a name filter, a live preview and the custom-CSS
