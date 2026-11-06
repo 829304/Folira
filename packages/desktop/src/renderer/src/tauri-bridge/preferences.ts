@@ -21,6 +21,8 @@ interface Store {
   values: Bag
   /** Keys merged since the last write, on their way to disk. */
   pending: Bag
+  /** When each pending key was queued, in ms since the epoch. */
+  pendingAt: Record<string, number>
   /** The in-flight read, shared by every caller so the file is read once. */
   loading: Promise<Bag> | null
   writeTimer: ReturnType<typeof setTimeout> | null
@@ -32,6 +34,7 @@ const createStore = (): Store => ({
   path: '',
   values: {},
   pending: {},
+  pendingAt: {},
   loading: null,
   writeTimer: null,
   writing: null
@@ -119,7 +122,9 @@ const flush = async(store: Store): Promise<void> => {
 
   const patch = store.pending
   if (Object.keys(patch).length === 0) return
+  const queuedAt = store.pendingAt
   store.pending = {}
+  store.pendingAt = {}
 
   const write = invoke('merge_json_file', { path: store.path, patch })
   const settled = write.then(
@@ -132,6 +137,7 @@ const flush = async(store: Store): Promise<void> => {
   } catch (err) {
     // Keep the keys so the next edit retries them rather than dropping them.
     store.pending = { ...patch, ...store.pending }
+    store.pendingAt = { ...queuedAt, ...store.pendingAt }
     throw err
   } finally {
     if (store.writing === settled) store.writing = null
@@ -148,11 +154,14 @@ const flush = async(store: Store): Promise<void> => {
  * keys in flight while the close handler saw an empty bag and destroyed the
  * webview.
  */
-const merge = async(store: Store, patch: unknown): Promise<void> => {
+const merge = async(store: Store, patch: unknown, at: number): Promise<void> => {
   if (!patch || typeof patch !== 'object') return
   const bag = patch as Bag
   Object.assign(store.values, bag)
   Object.assign(store.pending, bag)
+  Object.keys(bag).forEach((key) => {
+    store.pendingAt[key] = at
+  })
   scheduleWrite(store)
   // The read fills in the keys this window has not touched; anything merged
   // above wins, because `loadFromDisk` spreads the stored file under `values`.
@@ -178,10 +187,17 @@ type DispatchLocal = (channel: string, args: unknown[]) => void
  *
  * Not to be confused with `sendStoredPreferences` below, which answers a
  * question one window asked and is rightly local.
+ *
+ * The stamp travels with the patch: a window hearing its own echo back has to
+ * tell that echo from a newer change by another window, and values cannot say
+ * it — an array survives IPC as a fresh object with the same content.
  */
-export const announcePreferences = (patch: Record<string, unknown> | undefined): void => {
+export const announcePreferences = (
+  patch: Record<string, unknown> | undefined,
+  at = Date.now()
+): void => {
   if (!patch) return
-  emit('mt::user-preference', patch).catch((err) =>
+  emit('mt::user-preference', { patch, at }).catch((err) =>
     console.warn('[tauri-bridge] cannot announce a preference change:', err)
   )
 }
@@ -201,10 +217,19 @@ export const sendStoredUserData = async(dispatchLocal: DispatchLocal): Promise<v
   dispatchLocal('mt::stored-user-data', [await read(userData)])
 }
 
-export const setStoredPreferences = (patch: unknown): Promise<void> =>
-  merge(preferences, patch)
+/**
+ * Merge a local edit and report the time it was queued at, so the caller can
+ * announce it with the same stamp it was stored under.
+ */
+export const setStoredPreferences = (patch: unknown): Promise<number> => {
+  const at = Date.now()
+  return merge(preferences, patch, at).then(() => at)
+}
 
-export const setStoredUserData = (patch: unknown): Promise<void> => merge(userData, patch)
+export const setStoredUserData = (patch: unknown): Promise<number> => {
+  const at = Date.now()
+  return merge(userData, patch, at).then(() => at)
+}
 
 /**
  * Write whatever is still waiting out, for a window that is about to go away.
@@ -231,20 +256,25 @@ const drain = async(store: Store): Promise<void> => {
  * false` kept answering `false` after the settings window turned it on — and
  * the first click wrote `true` again instead of turning it off.
  */
-export const rememberStoredPreferences = (patch: unknown): void => {
+export const rememberStoredPreferences = (patch: unknown, at?: number): void => {
   if (!patch || typeof patch !== 'object') return
   const announced = patch as Bag
 
-  // A key this window still owed with an older value is stale: writing it later
-  // would put that value back after the newer one had already landed. An
-  // announcement carrying the same value — the sender's own echo — leaves the
-  // queued write alone, or the edit would never reach the disk. Only the pending
-  // copy is dropped; a write already on the wire cannot be recalled.
-  Object.keys(announced).forEach((key) => {
-    if (key in preferences.pending && preferences.pending[key] !== announced[key]) {
-      delete preferences.pending[key]
-    }
-  })
+  // A key queued before the announcement is stale: writing it later would put
+  // the older value back after the newer one had already landed. Only a stamp
+  // can tell that apart — the sender's own echo carries the same value, and an
+  // array comes back from IPC as a different object with equal content, so a
+  // value or reference comparison either drops a live edit or keeps a dead one.
+  // A write already on the wire cannot be recalled.
+  if (typeof at === 'number') {
+    Object.keys(announced).forEach((key) => {
+      const queuedAt = preferences.pendingAt[key]
+      if (queuedAt !== undefined && at > queuedAt) {
+        delete preferences.pending[key]
+        delete preferences.pendingAt[key]
+      }
+    })
+  }
 
   Object.assign(preferences.values, announced)
 }
@@ -277,8 +307,8 @@ export const pickFolderPreference = async(
     chosen = selected
   }
 
-  await setStoredPreferences({ [key]: chosen })
+  const at = await setStoredPreferences({ [key]: chosen })
   // Global: the image folder decides where the *editor* puts a pasted image, so
   // a folder picked in the settings window has to reach it.
-  announcePreferences({ [key]: chosen })
+  announcePreferences({ [key]: chosen }, at)
 }

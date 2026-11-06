@@ -10,9 +10,9 @@ import Parent from '../../base/parent';
 
 const debug = logger('diagramPreview:');
 
-// How long an offscreen staging node waits for the drawing Raphael defers until
-// the fonts are ready.
-const DRAWING_TIMEOUT = 2000;
+// WebFontLoader waits three seconds for a font and Raphael draws the fallback
+// afterwards, so the deadline below only catches a renderer that never draws.
+const DRAWING_TIMEOUT = 5000;
 
 // Offscreen but laid out, so renderers that measure their container (Vega sizes
 // itself from it) still get a width. `visibility` would not affect layout, but
@@ -199,21 +199,35 @@ class DiagramPreview extends Parent {
         const observer = new MutationObserver(() => {
             if (!drawn())
                 return;
+            this._cancelPublish = null;
             stop();
             this._publish(request, staging, label);
         });
-        // A renderer that never draws must not keep the offscreen node forever.
+        // WebFontLoader gives the fonts three seconds and the fallback drawing
+        // follows, so this deadline only catches a renderer that never draws at
+        // all. The placeholder is an error, not "Loading..." forever, and the
+        // staging node goes with it so nothing is left hanging off the body.
         const timer = setTimeout(() => {
+            if (request !== this._request)
+                return;
+            this._cancelPublish = null;
             stop();
-            if (request === this._request)
-                staging.remove();
+            staging.remove();
+            this.domNode!.innerHTML = `<div class="mu-diagram-error">&lt; ${this.muya.i18n.t(
+                'Diagram Timed Out',
+            )} &gt;</div>`;
         }, DRAWING_TIMEOUT);
         stop = () => {
             observer.disconnect();
             clearTimeout(timer);
         };
         observer.observe(staging, { childList: true, subtree: true });
-        this._cancelPublish = stop;
+        // A superseded render must take its offscreen node with it, or every edit
+        // leaves one more detached svg behind.
+        this._cancelPublish = () => {
+            stop();
+            staging.remove();
+        };
     }
 }
 

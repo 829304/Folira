@@ -352,14 +352,18 @@ export const usePreferencesStore = defineStore('preferences', {
       this.APPLY_PREFERENCE(kept)
     },
 
-    SET_USER_PREFERENCE(preference: Partial<PreferencesState> | Record<string, unknown>): void {
+    SET_USER_PREFERENCE(
+      preference: Partial<PreferencesState> | Record<string, unknown>,
+      at?: number
+    ): void {
       const incoming = preference as Record<string, unknown>
 
       // Another window changed a preference. The bridge keeps its own copy of
       // the stored values to answer `getStoredPreference` without a round trip,
       // and a menu toggle reads the value it is about to flip: leaving that copy
-      // behind would flip the old value back on the first click.
-      rememberStoredPreferences(incoming)
+      // behind would flip the old value back on the first click. The stamp says
+      // whether the announcement is newer than anything this window still owes.
+      rememberStoredPreferences(incoming, at)
 
       this.APPLY_PREFERENCE(incoming)
     },
@@ -387,8 +391,12 @@ export const usePreferencesStore = defineStore('preferences', {
         this.LOAD_STORED_USER_DATA(stored as Record<string, unknown>)
       })
 
-      window.electron.ipcRenderer.on('mt::user-preference', (_e, preferences) => {
-        this.SET_USER_PREFERENCE(preferences as Partial<PreferencesState>)
+      window.electron.ipcRenderer.on('mt::user-preference', (_e, message) => {
+        const { patch, at } = message as {
+          patch: Partial<PreferencesState>
+          at?: number
+        }
+        this.SET_USER_PREFERENCE(patch, at)
       })
     },
 

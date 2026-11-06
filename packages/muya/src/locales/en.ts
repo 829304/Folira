@@ -126,6 +126,7 @@ export const en = {
         'Loading...': 'Loading...',
         'Invalid Diagram Code': 'Invalid Diagram Code',
         'Empty Diagram': 'Empty Diagram',
+        'Diagram Timed Out': 'Diagram Timed Out',
         'Diagram': 'Diagram',
         'View diagram': 'View diagram',
         'Edit block': 'Edit block',

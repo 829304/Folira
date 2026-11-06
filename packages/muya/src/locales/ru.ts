@@ -126,6 +126,7 @@ export const ru = {
         'Loading...': 'Загрузка...',
         'Invalid Diagram Code': 'Ошибка в коде диаграммы',
         'Empty Diagram': 'Пустая диаграмма',
+        'Diagram Timed Out': 'Диаграмма не успела отрисоваться',
         'Diagram': 'Диаграмма',
         'View diagram': 'Показать диаграмму',
         'Edit block': 'Редактировать блок',

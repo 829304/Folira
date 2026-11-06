@@ -126,6 +126,7 @@ export const pt = {
         'Loading...': 'Carregando...',
         'Invalid Diagram Code': 'Código de diagrama inválido',
         'Empty Diagram': 'Diagrama vazio',
+        'Diagram Timed Out': 'O diagrama demorou demais',
         'Diagram': 'Diagrama',
         'View diagram': 'Ver diagrama',
         'Edit block': 'Editar bloco',

@@ -126,6 +126,7 @@ export const tr = {
         'Loading...': 'Yükleniyor...',
         'Invalid Diagram Code': 'Geçersiz Diyagram Kodu',
         'Empty Diagram': 'Boş Diyagram',
+        'Diagram Timed Out': 'Diyagram zaman aşımına uğradı',
         'Diagram': 'Diyagram',
         'View diagram': 'Diyagramı görüntüle',
         'Edit block': 'Bloğu düzenle',

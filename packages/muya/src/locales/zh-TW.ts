@@ -126,6 +126,7 @@ export const zhTW = {
         'Loading...': '載入中...',
         'Invalid Diagram Code': '圖表渲染失敗',
         'Empty Diagram': '空圖表',
+        'Diagram Timed Out': '圖表渲染逾時',
         'Diagram': '圖表',
         'View diagram': '檢視圖表',
         'Edit block': '編輯區塊',

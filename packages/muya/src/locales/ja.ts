@@ -126,6 +126,7 @@ export const ja = {
         'Loading...': 'ロード中...',
         'Invalid Diagram Code': 'グラフのレンダリングが失敗しました',
         'Empty Diagram': 'グラフがありません',
+        'Diagram Timed Out': '図の描画がタイムアウトしました',
         'Diagram': 'グラフ',
         'View diagram': 'グラフを表示',
         'Edit block': 'ブロックを編集',

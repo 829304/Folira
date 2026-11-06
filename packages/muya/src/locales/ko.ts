@@ -126,6 +126,7 @@ export const ko = {
         'Loading...': '로딩 중...',
         'Invalid Diagram Code': '잘못된 다이어그램 코드',
         'Empty Diagram': '빈 다이어그램',
+        'Diagram Timed Out': '다이어그램 렌더링 시간 초과',
         'Diagram': '다이어그램',
         'View diagram': '다이어그램 보기',
         'Edit block': '블록 편집',

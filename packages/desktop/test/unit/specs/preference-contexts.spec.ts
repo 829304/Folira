@@ -57,9 +57,9 @@ describe('independent preference contexts and actual close guard', () => {
     const settings = await context()
     await Promise.all([editor.getStoredPreference('autoSave'), settings.getStoredPreference('autoSave')])
     // The OS event bus fans out; receipt and cache mutation use production functions.
-    emit.mockImplementation(async(_channel: string, patch: Bag) => {
-      editor.rememberStoredPreferences(patch)
-      settings.rememberStoredPreferences(patch)
+    emit.mockImplementation(async(_channel: string, message: { patch: Bag; at: number }) => {
+      editor.rememberStoredPreferences(message.patch, message.at)
+      settings.rememberStoredPreferences(message.patch, message.at)
     })
     await settings.setStoredPreferences({ autoSave: true })
     settings.announcePreferences({ autoSave: true })
@@ -137,7 +137,12 @@ describe('independent preference contexts and actual close guard', () => {
     const { installTauriBridgeSync } = await import('@/tauri-bridge')
     installTauriBridgeSync()
     window.electron.ipcRenderer.send('mt::cmd-toggle-autosave')
-    await vi.waitFor(() => expect(emit).toHaveBeenCalledWith('mt::user-preference', { autoSave: false }))
+    await vi.waitFor(() =>
+      expect(emit).toHaveBeenCalledWith('mt::user-preference', {
+        patch: { autoSave: false },
+        at: expect.any(Number)
+      })
+    )
     await store.flushStoredPreferences()
     expect(disk['/data/preferences.json'].autoSave).toBe(false)
   })

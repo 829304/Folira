@@ -121,6 +121,7 @@ export const nl = {
         'Loading...': 'Laden...',
         'Invalid Diagram Code': 'Ongeldige diagramcode',
         'Empty Diagram': 'Leeg diagram',
+        'Diagram Timed Out': 'Diagram duurde te lang',
         'Diagram': 'Diagram',
         'View diagram': 'Diagram bekijken',
         'Edit block': 'Blok bewerken',

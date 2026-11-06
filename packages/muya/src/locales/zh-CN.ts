@@ -126,6 +126,7 @@ export const zhCN = {
         'Loading...': '加载中...',
         'Invalid Diagram Code': '图表渲染失败',
         'Empty Diagram': '空图表',
+        'Diagram Timed Out': '图表渲染超时',
         'Diagram': '图表',
         'View diagram': '查看图表',
         'Edit block': '编辑块',

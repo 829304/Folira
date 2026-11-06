@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import type { Muya } from '../../../../muya';
 import type { IDiagramMeta, IDiagramState } from '../../../../state/types';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CLASS_NAMES } from '../../../../config';
 import I18n from '../../../../i18n';
 import { en } from '../../../../locales/en';
@@ -22,6 +22,7 @@ const bootedHosts: HTMLElement[] = [];
 
 afterEach(() => {
     while (bootedHosts.length) bootedHosts.pop()!.remove();
+    document.body.querySelectorAll('div[style*="-10000px"]').forEach(node => node.remove());
     loadRendererMock.mockReset();
 });
 
@@ -461,5 +462,146 @@ describe('diagramPreview — drawing deferred by font loading', () => {
 
         expect(preview.domNode!.querySelector('svg')).toBeNull();
         expect(preview.domNode!.querySelector(`.${CLASS_NAMES.MU_EMPTY}`)).not.toBeNull();
+    });
+
+    it('takes the offscreen node away when a newer update supersedes the wait', async () => {
+        // A renderer that never draws keeps the staging node alive until the next
+        // edit; the wait must remove it, or every keystroke leaves one behind.
+        loadRendererMock.mockResolvedValue({ parse: () => ({ drawSVG: () => {} }) });
+
+        const { preview } = makePreview('st=>start: go', 'flowchart');
+        await preview.update('st=>start: go');
+
+        const waiting = document.body.querySelectorAll('div[style*="-10000px"]');
+        expect(waiting).toHaveLength(1);
+
+        await preview.update('');
+
+        expect(waiting[0].isConnected).toBe(false);
+        expect(document.body.querySelectorAll('div[style*="-10000px"]')).toHaveLength(0);
+    });
+
+    it('shows a readable error at the deadline instead of loading forever', async () => {
+        vi.useFakeTimers();
+        loadRendererMock.mockResolvedValue({ parse: () => ({ drawSVG: () => {} }) });
+
+        const { preview, i18n } = makePreview('st=>start: go', 'flowchart');
+        await preview.update('st=>start: go');
+        expect(preview.domNode!.textContent).toBe(i18n.t('Loading...'));
+
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(preview.domNode!.querySelector('.mu-diagram-error')).not.toBeNull();
+        expect(preview.domNode!.textContent).toContain(i18n.t('Diagram Timed Out'));
+        expect(document.body.querySelectorAll('div[style*="-10000px"]')).toHaveLength(0);
+        vi.useRealTimers();
+    });
+});
+
+// These regressions intentionally assert the required behavior with ordinary it().
+// Fake time crosses the actual 2s cleanup and 3s font fallback boundaries.
+describe('diagramPreview — slow fonts and staging cancellation regressions', () => {
+    let targets: HTMLElement[];
+    let previews: DiagramPreview[];
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        targets = [];
+        previews = [];
+        loadRendererMock.mockResolvedValue({
+            parse: () => ({
+                drawSVG: (target: HTMLElement) => {
+                    targets.push(target);
+                },
+            }),
+        });
+    });
+
+    afterEach(async () => {
+        // Cancel through the public update path, even after an assertion failed.
+        for (const preview of previews)
+            await preview.update('');
+        // A failed leak assertion must not leave an observer or staging node behind.
+        for (const target of targets)
+            target.remove();
+        vi.clearAllTimers();
+        vi.useRealTimers();
+    });
+
+    function waitingPreview() {
+        const result = makePreview('', 'flowchart');
+        previews.push(result.preview);
+        return result;
+    }
+
+    function draw(target: HTMLElement, title: string) {
+        target.innerHTML = `<svg width="10" height="10"><title>${title}</title></svg>`;
+    }
+
+    it('publishes a delayed drawing before cleanup (control)', async () => {
+        const { preview } = waitingPreview();
+        await preview.update('first');
+        expect(targets).toHaveLength(1);
+        await vi.advanceTimersByTimeAsync(1500);
+        draw(targets[0], 'Within deadline');
+        await vi.advanceTimersByTimeAsync(0);
+        expect(preview.domNode!.querySelector('title')?.textContent).toBe('Within deadline');
+        expect(targets[0].isConnected).toBe(false);
+    });
+
+    it('a drawing after the 3s font fallback cannot leave the preview permanently loading', async () => {
+        const { preview, i18n } = waitingPreview();
+        await preview.update('slow font');
+        await vi.advanceTimersByTimeAsync(3100);
+        draw(targets[0], 'Font fallback finished');
+        await vi.advanceTimersByTimeAsync(0);
+        // Either publish the late SVG, or expose a recoverable render error.
+        // Removing the target while leaving Loading... forever is never valid.
+        expect(preview.domNode!.querySelector('svg, .mu-diagram-error')).not.toBeNull();
+        expect(preview.domNode!.textContent).not.toBe(i18n.t('Loading...'));
+    });
+
+    it('a renderer that never draws eventually leaves a readable error instead of Loading', async () => {
+        const { preview, i18n } = waitingPreview();
+        await preview.update('never drawn');
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(preview.domNode!.querySelector('.mu-diagram-error')).not.toBeNull();
+        expect(preview.domNode!.textContent).not.toBe(i18n.t('Loading...'));
+    });
+
+    it.each(['empty', 'replacement'])('cancelling for %s detaches the old staging node immediately', async (next) => {
+        const { preview } = waitingPreview();
+        await preview.update('old');
+        const old = targets[0];
+        expect(old.isConnected).toBe(true);
+        await preview.update(next === 'empty' ? '' : 'new');
+        expect(old.isConnected).toBe(false);
+        if (next === 'replacement') {
+            draw(targets[1], 'New');
+            await vi.advanceTimersByTimeAsync(0);
+            expect(preview.domNode!.querySelector('title')?.textContent).toBe('New');
+        }
+    });
+
+    it('a cancelled late font callback cannot leave an offscreen SVG attached to body', async () => {
+        const { preview } = waitingPreview();
+        await preview.update('old');
+        const old = targets[0];
+        await preview.update('');
+        draw(old, 'Cancelled drawing');
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(document.body.contains(old)).toBe(false);
+        expect(preview.domNode!.querySelector(`.${CLASS_NAMES.MU_EMPTY}`)).not.toBeNull();
+        expect(preview.domNode!.querySelector('svg')).toBeNull();
+    });
+
+    it('repeated edits followed by clearing leave no staging nodes or timers', async () => {
+        const { preview } = waitingPreview();
+        for (const code of ['one', 'two', 'three'])
+            await preview.update(code);
+        await preview.update('');
+        expect(targets).toHaveLength(3);
+        expect(targets.filter(target => target.isConnected)).toEqual([]);
+        expect(vi.getTimerCount()).toBe(0);
     });
 });

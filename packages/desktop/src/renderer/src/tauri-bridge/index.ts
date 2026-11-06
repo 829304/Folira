@@ -240,10 +240,10 @@ const askForOpenFile = async(): Promise<void> => {
 const toggleBooleanPreference = async(key: string): Promise<void> => {
   const current = await getStoredPreference(key)
   const next = !current
-  await setStoredPreferences({ [key]: next })
+  const at = await setStoredPreferences({ [key]: next })
   // Global, not local: a toggle from the editor's menu has to reach an open
   // settings window too, or its checkbox goes on showing the old value.
-  announcePreferences({ [key]: next })
+  announcePreferences({ [key]: next }, at)
 }
 
 /**
@@ -314,7 +314,7 @@ const handleSend = (channel: string, args: unknown[]): void => {
       const patch = args[0] as Record<string, unknown> | undefined
       // Language is changed in the settings window but has to reach the editor.
       if (typeof patch?.language === 'string') broadcastLanguage(patch.language)
-      fire(setStoredPreferences(patch).then(() => announcePreferences(patch)))
+      fire(setStoredPreferences(patch).then((at) => announcePreferences(patch, at)))
       return
     }
     case 'mt::open-setting-window':
@@ -336,8 +336,8 @@ const handleSend = (channel: string, args: unknown[]): void => {
       return
     case 'mt::set-user-data':
       fire(
-        setStoredUserData(args[0]).then(() =>
-          announcePreferences(args[0] as Record<string, unknown> | undefined)
+        setStoredUserData(args[0]).then((at) =>
+          announcePreferences(args[0] as Record<string, unknown> | undefined, at)
         )
       )
       return

@@ -126,6 +126,7 @@ export const de = {
         'Loading...': 'Wird geladen...',
         'Invalid Diagram Code': 'Ungültiger Diagramm-Code',
         'Empty Diagram': 'Leeres Diagramm',
+        'Diagram Timed Out': 'Diagramm-Zeitüberschreitung',
         'Diagram': 'Diagramm',
         'View diagram': 'Diagramm ansehen',
         'Edit block': 'Block bearbeiten',

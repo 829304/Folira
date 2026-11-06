@@ -49,7 +49,9 @@ const settle = async(): Promise<void> => {
 
 /** Patches announced on `mt::user-preference`, in order. */
 const announced = (): unknown[] =>
-  emit.mock.calls.filter(([channel]) => channel === 'mt::user-preference').map(([, patch]) => patch)
+  emit.mock.calls
+    .filter(([channel]) => channel === 'mt::user-preference')
+    .map(([, message]) => (message as { patch: unknown }).patch)
 
 describe('announcing a preference change', () => {
   beforeEach(() => {

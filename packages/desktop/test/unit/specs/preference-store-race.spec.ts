@@ -272,11 +272,64 @@ describe('preference store', () => {
 
     // Queued but not yet written: the debounce is what the second window beats.
     const queued = setStoredPreferences({ autoSave: true })
-    rememberStoredPreferences({ autoSave: false })
+    rememberStoredPreferences({ autoSave: false }, Date.now() + 1000)
     await flushStoredPreferences()
     await queued
 
     const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
     expect(writes).toHaveLength(0)
+  })
+
+  it('keeps its own echo of an array preference', async() => {
+    // `sideBarExcludeFiles` is an array, and IPC hands it back as a fresh object
+    // with equal content. Comparing values dropped the window's own queued write.
+    invoke.mockImplementation((command: string) => {
+      if (command === 'path_exists') return Promise.resolve(true)
+      if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
+      if (command === 'merge_json_file') return Promise.resolve(undefined)
+      return Promise.resolve(undefined)
+    })
+
+    const { setStoredPreferences, rememberStoredPreferences, flushStoredPreferences } =
+      await loadModule()
+
+    const queued = setStoredPreferences({ sideBarExcludeFiles: ['node_modules'] })
+    const at = await queued
+    rememberStoredPreferences({ sideBarExcludeFiles: ['node_modules'] }, at)
+    await flushStoredPreferences()
+
+    const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
+    expect(writes).toHaveLength(1)
+    expect(writes[0][1]).toEqual({
+      path: '/user-data/preferences.json',
+      patch: { sideBarExcludeFiles: ['node_modules'] }
+    })
+  })
+
+  it('ignores an echo that arrives after a newer edit', async() => {
+    // Two quick edits to the font size, then the first announcement comes back:
+    // the older stamp must not cancel the newer patch.
+    invoke.mockImplementation((command: string) => {
+      if (command === 'path_exists') return Promise.resolve(true)
+      if (command === 'read_file') return Promise.resolve(JSON.stringify(STORED))
+      if (command === 'merge_json_file') return Promise.resolve(undefined)
+      return Promise.resolve(undefined)
+    })
+
+    const { setStoredPreferences, rememberStoredPreferences, flushStoredPreferences } =
+      await loadModule()
+
+    const older = setStoredPreferences({ codeFontSize: 18 })
+    const olderAt = await older
+    await setStoredPreferences({ codeFontSize: 24 })
+    rememberStoredPreferences({ codeFontSize: 18 }, olderAt)
+    await flushStoredPreferences()
+
+    const writes = invoke.mock.calls.filter(([command]) => command === 'merge_json_file')
+    expect(writes).toHaveLength(1)
+    expect(writes[0][1]).toEqual({
+      path: '/user-data/preferences.json',
+      patch: { codeFontSize: 24 }
+    })
   })
 })
