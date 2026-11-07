@@ -67,6 +67,20 @@ describe('theme preview candidate', () => {
     ).toBe('light')
   })
 
+  it('keeps the focused card when the hovered one was filtered out', () => {
+    // Tab moved focus to Dracula, then the query removed the card the pointer
+    // still rests on. The stale hover must not win over the visible focus.
+    expect(
+      previewIdOf({ hovered: 'ayu-light', focused: 'dracula', visible, fallback: 'light' })
+    ).toBe('dracula')
+  })
+
+  it('falls back when both candidates were filtered out', () => {
+    expect(
+      previewIdOf({ hovered: 'ayu-light', focused: 'nord', visible, fallback: 'light' })
+    ).toBe('light')
+  })
+
   it('falls back when neither hover nor focus points at a card', () => {
     expect(previewIdOf({ hovered: null, focused: null, visible, fallback: 'nord' })).toBe('nord')
   })

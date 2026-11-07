@@ -193,7 +193,10 @@ describe('first frame', () => {
     expect(page).toContain('const focusedTheme = ref<string | null>(null)')
     expect(page).toContain('@mouseenter="hoveredTheme = entry.id"')
     expect(page).toContain('@mouseleave="hoveredTheme = null"')
-    expect(page).toContain('@focus="focusedTheme = entry.id"')
+    // Keyboard focus releases a pointer that never moved, so Tab still previews
+    // the card it lands on; a click keeps the card the pointer is over.
+    expect(page).toContain('@focus="focusTheme(entry.id, $event)"')
+    expect(page).toMatch(/const focusTheme = \([\s\S]{0,300}matches\(':focus-visible'\)[\s\S]{0,120}hoveredTheme\.value = null/)
     expect(page).toContain('@blur="focusedTheme = null"')
     // The preview resolves through the pure helper, and it falls back whenever
     // the candidate is no longer in the visible list.

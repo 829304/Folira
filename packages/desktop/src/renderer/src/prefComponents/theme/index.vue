@@ -66,7 +66,7 @@
           @click="selectTheme(entry.id)"
           @mouseenter="hoveredTheme = entry.id"
           @mouseleave="hoveredTheme = null"
-          @focus="focusedTheme = entry.id"
+          @focus="focusTheme(entry.id, $event)"
           @blur="focusedTheme = null"
         >
           <span
@@ -201,7 +201,10 @@ watch(selectedTheme, (id) => {
 
 // Changing the filter or the tab removes the cards that carried the hover and
 // the focus, and a removed node never fires mouseleave/blur. Clearing both here
-// is what keeps the preview off a card the list no longer shows.
+// is what keeps the preview off a card the list no longer shows. A card that
+// survives the new query loses its preview until the pointer or the keyboard
+// asks again; that is deliberate, because keeping it would let a card removed
+// for one query come back to life when a later query lists it again.
 watch([tab, query], () => {
   hoveredTheme.value = null
   focusedTheme.value = null
@@ -230,6 +233,18 @@ const moveTabFocus = (event: KeyboardEvent, current: ThemeAppearance): void => {
 
 const swatch = (entry: ThemeEntry, axis: 'ui' | 'md', name: string): string =>
   entry.swatches[axis]?.[name] ?? 'transparent'
+
+// Keyboard focus wins over a pointer that has not moved: when Tab reaches a
+// card while the mouse still rests on another one, the preview should follow the
+// keyboard. Only `:focus-visible` counts, so a click keeps the hovered card that
+// the pointer is actually over.
+const focusTheme = (id: string, event: FocusEvent): void => {
+  if ((event.currentTarget as HTMLElement | null)?.matches(':focus-visible')) {
+    hoveredTheme.value = null
+  }
+
+  focusedTheme.value = id
+}
 
 const selectTheme = async (id: string): Promise<void> => {
   // A card selection is not a tab switch: pin the tab so the commit's later
