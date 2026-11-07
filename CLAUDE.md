@@ -262,9 +262,9 @@ renderer agree on values such as the current theme.
 
 `renderer/src/assets/themes/` ships **30 themes**. Each has two files of its own —
 `ui/<id>.css` (window chrome) and `md/<id>.css` (document typography) — plus a
-syntax palette in `prismjs/`, which most themes name after themselves but a few
-share (`light` → `default.theme.css`, `dark` and `material-dark` →
-`dark.theme.css`: 29 palette files for 30 themes). `manifest.json` describes every
+syntax palette in `prismjs/`, which most themes name after themselves but two do
+not (`light` uses `default.theme.css`; `dark` and `material-dark` share
+`dark.theme.css` — 29 palette files for 30 themes). `manifest.json` describes every
 entry (`id`, `label`, `appearance`, `prism`, `swatches`). `util/themeColor.ts`
 lazy-loads the files through `import.meta.glob`, `util/theme.ts` injects them
 into three `<style>` slots, `scripts/themes/build.mjs` generates

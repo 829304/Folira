@@ -23,6 +23,12 @@ const documentedIds = documentedNames.map(([, id]) => id)
 
 const deletedIds = ['tokyo-night-storm', 'rose-pine-moon', 'cyberdream', 'nightfox']
 
+// The site's search reads this generated file instead of the markdown, so it has
+// to be regenerated whenever the page changes (`pnpm -C packages/website docs:index`).
+const searchIndex = JSON.parse(
+  readFileSync(resolve(__dirname, '../../../../website/public/docs-index.json'), 'utf8')
+) as { slug: string; body: string }[]
+
 const byLabel = (a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label)
 
 describe('the published theme page', () => {
@@ -53,5 +59,16 @@ describe('the published theme page', () => {
   it('points at the preferences page rather than the removed Theme menu', () => {
     expect(doc).not.toContain('Theme** menu')
     expect(doc).not.toContain('src/main/menu')
+  })
+
+  it('publishes the same text through the search index', () => {
+    const page = searchIndex.find(entry => entry.slug === 'themes')
+    const light = THEMES.filter(theme => theme.appearance === 'light').length
+    const dark = THEMES.filter(theme => theme.appearance === 'dark').length
+
+    expect(page?.body).toContain(`**${THEMES.length} built-in themes** — ${light} light and ${dark} dark`)
+    for (const id of deletedIds) {
+      expect(page?.body).not.toContain(id)
+    }
   })
 })

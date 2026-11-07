@@ -15,7 +15,7 @@ A theme whose id is no longer shipped (for example after an upgrade) falls back 
 
 ## Custom CSS
 
-`Preferences` → `Theme` → `Custom CSS` appends a stylesheet after the active theme, so it wins wherever the two have equal specificity. Syntax colours are the simple case: the syntax palette only claims `:where(.editor-wrapper)`, which carries no weight, so
+`Preferences` → `Theme` → `Custom CSS` appends a stylesheet after the active theme, so it wins wherever the two have equal specificity. Syntax colours are the simple case: every built-in palette claims `.token.*` at the same weight as this rule (GitHub Light additionally keeps its selectors inside `:where(.editor-wrapper)`, which adds nothing), so
 
 ```css
 .token.keyword { color: #7c3aed; }
@@ -29,7 +29,7 @@ For the document itself, themes write their rules under `.editor-wrapper` (and s
 .editor-wrapper h2 { letter-spacing: -0.01em; }
 ```
 
-`docs/THEME_AXES.md` in the repository lists which rules already sit at engine weight.
+A handful of the inherited themes still mark individual rules (code blocks, thematic breaks, diagrams) as `!important`; overriding those needs `!important` too. The repository's `docs/THEME_AXES.md` lists which rules already sit at engine weight.
 
 ## Light themes
 
