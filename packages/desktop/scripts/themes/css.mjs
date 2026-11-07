@@ -125,3 +125,42 @@ export function variablesOf (css) {
   }
   return found
 }
+
+/** The handful of colours a theme card draws. */
+export const SWATCH_NAMES = {
+  ui: ['editorBgColor', 'editorColor', 'sideBarBgColor', 'themeColor', 'buttonPrimaryBgColor'],
+  md: ['editorBgColor', 'editorColor', 'h1Color', 'linkColor', 'codeBlockBgColor', 'blockquoteBorderColor']
+}
+
+/**
+ * Resolve the card swatches for one theme.
+ *
+ * Each half starts from its own palette: `editorColor` means the chrome in one
+ * file and the page in the other, so keeping the maps apart is what stops a
+ * Markdown swatch from silently taking the interface colour. The Markdown side
+ * then resolves against a merged view: its own declarations win, while a
+ * reference that leaves the file (e.g. `--fmd-linkColor: var(--themeColor)`)
+ * lands on the interface palette, mirroring how base.css publishes the shared
+ * names inside `.editor-wrapper`. The merge only covers shapes both halves can
+ * resolve together — a swatch missing from both axes, or one whose chain
+ * dangles, still throws instead of painting `initial`.
+ */
+export function swatchesOf (uiLiterals, mdLiterals, id) {
+  const mdView = new Map([...uiLiterals, ...mdLiterals])
+  const pick = (literals, names) => {
+    const picked = {}
+    for (const name of names) {
+      const value = resolveValue(literals, name)
+      if (value === null || value === 'initial') {
+        throw new Error(`${id}: cannot resolve ${name} for the card swatches`)
+      }
+      picked[name] = value.trim()
+    }
+    return picked
+  }
+
+  return {
+    ui: pick(uiLiterals, SWATCH_NAMES.ui),
+    md: pick(mdView, SWATCH_NAMES.md)
+  }
+}

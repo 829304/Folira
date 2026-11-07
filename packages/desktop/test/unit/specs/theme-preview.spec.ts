@@ -229,23 +229,50 @@ describe('github-light markdown rules', () => {
 })
 
 // The custom-CSS slot is injected after the theme sheets, so a user rule wins
-// on source order only while the theme keeps its own weight. These two shapes
-// are what the app promises: the Prism palette scopes through `:where()` (zero
-// specificity) and the inline-code rule zeroes the `:not(pre)` type the same
-// way. A bare `.editor-wrapper` prefix or a plain `:not(pre)` would add weight
-// and silently beat `.token.keyword` or `.editor-wrapper code`.
-describe('theme rules custom CSS can override', () => {
-  it('scopes the GitHub Light palette with zero specificity', () => {
-    const prism = readFileSync(resolve(themesDir, 'prismjs', 'github-light.theme.css'), 'utf8')
+// on source order only while the theme keeps its own weight. These checks pin
+// the zero-weight shapes GitHub Light promises — the Prism palette and the
+// inline-code selector — because those are where a class-shaped scope, or a
+// plain `:not(pre)`, would silently outrank `.token.keyword` and
+// `.editor-wrapper code` again. The other 32 upstream palettes are global
+// (`prismjs/<id>.theme.css` with plain `.token.*` selectors) and stay out of
+// scope here.
 
-    expect(prism).toContain(':where(.editor-wrapper)')
-    expect(prism).not.toMatch(/(?<!:where\()\.editor-wrapper/)
+/** Strip block comments so selector parsing cannot trip over their text. */
+const stripComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '')
+
+/**
+ * Every selector in a flat theme stylesheet. These files have no at-rules, so
+ * a `}` ends each block; the selector part is what precedes the next `{`.
+ */
+const selectorsIn = (css: string): string[] =>
+  stripComments(css)
+    .split('}')
+    .filter(block => block.includes('{'))
+    .flatMap((block) => {
+      const selector = block.slice(0, block.indexOf('{')).trim()
+      return selector.split(',').map(part => part.trim())
+    })
+
+describe('theme rules custom CSS can override', () => {
+  it('scopes every GitHub Light Prism selector with :where()', () => {
+    const prism = readFileSync(resolve(themesDir, 'prismjs', 'github-light.theme.css'), 'utf8')
+    const selectors = selectorsIn(prism)
+
+    expect(selectors.length).toBeGreaterThan(30)
+    expect(
+      selectors.filter(selector => !selector.startsWith(':where(.editor-wrapper)'))
+    ).toEqual([])
   })
 
-  it('scopes the GitHub Light inline code with zero specificity', () => {
+  it('keeps the GitHub Light inline-code selector exactly zero-weight', () => {
     const md = readTheme('md', 'github-light')
+    const selectors = selectorsIn(md)
 
-    expect(md).toContain('.editor-wrapper :where(:not(pre)) > code')
-    expect(md).not.toMatch(/\.editor-wrapper :not\(pre\)/)
+    expect(selectors).toContain('.editor-wrapper :where(:not(pre)) > code')
+    // `:not(pre)` contributes a type's specificity unless wrapped in `:where`;
+    // a plain one would let the theme outrank a user's rule again.
+    expect(selectors.filter(selector => selector.includes(':not(pre)'))).toEqual([
+      '.editor-wrapper :where(:not(pre)) > code'
+    ])
   })
 })

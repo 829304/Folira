@@ -26,7 +26,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { MD_SCOPE, parseBlocks, parseDeclarations, resolveValue, stripComments, variablesOf } from './css.mjs'
+import { MD_SCOPE, parseBlocks, parseDeclarations, resolveValue, stripComments, swatchesOf, variablesOf } from './css.mjs'
 
 // Resolved from this file, not the shell: the pnpm filter scripts run with
 // `packages/desktop` as the working directory, one level below the repo root.
@@ -413,42 +413,6 @@ function restoreReferences (kind, file, defaults, literals) {
     })
   }
   writeFile(file, css)
-}
-// The handful of colours a theme card draws. They are resolved here, from the
-// same literals the appearance flag uses, so the picker never has to load 66
-// stylesheets to paint 66 cards — and never drifts from the files it describes.
-const SWATCH_NAMES = {
-  ui: ['editorBgColor', 'editorColor', 'sideBarBgColor', 'themeColor', 'buttonPrimaryBgColor'],
-  md: ['editorBgColor', 'editorColor', 'h1Color', 'linkColor', 'codeBlockBgColor', 'blockquoteBorderColor']
-}
-
-// Each half starts from its own palette: `editorColor` means the chrome in one
-// file and the page in the other, so keeping the maps apart is what stops a
-// Markdown swatch from silently taking the interface colour. The Markdown side
-// then resolves against a merged view: its own declarations win, while a
-// reference that leaves the file (e.g. `--fmd-linkColor: var(--themeColor)`)
-// lands on the interface palette, mirroring how base.css publishes the shared
-// names inside `.editor-wrapper`. The merge only covers shapes both halves can
-// resolve together — a swatch missing from both axes, or one whose chain
-// dangles, still fails the build instead of painting `initial`.
-function swatchesOf (uiLiterals, mdLiterals, id) {
-  const mdView = new Map([...uiLiterals, ...mdLiterals])
-  const pick = (literals, names) => {
-    const picked = {}
-    for (const name of names) {
-      const value = resolveValue(literals, name)
-      if (value === null || value === 'initial') {
-        throw new Error(`${id}: cannot resolve ${name} for the card swatches`)
-      }
-      picked[name] = value.trim()
-    }
-    return picked
-  }
-
-  return {
-    ui: pick(uiLiterals, SWATCH_NAMES.ui),
-    md: pick(mdView, SWATCH_NAMES.md)
-  }
 }
 
 function aggregate () {

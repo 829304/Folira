@@ -52,13 +52,23 @@ mirrors every custom property on the element that declares it
 those aliases first. Copying the declaration text instead would change its
 cascade position, its selector and its evaluation context.
 
-Syntax colours follow the same rule. Theme rules are scoped to the editor at
-zero or engine-level specificity — the GitHub Light Prism palette through
-`:where(.editor-wrapper)` in `prismjs/github-light.theme.css`, its inline-code
-rule through `:where(:not(pre))` — so a user's rule wins on source order. A
-`.token.keyword`, `.editor-wrapper code` or `.editor-wrapper h1` rule needs no
-theme-specific prefix and keeps working when the theme changes; the other 32
-upstream palettes stay global and take the same selectors.
+Syntax colours and ordinary typography follow the same rule. A theme's rules
+for the `--fmd-*`-backed colours and for plain element styling are scoped to
+the editor at zero specificity — the GitHub Light Prism palette rides on
+`:where(.editor-wrapper)` in `prismjs/github-light.theme.css`, and its
+inline-code rule on `:where(:not(pre))` — so a user's `.token.keyword`,
+`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. The
+other 32 upstream palettes stay global and take the same selectors.
+
+A few structural rules cannot be zero-weight: they have to outrank Muya's own
+stylesheet. In `md/github-light.css` those are the line-number gutter's
+`padding-left` and `top` (the engine reserves its own offset), the zebra rows,
+the task-box radius, and the nested-quote right padding. They sit at engine
+weight or above, so overriding one takes the same selector shape or a stronger
+one; the comments next to those rules say why each is special. The guard in
+`theme-preview.spec.ts` therefore pins the zero-weight shapes (the Prism scope
+and the inline-code selector), not a blanket rule that every theme selector is
+weightless.
 
 ## Loading a theme
 
@@ -179,10 +189,12 @@ that one comparison (a pre-split id without a baseline still fails) and goes
 through every other check. `verify.mjs` needs `THEME_LEGACY_DIR`; without a
 baseline it exits non-zero unless `THEMES_VERIFY_ALLOW_NO_BASELINE=1` is set.
 
-Custom CSS stays effective across theme switches: `.token.keyword`,
-`.editor-wrapper code` and `.editor-wrapper h1` are the selector shapes a theme
-must leave overridable, and `theme-preview.spec.ts` fails if a theme raises their
-specificity (a bare `.editor-wrapper` prefix, or `:not(pre)` without `:where`).
+Custom CSS stays effective across theme switches. `theme-preview.spec.ts` pins
+the two zero-weight shapes GitHub Light promises: every Prism selector in
+`prismjs/github-light.theme.css` starts with `:where(.editor-wrapper)`, and the
+inline-code rule is exactly `.editor-wrapper :where(:not(pre)) > code`. The
+other 32 upstream palettes stay global and take a plain `.token.keyword`, so
+the guard is scoped to the one theme that carries its own syntax palette.
 
 ## Out of scope
 
