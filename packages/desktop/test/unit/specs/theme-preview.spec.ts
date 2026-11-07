@@ -163,3 +163,36 @@ describe('preview of one theme', () => {
     expect(PREVIEW_SAMPLE).toContain('class="token comment"')
   })
 })
+
+// The GitHub Light body stylesheet carries rules the other themes do not, and
+// each one changes how the editor and the preview share a stylesheet. These
+// pin the two regressions a stylesheet review found: the user's code font size
+// must still win, and the preview's block code must not inherit the inline pill.
+describe('github-light markdown rules', () => {
+  const css = readTheme('md', 'github-light')
+  const rule = (selector: string): string => {
+    const start = css.indexOf(`${selector} {`)
+    return start < 0 ? '' : css.slice(start, css.indexOf('}', start) + 1)
+  }
+
+  it('leaves the code block font size to the user preference', () => {
+    expect(rule('.editor-wrapper .mu-code-block')).not.toContain('font-size')
+    expect(rule('.editor-wrapper pre code:not(.mu-code)')).toContain('font-size: 85%')
+  })
+
+  it('keeps the inline pill off a preview code block', () => {
+    expect(css).toContain('.editor-wrapper :not(pre) > code:not(.mu-code)')
+    expect(css).toContain('.editor-wrapper pre code:not(.mu-code)')
+  })
+
+  it('paints every second data row instead of every second row', () => {
+    expect(css).toContain('.editor-wrapper .mu-table-inner tr:nth-child(odd):not(:first-child) td')
+    expect(css).toContain('.editor-wrapper tbody tr:nth-child(2n) td')
+    expect(css).not.toContain('.editor-wrapper tr:nth-child(2n) td')
+  })
+
+  it('insets nested quotes and ends with a newline', () => {
+    expect(rule('.editor-wrapper blockquote blockquote')).toContain('padding-right: 1em')
+    expect(css.endsWith('\n')).toBe(true)
+  })
+})

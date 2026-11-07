@@ -138,7 +138,9 @@ from, so a later change can be diffed against the real source instead of guessed
   MIT, © Sindre Sorhus), scoped to `.editor-wrapper` and mapped onto the
   `--fmd-*` variables plus the `h1`–`h6`, table, blockquote, code and rule rules
   the engine needs. The interface half (Primer) and the syntax palette (Primer
-  Prettylights) are recorded here when they land.
+  Prettylights) are recorded here when they land. The line-number gutter rule
+  uses `:has()`, as the engine already does, so the theme does not raise the
+  minimum WebView version (Chromium 105+ / WebKit 15.4+).
 
 ## Checks
 
@@ -148,7 +150,7 @@ structural variables, swatches, and a comparison of 3830 values against the
 pre-split files. A theme added after the split has no pre-split file: it skips
 that one comparison (a pre-split id without a baseline still fails) and goes
 through every other check. `verify.mjs` needs `THEME_LEGACY_DIR`; without a
-baseline it exits non-zero unless `THEMES_ALLOW_NO_BASELINE=1` is set.
+baseline it exits non-zero unless `THEMES_VERIFY_ALLOW_NO_BASELINE=1` is set.
 
 ## Out of scope
 

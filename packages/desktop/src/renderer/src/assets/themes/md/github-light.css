@@ -61,8 +61,11 @@
 /* Headings: GitHub's 600 weight, 1.25 line height, and the h1/h2 rules that
  * close with a hairline. The rules reach the editor (Muya renders plain
  * `<h1>`…`<h6>` inside `.mu-container`) and the settings preview (plain HTML
- * inside `.editor-wrapper`). Specificity stays at one class plus one element
- * so user CSS in `#custom-styles` can still override it. */
+ * inside `.editor-wrapper`). The heading selectors stay at one class plus one
+ * element, so a custom stylesheet can beat them with the same selector. The
+ * deeper rules below (inline code, zebra rows, nested quotes, task boxes) need
+ * their higher specificity to outrank Muya's own stylesheet, so user CSS has
+ * to match those selectors to win. */
 
 .editor-wrapper h1,
 .editor-wrapper h2,
@@ -155,6 +158,13 @@
   content: '';
 }
 
+/* Muya zeroes the right padding of a nested quote; GitHub keeps both sides
+ * inset, so the inner bar is not flush against the outer quote's text. */
+
+.editor-wrapper blockquote blockquote {
+  padding-right: 1em;
+}
+
 /* Lists */
 
 .editor-wrapper ul,
@@ -183,14 +193,20 @@
   font-weight: 600;
 }
 
-.editor-wrapper tr:nth-child(2n) td {
+/* Zebra rows. GitHub paints `tbody tr:nth-child(2n)` — its second and fourth
+ * data row. Muya has no `tbody`, and its first `tr` is the header (the engine
+ * bolds `tr:first-child`), so the editor counts from the header while the
+ * preview has a real `tbody`; both selectors below land on data rows 2 and 4. */
+
+.editor-wrapper .mu-table-inner tr:nth-child(odd):not(:first-child) td,
+.editor-wrapper tbody tr:nth-child(2n) td {
   background: var(--codeBlockBgColor);
 }
 
 /* Inline code: GitHub's translucent grey pill. `.mu-code` is the block code
  * element and must keep the block palette. */
 
-.editor-wrapper code:not(.mu-code) {
+.editor-wrapper :not(pre) > code:not(.mu-code) {
   padding: 0.2em 0.4em;
 
   font-size: 85%;
@@ -207,7 +223,6 @@
 .editor-wrapper .mu-code-block {
   padding: 1rem;
 
-  font-size: 85%;
   line-height: 1.45;
 
   border: 0;
@@ -234,7 +249,7 @@
   border-radius: 6px;
 }
 
-.editor-wrapper pre code {
+.editor-wrapper pre code:not(.mu-code) {
   padding: 0;
 
   font-size: 85%;
