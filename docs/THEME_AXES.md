@@ -52,6 +52,11 @@ mirrors every custom property on the element that declares it
 those aliases first. Copying the declaration text instead would change its
 cascade position, its selector and its evaluation context.
 
+Syntax colours follow the same rule: the GitHub Light palette is scoped to
+`.editor-wrapper` (`prismjs/github-light.theme.css`), so overriding its tokens
+takes `.editor-wrapper .token.keyword`, while the other 32 upstream palettes
+stay global and take `.token.keyword`.
+
 ## Loading a theme
 
 `applyThemeSet(id)` in `util/theme.ts` is the only way a theme reaches the

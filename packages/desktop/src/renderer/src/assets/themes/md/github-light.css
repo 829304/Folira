@@ -209,8 +209,9 @@
 
 /* Inline code: GitHub's translucent grey pill. `:where(:not(pre))` zeroes the
  * exclusion's specificity, so the rule stays at (0,1,1) — equal to a user's
- * `.editor-wrapper code` and to the engine's `code.mu-inline-rule`, and last in
- * the cascade because the theme slot precedes `#custom-styles`. */
+ * `.editor-wrapper code` and to the engine's `code.mu-inline-rule`. It comes
+ * after the engine stylesheet and before `#custom-styles`, so it wins the tie
+ * against the engine and yields to user CSS. */
 
 .editor-wrapper :where(:not(pre)) > code {
   padding: 0.2em 0.4em;
@@ -239,10 +240,10 @@
   padding-left: 2.5em;
 }
 
-/* Muya starts the gutter one `em` below the padding box, which only matches
- * `padding: 1rem` at the default code size. Pin it to the padding the theme
- * actually reserves so the numbers stay level with the first code line when the
- * user raises the code font size. */
+/* Muya offsets the gutter by one em of the code font while the theme reserves
+ * one rem, so the two only agree at a 16px code size. Pin the gutter to the
+ * padding the theme actually reserves so the numbers stay level with the first
+ * code line at any size. */
 .editor-wrapper .mu-code-block .mu-line-numbers-rows {
   top: 1rem;
 }

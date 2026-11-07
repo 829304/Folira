@@ -425,8 +425,12 @@ const SWATCH_NAMES = {
 // Each half is resolved against its own palette: `editorColor` means the chrome
 // in one file and the page in the other, so a merged map would paint the
 // Markdown card with the interface colours. The Markdown side falls back to the
-// interface palette when its own file omits a swatch, matching the
-// `--fmd-* → --fui-*` fallback base.css publishes inside `.editor-wrapper`.
+// interface palette when its own file omits a swatch, matching the same-name
+// `--fmd-* → --fui-*` shape base.css publishes inside `.editor-wrapper`. The
+// fallback only covers names both halves declare: chains such as
+// `--fmd-h1Color → --headingColor/--editorColor80`, `--fmd-codeBlockBgColor →
+// a literal` and `--fmd-blockquoteBorderColor → --themeColor` are not that
+// shape, so those swatches must stay declared in the Markdown file.
 function swatchesOf (uiLiterals, mdLiterals, id) {
   const pick = (literals, fallback, names) => {
     const picked = {}

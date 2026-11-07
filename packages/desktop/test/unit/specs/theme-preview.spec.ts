@@ -207,6 +207,9 @@ describe('github-light markdown rules', () => {
   })
 
   it('pins the line-number gutter to the code block padding', () => {
+    // The gutter offset and the block padding only line up as a pair, so a
+    // change to either one alone must fail here.
+    expect(rule('.editor-wrapper .mu-code-block')).toContain('padding: 1rem')
     expect(rule('.editor-wrapper .mu-code-block:has(.mu-line-numbers-rows)')).toContain(
       'padding-left: 2.5em'
     )
