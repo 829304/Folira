@@ -254,14 +254,42 @@ const selectorsIn = (css: string): string[] =>
     })
 
 describe('theme rules custom CSS can override', () => {
+  /** Drop the subtrees that are already zero-weight, so their insides do not count. */
+  const withoutWhere = (selector: string): string => {
+    let result = ''
+    let cursor = 0
+    for (;;) {
+      const start = selector.indexOf(':where(', cursor)
+      if (start < 0) return result + selector.slice(cursor)
+      result += selector.slice(cursor, start)
+      let depth = 0
+      let end = start + 6
+      for (; end < selector.length; end++) {
+        if (selector[end] === '(') depth++
+        else if (selector[end] === ')') {
+          depth--
+          if (depth === 0) break
+        }
+      }
+      cursor = end + 1
+    }
+  }
+
   it('scopes every GitHub Light Prism selector with :where()', () => {
     const prism = readFileSync(resolve(themesDir, 'prismjs', 'github-light.theme.css'), 'utf8')
     const selectors = selectorsIn(prism)
+    const prefix = ':where(.editor-wrapper)'
+    // The prefix alone is not enough: a suffix such as `:not(.x)` leaves the
+    // scope intact but raises the selector to (0,3,0), beating the user's
+    // `.token.keyword` again. So anything outside a `:where()` in the rest of
+    // the selector must stay free of specificity-raising pseudo-classes and IDs.
+    const offenders = selectors.filter(selector => (
+      !selector.startsWith(prefix) ||
+      /:(?:not|is|has)\(|#/.test(withoutWhere(selector.slice(prefix.length)))
+    ))
 
-    expect(selectors.length).toBeGreaterThan(30)
-    expect(
-      selectors.filter(selector => !selector.startsWith(':where(.editor-wrapper)'))
-    ).toEqual([])
+    expect(selectors.length).toBe(41)
+    expect(offenders).toEqual([])
   })
 
   it('keeps the GitHub Light inline-code selector exactly zero-weight', () => {

@@ -27,23 +27,26 @@
   background: var(--editorBgColor, #fff);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  /* Taller samples are cut by this fixed frame. The bottom fade makes the cut
-     read as "there is more below" instead of slicing the last line of code in
-     half; 86% keeps the code text above the fade at the default 216px. */
-  mask-image: linear-gradient(#000 86%, transparent);
-  -webkit-mask-image: linear-gradient(#000 86%, transparent);
+  /* The sample is scaled per breakpoint to fit this frame, so the mask only
+     needs to guard against overflow: 96% leaves the last ~7px at 216px for a
+     rare taller sample. Starting it earlier faded the sample's last block — the
+     code block — to near invisibility at the 176px and 140px breakpoints. */
+  mask-image: linear-gradient(#000 96%, transparent);
+  -webkit-mask-image: linear-gradient(#000 96%, transparent);
 }
 
 /* Scale the sample as a whole instead of shrinking its font sizes: a theme's
    rem/em spacing — heading margins, table cell padding, code-block padding —
-   scales with it, so the preview keeps the theme's proportions. 0.45 was
-   measured on PREVIEW_SAMPLE under the tallest (GitHub Light) rules: it keeps
-   the code block's text above the frame's fade at the default 216px height. */
+   scales with it, so the preview keeps the theme's proportions. The value is a
+   breakpoint variable in index.vue and must move together with
+   --theme-preview-height: a shorter frame needs a smaller zoom, or the bottom
+   of the code block disappears under the frame's fade. 0.45 was measured on
+   PREVIEW_SAMPLE under the tallest (GitHub Light) rules for the 216px frame. */
 .editor-wrapper {
   padding: 2px 8px;
   font-size: 14px;
   line-height: 1.5;
-  zoom: 0.45;
+  zoom: var(--theme-preview-zoom, 0.45);
 }
 
 :where(.editor-wrapper) h1,

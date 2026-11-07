@@ -34,12 +34,12 @@
   border-radius: 0.3em;
 }
 
-:where(.editor-wrapper) :not(pre) > code[class*='language-'],
+:where(.editor-wrapper) :where(:not(pre)) > code[class*='language-'],
 :where(.editor-wrapper) pre.ag-paragraph {
   background: #f6f8fa;
 }
 
-:where(.editor-wrapper) :not(pre) > code[class*='language-'] {
+:where(.editor-wrapper) :where(:not(pre)) > code[class*='language-'] {
   padding: 0.1em;
   border-radius: 0.3em;
   white-space: normal;

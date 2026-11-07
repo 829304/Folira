@@ -154,17 +154,22 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
      The 84px chrome is the title row, the search box, the 8px top padding and
      the bottom border, measured in the settings window — not estimated. */
   --theme-preview-height: 216px; /* total 300px */
+  --theme-preview-zoom: 0.45;
   --theme-header-height: calc(var(--theme-preview-height) + 84px);
   scroll-padding-top: calc(var(--theme-header-height) + 8px);
 
   /* Short windows trade preview height for grid space. The header follows the
-     same value, so the two cannot drift apart. */
+     same value, so the two cannot drift apart. The zoom moves with the height:
+     the sample is scaled as one block, so a shorter frame needs a smaller zoom
+     or the code block's lower half disappears under the frame's fade. */
   @media (max-height: 760px) {
     --theme-preview-height: 176px; /* total 260px */
+    --theme-preview-zoom: 0.4;
   }
 
   @media (max-height: 640px) {
     --theme-preview-height: 140px; /* total 224px */
+    --theme-preview-zoom: 0.31;
   }
 
   & .pref-theme-header {

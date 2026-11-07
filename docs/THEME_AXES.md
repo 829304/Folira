@@ -52,13 +52,16 @@ mirrors every custom property on the element that declares it
 those aliases first. Copying the declaration text instead would change its
 cascade position, its selector and its evaluation context.
 
-Syntax colours and ordinary typography follow the same rule. A theme's rules
-for the `--fmd-*`-backed colours and for plain element styling are scoped to
-the editor at zero specificity — the GitHub Light Prism palette rides on
-`:where(.editor-wrapper)` in `prismjs/github-light.theme.css`, and its
-inline-code rule on `:where(:not(pre))` — so a user's `.token.keyword`,
-`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. The
-other 32 upstream palettes stay global and take the same selectors.
+Syntax colours and ordinary typography follow the same rule for the hand-written
+themes. A theme's rules for the `--fmd-*`-backed colours and for plain element
+styling are scoped to the editor at zero specificity — the GitHub Light Prism
+palette rides on `:where(.editor-wrapper)` in `prismjs/github-light.theme.css`,
+and its inline-code rule on `:where(:not(pre))` — so a user's `.token.keyword`,
+`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. The 32
+themes inherited from upstream are the exception: their Markdown halves still
+carry the old selector tails, unscoped and in places `!important`, so overriding
+one of those takes the same selector or a stronger one. Their Prism palettes stay
+global and take the familiar `.token.*` names.
 
 A few structural rules cannot be zero-weight: they have to outrank Muya's own
 stylesheet. In `md/github-light.css` those are the line-number gutter's

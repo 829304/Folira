@@ -55,4 +55,19 @@ describe('card swatches', () => {
       'github-light: cannot resolve linkColor for the card swatches'
     )
   })
+
+  it('resolves the fallback of a var() whose reference is missing', () => {
+    const literals = mdDeclaring([['linkColor', 'var(--missingColor, #fff)']])
+
+    expect(swatchesOf(uiLiterals, literals, 'github-light').md.linkColor).toBe('#fff')
+  })
+
+  it('throws when a swatch is missing from both palettes', () => {
+    const literals = mdDeclaring()
+    literals.delete('h1Color')
+
+    expect(() => swatchesOf(uiLiterals, literals, 'github-light')).toThrow(
+      'github-light: cannot resolve h1Color for the card swatches'
+    )
+  })
 })
