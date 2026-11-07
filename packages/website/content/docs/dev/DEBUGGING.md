@@ -1,5 +1,20 @@
 # Debugging
 
+> **Note (2026-11-08):** this page describes the upstream Electron toolchain and has not been rewritten for the Tauri shell. Folira's current structure, module boundaries and commands are in `CLAUDE.md` at the repository root: `pnpm --filter folira tauri:dev` runs the app, `pnpm --filter folira tauri:build` produces installers, `pnpm --filter folira test:unit` and `pnpm --filter folira typecheck` are the checks.
+
+## Inspecting the running app
+
+The renderer is a WebView page, so the recipes below no longer apply. In development on Windows, start the app with the WebView2 debugging port open and talk to it over the Chrome DevTools Protocol:
+
+```powershell
+$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = '--remote-debugging-port=9222'
+pnpm --filter folira tauri:dev
+```
+
+`http://127.0.0.1:9222/json/list` then lists the editor page and the settings page (`…?type=settings`); anything that speaks CDP — a short Node script over `WebSocket`, or `chrome://inspect` — can evaluate expressions, capture screenshots and dispatch real mouse and keyboard events. This is how the theme and window behaviour are checked in the repository's own workflow.
+
+On Linux the same role is played by WebKitGTK's inspector (`WEBKIT_INSPECTOR_SERVER`), and the Rust side is debugged with `rust-gdb` or `lldb` against the `folira` binary. Neither has been automated here yet.
+
 ## Use Visual Studio Code
 
 The most simplest way is to debug using the `Debug MarkText` configuration. You can set breakpoints and use the `debugger` statement.

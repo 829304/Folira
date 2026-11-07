@@ -37,17 +37,16 @@ Folira 是一个开源的桌面 Markdown 编辑器：一边写，看到的就已
 - **导出**：HTML 与 PDF
 - **粘贴即插图**：从剪贴板粘贴或直接拖拽图片插入
 - **文件管理**：多标签、侧栏文件树、目录（TOC）面板、全文搜索
-- **主题**：内置 30 余套主题，深浅色跟随系统
+- **主题**：内置 30 套主题（11 浅 / 19 深），一次选择统一界面、正文与代码高亮
 - **十种界面语言**：de、en、es、fr、ja、ko、pt、tr、zh-CN、zh-TW
 
 ## 主题
 
-主题系统正在重做，目标是把两条轴拆开、任意组合：
+Folira 内置 30 套主题，其中 11 套浅色、19 套深色。主题是一个整体选择：界面（标题栏、侧栏、标签页、菜单、设置页）、正文排版（字号层级、引用、代码块、表格、链接）与代码高亮同时切换，不会出现三者配色互相打架的情况。
 
-- **应用界面主题**：标题栏、侧栏、标签页、菜单、设置页的观感
-- **Markdown 排版主题**：字体、行距、标题层级、引用、代码块、表格、链接的排版
+「偏好设置 → 主题」里按浅色 / 深色两个页签浏览，可搜索、可悬停即时预览，点击才应用并写入偏好。自定义 CSS 追加在主题样式之后，同权重时按顺序胜出（语法颜色直接写 `.token.*` 即可；主题设置过的排版用 `.editor-wrapper h2` 这类同形选择器覆盖）。
 
-首批计划提供 Folira Default、GitHub、Typora GitBook、Claude、Bear、Notion、iA Writer、Linear、Paper（羊皮纸）、OLED Black 共 10 套排版主题；界面主题与代码高亮主题各自独立选择，也可以跟随系统自动切换深色与浅色。
+配色大多源自社区方案（GitHub Primer、Catppuccin、Dracula、Nord、Tokyo Night、Solarized 等），完整列表与来源见 [Themes](packages/website/content/docs/end-user/THEMES.md)。
 
 ## 下载安装
 
@@ -116,9 +115,10 @@ pnpm lint                           # ESLint
 
 - [x] 移除 Electron 主进程与构建工具链，只保留 Tauri 外壳
 - [x] 修复迁移遗留的构建、类型与单元测试问题
-- [ ] 品牌改造：名称、图标、窗口标题、安装包标识
-- [ ] 主题系统：界面主题与 Markdown 排版主题双轴解耦
-- [ ] 10 套 Markdown 排版主题
+- [x] 品牌改造：名称、图标、窗口标题、安装包标识
+- [x] 主题系统：单一主题 id 统一界面、正文与代码高亮，浅色 / 深色分页浏览
+- [x] 新增主题：GitHub Light（Primer 界面 + Prettylights 语法）
+- [ ] 新增主题：GitHub Dark
 - [ ] 图片上传（PicGo / 自定义脚本）
 - [ ] 自动更新
 - [ ] Windows、macOS、Linux 三平台发布流水线

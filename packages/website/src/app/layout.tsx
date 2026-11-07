@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 const SITE_URL = 'https://marktext.me'
 const TITLE = 'MarkText — The Markdown editor that gets out of your way'
 const DESCRIPTION =
-  'A free, open-source, real-time preview Markdown editor for macOS, Windows and Linux. Beautiful typography, 33 built-in themes, math, diagrams, footnotes — all rendered live.'
+  'A free, open-source, real-time preview Markdown editor for macOS, Windows and Linux. Beautiful typography, 30 built-in themes, math, diagrams, footnotes — all rendered live.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

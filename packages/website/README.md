@@ -180,14 +180,14 @@ website/
 
 ## 🎨 Themes
 
-The website supports multiple editor themes:
+The marketing pages preview a handful of the app's built-in themes (`packages/desktop/src/renderer/src/assets/themes/manifest.json` is the source of truth for the full set):
 
-- **Cadmium Light** (Default)
-- **Dark** - Dark theme with high contrast
-- **Graphite** - Elegant dark gray theme
-- **Material Dark** - Material Design inspired dark theme
-- **One Dark** - Atom One Dark theme
-- **Ulysses** - Minimalist theme inspired by Ulysses app
+- **Light** (default)
+- **Dark** — the plain dark theme
+- **GitHub Light** — Primer chrome, Prettylights syntax
+- **Material Dark** — Material Design inspired dark theme
+- **ONE Dark** — Atom's One Dark theme
+- **Ulysses** — minimalist theme inspired by the Ulysses app
 
 ## 📝 Markdown Features
 

@@ -1,5 +1,7 @@
 # Folira 开发需求概要
 
+> **状态说明（2026-11-08）**：这是立项时的需求稿，保留作历史记录。其中"界面主题与 Markdown 排版主题双轴解耦"、"首批 10 套排版主题"两项目标已被后续决策取代——现在对外只暴露一个主题 id，界面、正文与语法高亮一起切换；新增主题按需实现（已落地 GitHub Light，占位规划见路线图）。当前实现口径以 `docs/THEME_AXES.md`、`CLAUDE.md` 与 `packages/website/content/docs/end-user/THEMES.md` 为准。
+
 ## 一、项目定位
 
 基于 [marktext-light](https://github.com/SugarFatFree/marktext-light) 开发 **Folira**，一款轻量、精致、跨平台的 Markdown 所见即所得编辑器。

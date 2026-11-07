@@ -260,13 +260,21 @@ renderer agree on values such as the current theme.
 
 ### Themes
 
-`renderer/src/assets/themes/` holds 32 `*.theme.css` files (~214 lines each) plus
-31 Prism themes under `themes/prismjs/`, loaded by `util/themeColor.ts` and
-injected by `util/theme.ts`. Each CSS file currently mixes two concerns: app-UI
-variables (`--sideBarBgColor`, `--titleBar*`, `--button*`) and document
-typography variables (`--h1Color`, `--linkColor`, `--codeBlockBgColor`, …).
-Splitting those into independently selectable UI and Markdown themes is planned
-(theme files will be grouped per axis); until then a theme is a single unit.
+`renderer/src/assets/themes/` ships **30 themes**. Each has two files of its own —
+`ui/<id>.css` (window chrome) and `md/<id>.css` (document typography) — plus a
+syntax palette in `prismjs/`, which most themes name after themselves but a few
+share (`light` → `default.theme.css`, `dark` and `material-dark` →
+`dark.theme.css`: 29 palette files for 30 themes). `manifest.json` describes every
+entry (`id`, `label`, `appearance`, `prism`, `swatches`). `util/themeColor.ts`
+lazy-loads the files through `import.meta.glob`, `util/theme.ts` injects them
+into three `<style>` slots, `scripts/themes/build.mjs` generates
+`base.css`/`manifest.json` (`tokens.mjs` classifies the variables, `verify.mjs`
+checks the cascade) — `pnpm --filter folira themes:check` is the gate (see
+`docs/THEME_AXES.md`).
+
+Users still pick **one id**: `theme` in `preferences.json` selects all three
+files together, and the settings page lists them under Light/Dark tabs.
+Per-axis themes are out of scope (see the doc's "Out of scope").
 
 ### i18n
 

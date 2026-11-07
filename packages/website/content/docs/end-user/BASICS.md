@@ -58,7 +58,7 @@ Folira also has support to open a directory via <kbd>CmdOrCtrl</kbd>+<kbd>Shift<
 
 ## Themes
 
-You can change the application theme by clicking on an entry under the themes application menu.
+Themes are picked in `Preferences` → `Theme`. One choice covers the window chrome, the page and the syntax highlighting together; the list is split into light and dark tabs, and hovering a card previews it before you commit. See [Themes](THEMES.md) for the list and for custom CSS.
 
 ## Preferences
 

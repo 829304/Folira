@@ -127,7 +127,7 @@ MarkText 是一款由社群支持驅動的開源 Markdown 編輯器。如果 Mar
 - 支援數學表達式（KaTeX）、Front Matter 和表情符號等 Markdown 擴展。
 - 支援段落和內聯樣式快捷方式，提升寫作效率。
 - 可匯出 **HTML** 和 **PDF** 文件。
-- 多種[主題](../end-user/THEMES.md)：**Cadmium Light**、**Material Dark** 等。
+- 多種[主題](../end-user/THEMES.md)：**Light**、**Material Dark** 等。
 - 多種編輯模式：**原始碼模式**、**打字機模式**、**專注模式**。
 - 支援直接從剪貼簿貼上圖片。
 

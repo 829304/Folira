@@ -126,7 +126,7 @@ MarkText ist ein Open-Source-Markdown-Editor, der von seiner Community unterstü
 - Markdown-Erweiterungen wie mathematische Ausdrücke (KaTeX), Front Matter und Emojis.
 - Unterstützung für Absatz- und Inline-Stil-Kurzbefehle zur Verbesserung der Schreibeffizienz.
 - Ausgabe von **HTML**- und **PDF**-Dateien.
-- Verschiedene [Themes](../end-user/THEMES.md): **Cadmium Light**, **Material Dark** usw.
+- Verschiedene [Themes](../end-user/THEMES.md): **Light**, **Material Dark** usw.
 - Verschiedene Bearbeitungsmodi: **Quellcode-Modus**, **Schreibmaschinen-Modus**, **Fokus-Modus**.
 - Bilder direkt aus der Zwischenablage einfügen.
 

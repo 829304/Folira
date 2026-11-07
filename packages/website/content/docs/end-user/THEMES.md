@@ -1,100 +1,96 @@
 # Themes
 
-MarkText includes 33 built-in themes organized into Light and Dark categories. Each theme provides a complete color scheme for the editor interface and syntax highlighting.
+Folira ships **30 built-in themes** — 11 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables, links) and the syntax-highlighting palette at once, so the three always agree with each other.
 
-The names below match the labels shown in the **Theme** menu. The underlying id stored in `preferences.json` under the `theme` field can differ — e.g. *Cadmium Light* → `light`, *Cadmium Dark* → `dark`, *Graphite Light* → `graphite`, *Ulysses Light* → `ulysses`. The full label↔id mapping lives in `src/main/menu/templates/theme.ts`.
+## Choosing a theme
 
-## Light Themes
+Open `Preferences` → `Theme`. The list is split into **Light** and **Dark** tabs and opens on the tab of the theme you are currently using.
 
-| Theme | Description |
-|-------|-------------|
-| **Ayu Light** | Warm, comfortable light theme with soft colors |
-| **Cadmium Light** | Clean, minimal light theme (default) |
-| **Catppuccin Latte** | Soothing pastel theme with warm tones |
-| **Everforest Light** | Nature-inspired green-tinted light theme |
-| **Graphite Light** | Cool gray-toned light theme |
-| **Gruvbox Light** | Retro groove with warm, earthy colors |
-| **Rosé Pine Dawn** | Elegant theme with subtle rose accents |
-| **Solarized Light** | Classic precision color scheme |
-| **Tokyo Night Light** | Modern light variant of Tokyo Night |
-| **Ulysses Light** | Inspired by the Ulysses writing app |
+- **Browse** — the tabs only switch which themes are listed; they do not change the editor.
+- **Search** — filters within the current tab. The search term is kept when you switch tabs.
+- **Preview** — hovering a card, or focusing it with <kbd>Tab</kbd>, previews that theme in the strip above the list without applying it. Moving away puts the preview back.
+- **Apply** — clicking a card applies the theme and saves it. It is stored as `theme` in `preferences.json` and restored on the next start.
 
-## Dark Themes
+A theme whose id is no longer shipped (for example after an upgrade) falls back to the `Light` theme; the rest of your preferences are left untouched.
 
-| Theme | Description |
-|-------|-------------|
-| **Ayu Dark** | Deep, comfortable dark theme |
-| **Ayu Mirage** | Softer dark variant of Ayu |
-| **Cadmium Dark** | Clean, minimal dark theme |
-| **Catppuccin Mocha** | Rich, warm dark pastel theme |
-| **cyberdream** | Neon-accented futuristic dark theme |
-| **Dracula** | Popular purple-tinted dark theme |
-| **Everforest Dark** | Nature-inspired forest dark theme |
-| **Gruvbox Dark** | Retro groove with warm dark colors |
-| **Horizon Dark** | Vibrant warm dark theme |
-| **Kanagawa** | Inspired by Hokusai's Great Wave painting |
-| **Material Dark** | Google Material Design dark theme |
-| **Monokai Pro** | Professional variant of the classic Monokai |
-| **Nightfox** | Cool-toned dark theme with good contrast |
-| **Nord** | Arctic, bluish clean dark theme |
-| **One Dark** | Atom editor's signature dark theme |
-| **Oxocarbon Dark** | IBM Carbon-inspired minimal dark theme |
-| **Palenight** | Elegant purple-tinted dark theme |
-| **Rosé Pine** | Soho vibes with muted rose tones |
-| **Rosé Pine Moon** | Darker variant of Rosé Pine |
-| **Solarized Dark** | Classic precision dark color scheme |
-| **Synthwave '84** | Retro 80s neon aesthetic |
-| **Tokyo Night** | Modern VSCode-inspired dark theme |
-| **Tokyo Night Storm** | Higher contrast Tokyo Night variant |
+## Custom CSS
 
-## Switching Themes
+`Preferences` → `Theme` → `Custom CSS` appends a stylesheet after the active theme, so it wins wherever the two have equal specificity. Syntax colours are the simple case: the syntax palette only claims `:where(.editor-wrapper)`, which carries no weight, so
 
-You can switch themes in several ways:
+```css
+.token.keyword { color: #7c3aed; }
+```
 
-1. **Menu**: Go to `Theme` menu and select your preferred theme
-2. **Preferences**: Open `Preferences` → `Theme` tab to preview and select themes
-3. **Follow System**: Enable "Follow System Theme" to automatically switch between light and dark themes based on your system settings
+applies to every built-in theme without a prefix.
 
-## Theme Screenshots
+For the document itself, themes write their rules under `.editor-wrapper` (and structural ones — gutter, zebra rows, task boxes, nested quotes — at the engine's own weight or above). A bare `h2 { … }` therefore loses to a theme that styles `.editor-wrapper h2`; use the same shape, or a stronger selector, when you want to override the typography a theme sets:
 
-### Light Themes
+```css
+.editor-wrapper h2 { letter-spacing: -0.01em; }
+```
 
-| Cadmium Light | Graphite Light |
-|---------------|----------------|
-| ![Cadmium Light](../themeImages/cadmium-light.png) | ![Graphite Light](../themeImages/graphite-light.png) |
+`docs/THEME_AXES.md` in the repository lists which rules already sit at engine weight.
 
-| Ulysses Light | Catppuccin Latte |
-|---------------|------------------|
-| ![Ulysses Light](../themeImages/ulysses-light.png) | ![Catppuccin Latte](../themeImages/catppuccin-latte.png) |
+## Light themes
 
-### Dark Themes
+| Theme | id | Notes |
+| --- | --- | --- |
+| AYU Light | `ayu-light` | Warm grey paper, gentle contrast |
+| Catppuccin Latte | `catppuccin-latte` | Pastel light with warm neutrals |
+| Everforest Light | `everforest-light` | Green-tinted paper |
+| GitHub Light | `github-light` | GitHub's own Markdown look: Primer chrome, Prettylights syntax |
+| Graphite | `graphite` | Neutral grey light |
+| Gruvbox Light | `gruvbox-light` | Retro, warm light |
+| Light | `light` | Folira's plain light default |
+| Rose Pine Dawn | `rose-pine-dawn` | Soft rose light |
+| Solarized Light | `solarized-light` | The classic cream background |
+| Tokyo Night Light | `tokyo-night-light` | Cool blue-white light |
+| Ulysses | `ulysses` | Muted lavender grey, built for long sessions |
 
-| Dark | Material Dark |
-|------|---------------|
-| ![Dark](../themeImages/dark.png) | ![Material Dark](../themeImages/material-dark.png) |
+## Dark themes
 
-| One Dark | Dracula |
-|----------|---------|
-| ![One Dark](../themeImages/one-dark.png) | ![Dracula](../themeImages/dracula.png) |
+| Theme | id | Notes |
+| --- | --- | --- |
+| AYU Dark | `ayu-dark` | Deep blue-grey |
+| AYU Mirage | `ayu-mirage` | The softer AYU variant |
+| Catppuccin Mocha | `catppuccin-mocha` | Warm pastel dark |
+| Dark | `dark` | Folira's plain dark default |
+| Dracula | `dracula` | Purple-tinted dark |
+| Everforest Dark | `everforest-dark` | Forest green dark |
+| Gruvbox Dark | `gruvbox-dark` | Retro, warm dark |
+| Horizon Dark | `horizon-dark` | Vivid warm dark |
+| Kanagawa | `kanagawa` | Ink-wash inspired dark |
+| Material Dark | `material-dark` | Material Design dark |
+| Monokai PRO | `monokai-pro` | Monokai Pro dark |
+| Nord | `nord` | Arctic blue-grey |
+| ONE Dark | `one-dark` | Atom's One Dark |
+| Oxocarbon Dark | `oxocarbon-dark` | IBM Carbon minimal dark |
+| Palenight | `palenight` | Purple-tinted dark |
+| Rose Pine | `rose-pine` | Muted rose dark |
+| Solarized Dark | `solarized-dark` | The classic teal dark |
+| Synthwave 84 | `synthwave-84` | 1980s neon |
+| Tokyo Night | `tokyo-night` | Cool blue dark |
 
-| Nord | Tokyo Night |
-|------|-------------|
-| ![Nord](../themeImages/nord.png) | ![Tokyo Night](../themeImages/tokyo-night.png) |
+## Theme credits
 
-## Custom Themes
+Many of these themes follow colour schemes published by the developer community. Each project keeps its own license; the links below are the upstream sources.
 
-Custom theme support is planned for a future release. In the meantime, you can use the "Custom CSS" option in Preferences → Theme to override theme styles.
-
-## Theme Credits
-
-Many of these themes are inspired by popular color schemes from the developer community:
-
-- [Catppuccin](https://github.com/catppuccin/catppuccin) - MIT License
-- [Dracula](https://github.com/dracula/dracula-theme) - MIT License
-- [Everforest](https://github.com/sainnhe/everforest) - MIT License
-- [Gruvbox](https://github.com/morhetz/gruvbox) - MIT License
-- [Nord](https://github.com/nordtheme/nord) - MIT License
-- [Rosé Pine](https://github.com/rose-pine/rose-pine-theme) - MIT License
-- [Solarized](https://github.com/altercation/solarized) - MIT License
-- [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) - MIT License
-- [Gogh Themes](https://github.com/Gogh-Co/Gogh) - MIT License (color palette reference)
+- [Ayu](https://github.com/ayu-theme) — MIT
+- [Catppuccin](https://github.com/catppuccin/catppuccin) — MIT
+- [Dracula](https://github.com/dracula/dracula-theme) — MIT
+- [Everforest](https://github.com/sainnhe/everforest) — MIT
+- [GitHub: Primer](https://github.com/primer/primitives) (interface tokens and the Prettylights syntax palette) and [github-markdown-css](https://github.com/sindresorhus/github-markdown-css) (document styles) — MIT
+- [Gruvbox](https://github.com/morhetz/gruvbox) — MIT
+- [Horizon](https://github.com/jolaleye/horizon-theme-vscode) — MIT
+- [Kanagawa](https://github.com/rebelot/kanagawa.nvim) — MIT
+- [Material Theme](https://github.com/material-theme/vsc-material-theme) — MIT
+- [Monokai Pro](https://monokai.pro) — see upstream
+- [Nord](https://github.com/nordtheme/nord) — MIT
+- [One Dark](https://github.com/atom/one-dark-syntax) — MIT
+- [Oxocarbon](https://github.com/nyoom-engineering/oxocarbon.nvim) — MIT
+- [Palenight](https://github.com/drewtempelmeyer/palenight.vim) — MIT
+- [Rosé Pine](https://github.com/rose-pine/rose-pine-theme) — MIT
+- [Solarized](https://github.com/altercation/solarized) — MIT
+- [Synthwave '84](https://github.com/robb0wen/synthwave-vscode) — MIT
+- [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) — MIT
+- [Gogh Themes](https://github.com/Gogh-Co/Gogh) — MIT (colour palette reference)

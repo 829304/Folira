@@ -127,7 +127,7 @@ MarkText는 커뮤니티의 지원으로 운영되는 오픈소스 Markdown 편�
 - 수식(KaTeX), 프론트 매터, 이모지 등 마크다운 확장 기능.
 - 단락 및 인라인 스타일 단축키로 작성 효율을 높여 줍니다.
 - **HTML** 및 **PDF** 파일 출력.
-- 다양한 [테마](../end-user/THEMES.md): **Cadmium Light**, **Material Dark** 등.
+- 다양한 [테마](../end-user/THEMES.md): **Light**, **Material Dark** 등.
 - 다양한 편집 모드: **소스 코드 모드**, **타자기 모드**, **포커스 모드**.
 - 클립보드에서 직접 이미지를 붙여넣기.
 

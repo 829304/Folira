@@ -1,5 +1,7 @@
 # Project Architecture
 
+> **Note (2026-11-08):** this page still describes the upstream MarkText layout — an Electron main/preload/renderer split with `out/`, `resources/` and `static/`. Folira ships a Tauri 2 shell instead: the current structure, module boundaries and commands are in `CLAUDE.md` at the repository root, and the engine history is in `docs/MUYA_SYNC.md`.
+
 ## Overview
 
 - `.`: Configuration files

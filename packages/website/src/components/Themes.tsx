@@ -10,13 +10,16 @@ type Swatch = {
   bgBorder?: string
 }
 
+// Decorative approximations picked to look right at card size. The real values
+// live in packages/desktop/src/renderer/src/assets/themes/manifest.json, which
+// the app reads for its own theme picker; these do not have to match it exactly.
 const SWATCHES: Swatch[] = [
-  { name: 'Cadmium Light', bg: '#fff', fg: '#333', accent: '#3a86ff', bgBorder: '#ddd' },
-  { name: 'Dark', bg: '#16161c', fg: '#cfcfe0', accent: '#a855f7' },
-  { name: 'Graphite Light', bg: '#fdf6e3', fg: '#586e75', accent: '#b58900', bgBorder: '#e8dcc0' },
-  { name: 'Material Dark', bg: '#0f1419', fg: '#9fb3c8', accent: '#23d18b' },
-  { name: 'Ulysses Light', bg: '#f7f3ee', fg: '#5b5147', accent: '#c75e3a', bgBorder: '#e6ddcf' },
-  { name: 'One Dark', bg: '#282c34', fg: '#abb2bf', accent: '#c678dd' }
+  { name: 'Light', bg: '#fff', fg: '#4d4d4d', accent: '#21b56f', bgBorder: '#e2e2e2' },
+  { name: 'Dark', bg: '#282828', fg: '#cfcfcf', accent: '#409eff' },
+  { name: 'GitHub Light', bg: '#fff', fg: '#1f2328', accent: '#0969da', bgBorder: '#d1d9e0' },
+  { name: 'Material Dark', bg: '#34393f', fg: '#abb2bf', accent: '#f48237' },
+  { name: 'Ulysses', bg: '#f3f3f3', fg: '#656565', accent: '#0c8bba', bgBorder: '#e4e4e4' },
+  { name: 'ONE Dark', bg: '#282c34', fg: '#9da5b4', accent: '#e06c75' }
 ]
 
 export default function Themes() {
@@ -29,16 +32,16 @@ export default function Themes() {
               <span className="kicker">Themes</span>
               <h2 className="sec-title">Make it yours.</h2>
               <p className="sec-desc">
-                33 built-in themes, light and dark. Every one is just CSS — fork a favorite or write
-                your own.
+                30 built-in themes, light and dark. One choice sets the window chrome, the page and
+                the syntax colours together — and every theme is plain CSS.
               </p>
             </div>
             <div className="feat-list">
               <FeatItem
                 delay="d1"
                 icon={<SunIcon />}
-                title="Light & dark, instantly"
-                description="Switch with a keystroke, or follow your system."
+                title="Light and dark, in one list"
+                description="Browse under two tabs, preview on hover, click to apply."
               />
               <FeatItem
                 delay="d2"
@@ -78,7 +81,7 @@ export default function Themes() {
               ))}
             </div>
             <div className="theme-more reveal d1">
-              <span>+27 more built-in themes</span>
+              <span>+24 more built-in themes</span>
             </div>
           </div>
         </div>

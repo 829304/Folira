@@ -127,7 +127,7 @@ MarkText, topluluğunun desteğiyle hayata geçirilmiş açık kaynaklı bir Mar
 - Matematiksel ifadeler (KaTeX), front matter ve emoji gibi Markdown uzantıları.
 - Yazma verimliliğinizi artırmak için paragraf ve satır içi stil kısayolları.
 - **HTML** ve **PDF** dosyası çıktısı.
-- Çeşitli [temalar](../end-user/THEMES.md): **Cadmium Light**, **Material Dark** vb.
+- Çeşitli [temalar](../end-user/THEMES.md): **Light**, **Material Dark** vb.
 - Çeşitli düzenleme modları: **Kaynak Kodu modu**, **Daktilo modu**, **Odak modu**.
 - Görüntüleri doğrudan panodan yapıştırın.
 

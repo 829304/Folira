@@ -127,7 +127,7 @@ MarkText একটি ওপেন-সোর্স Markdown এডিটর, য
 - Markdown এক্সটেনশন যেমন গণিতের অভিব্যক্তি (KaTeX), front matter এবং emoji সমর্থন করে।
 - দ্রুত লেখার জন্য paragraph ও inline style shortcut সমর্থন করে।
 - **HTML** এবং **PDF** ফাইলে এক্সপোর্ট করা যায়।
-- বিভিন্ন [theme](https://marktext.me/docs/themes): **Cadmium Light**, **Material Dark** ইত্যাদি।
+- বিভিন্ন [theme](https://marktext.me/docs/themes): **Light**, **Material Dark** ইত্যাদি।
 - বিভিন্ন এডিটিং মোড: **Source Code mode**, **Typewriter mode**, **Focus mode**।
 - ক্লিপবোর্ড থেকে সরাসরি ছবি পেস্ট করা যায়।
 

@@ -1,5 +1,7 @@
 # Performance Testing
 
+> **Note (2026-11-08):** this page describes the upstream Electron toolchain and has not been rewritten for the Tauri shell. Folira's current structure, module boundaries and commands are in `CLAUDE.md` at the repository root: `pnpm --filter folira tauri:dev` runs the app, `pnpm --filter folira tauri:build` produces installers, `pnpm --filter folira test:unit` and `pnpm --filter folira typecheck` are the checks.
+
 - We mainly rely on Chrome's `Performance` tab to analyse and record the performance of MarkText
 
 - Electron is split into 3 processes: `main`, `preload` and `renderer`. We will be focusing on `main` and `renderer` since these are the heaviest

@@ -126,7 +126,7 @@ MarkText est un éditeur Markdown open-source soutenu par sa communauté. Si Mar
 - Extensions Markdown telles que les expressions mathématiques (KaTeX), le front matter et les emojis.
 - Raccourcis de paragraphe et de style en ligne pour améliorer votre efficacité d'écriture.
 - Export de fichiers **HTML** et **PDF**.
-- Divers [thèmes](../end-user/THEMES.md) : **Cadmium Light**, **Material Dark**, etc.
+- Divers [thèmes](../end-user/THEMES.md) : **Light**, **Material Dark**, etc.
 - Divers modes d'édition : **mode code source**, **mode machine à écrire**, **mode focus**.
 - Coller des images directement depuis le presse-papiers.
 

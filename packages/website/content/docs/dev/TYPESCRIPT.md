@@ -1,5 +1,7 @@
 # TypeScript
 
+> **Note (2026-11-08):** this page describes the upstream Electron toolchain and has not been rewritten for the Tauri shell. Folira's current structure, module boundaries and commands are in `CLAUDE.md` at the repository root: `pnpm --filter folira tauri:dev` runs the app, `pnpm --filter folira tauri:build` produces installers, `pnpm --filter folira test:unit` and `pnpm --filter folira typecheck` are the checks.
+
 MarkText is a TypeScript project. Every file under `src/` (except `src/muya/`),
 the build scripts under `scripts/`, the test specs under `test/`, the
 build config (`electron.vite.config.ts`), and the test configs

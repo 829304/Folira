@@ -1,5 +1,7 @@
 # Inter-Process Communication (IPC)
 
+> **Note (2026-11-08):** this page describes the upstream Electron toolchain and has not been rewritten for the Tauri shell. Folira's current structure, module boundaries and commands are in `CLAUDE.md` at the repository root: `pnpm --filter folira tauri:dev` runs the app, `pnpm --filter folira tauri:build` produces installers, `pnpm --filter folira test:unit` and `pnpm --filter folira typecheck` are the checks.
+
 The renderer runs sandboxed (`contextIsolation: true`, `sandbox: true`,
 `nodeIntegration: false` — see `src/main/config.ts`), so it can't import
 `electron` directly. All renderer↔main traffic goes through the typed

@@ -37,17 +37,16 @@ It is built with **Tauri 2 + Rust + Vue 3**. The editor engine is MarkText's Muy
 - **Export**: HTML and PDF
 - **Images**: paste from the clipboard or drag them in
 - **Files**: tabs, a sidebar file tree, a table-of-contents panel, full-text search
-- **Themes**: more than 30 built in, with light and dark following the OS
+- **Themes**: 30 built in (11 light, 19 dark); one choice sets the chrome, the page and the syntax colours
 - **Ten interface languages**: de, en, es, fr, ja, ko, pt, tr, zh-CN, zh-TW
 
 ## Themes
 
-The theme system is being reworked so that two axes can be chosen independently and combined freely:
+Folira ships 30 built-in themes — 11 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables) and the syntax-highlighting palette together, so none of them can drift out of step with the others.
 
-- **Application UI theme**: title bar, sidebar, tabs, menus, settings
-- **Markdown typography theme**: type, leading, heading scale, blockquotes, code blocks, tables, links
+`Preferences` → `Theme` lists them under **Light** and **Dark** tabs, opens on the tab of the theme in use, and filters with a search box. Hovering a card previews it before you apply; custom CSS is appended after the theme, so it wins at equal specificity (syntax colours need no prefix; typography a theme sets needs a selector of the same shape, such as `.editor-wrapper h2`).
 
-The first batch is planned to include ten typography themes — Folira Default, GitHub, Typora GitBook, Claude, Bear, Notion, iA Writer, Linear, Paper, and OLED Black. The UI theme and the syntax-highlighting theme are chosen separately, and both can follow the system's light/dark preference.
+Most palettes come from community colour schemes (GitHub Primer, Catppuccin, Dracula, Nord, Tokyo Night, Solarized, …). The full list and its sources are in [Themes](packages/website/content/docs/end-user/THEMES.md).
 
 ## Download and installation
 
@@ -116,9 +115,10 @@ Repository layout, module boundaries and the finer development conventions are i
 
 - [x] Remove the Electron main process and its build tooling; keep only the Tauri shell
 - [x] Fix the build, type and unit-test issues left by that migration
-- [ ] Rebranding: name, icons, window title, installer identity
-- [ ] Theme system: decouple the UI theme from the Markdown typography theme
-- [ ] Ten Markdown typography themes
+- [x] Rebranding: name, icons, window title, installer identity
+- [x] Theme system: one theme id drives the chrome, the page and the syntax colours, browsed under Light/Dark tabs
+- [x] New theme: GitHub Light (Primer chrome, Prettylights syntax)
+- [ ] New theme: GitHub Dark
 - [ ] Image upload (PicGo or a custom script)
 - [ ] Auto-update
 - [ ] Release pipelines for Windows, macOS and Linux
