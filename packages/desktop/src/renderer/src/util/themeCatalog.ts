@@ -75,3 +75,23 @@ export const previewIdOf = (options: {
  */
 export const hoverAfterFocus = (usesKeyboard: boolean, hovered: string | null): string | null =>
   usesKeyboard ? null : hovered
+
+/**
+ * The candidates that survive a new visible list.
+ *
+ * A card that left the list unmounts before it can fire `mouseleave`/`blur`, so
+ * the page has to drop its claim itself — otherwise a theme removed by one query
+ * would come back to life when a later query lists it again. A card that is
+ * still listed keeps its claim: narrowing the list around the card the pointer
+ * already rests on must not stop its preview.
+ */
+export const prunePreviewCandidates = (
+  visible: ReadonlyArray<Pick<ThemeEntry, 'id'>>,
+  candidates: { hovered: string | null; focused: string | null }
+): { hovered: string | null; focused: string | null } => {
+  const listed = new Set(visible.map(theme => theme.id))
+  const keep = (candidate: string | null): string | null =>
+    candidate !== null && listed.has(candidate) ? candidate : null
+
+  return { hovered: keep(candidates.hovered), focused: keep(candidates.focused) }
+}

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import { THEMES } from '@/util/themeColor'
-import { appearanceOf, hoverAfterFocus, matchThemes, previewIdOf, themesOf } from '@/util/themeCatalog'
+import {
+  appearanceOf,
+  hoverAfterFocus,
+  matchThemes,
+  previewIdOf,
+  prunePreviewCandidates,
+  themesOf
+} from '@/util/themeCatalog'
 
 const ids = (themes: { id: string }[]): string[] => themes.map(theme => theme.id)
 
@@ -93,6 +100,23 @@ describe('theme preview candidate', () => {
     // claim and a move within the grid cannot clear what focus set.
     expect(hoverAfterFocus(false, 'dracula')).toBe('dracula')
     expect(hoverAfterFocus(false, null)).toBeNull()
+  })
+
+  it('drops only the candidates whose card left the list', () => {
+    // Narrowing the query around the card the pointer rests on must not stop the
+    // preview; only a card that is gone from the list loses its claim.
+    expect(
+      prunePreviewCandidates(visible, { hovered: 'dracula', focused: 'light' })
+    ).toEqual({ hovered: 'dracula', focused: 'light' })
+
+    expect(
+      prunePreviewCandidates(visible, { hovered: 'ayu-light', focused: 'dracula' })
+    ).toEqual({ hovered: null, focused: 'dracula' })
+
+    expect(prunePreviewCandidates([], { hovered: 'light', focused: 'dracula' })).toEqual({
+      hovered: null,
+      focused: null
+    })
   })
 
   it('falls back when neither hover nor focus points at a card', () => {

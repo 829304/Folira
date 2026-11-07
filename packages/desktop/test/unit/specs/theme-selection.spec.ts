@@ -192,6 +192,9 @@ describe('first frame', () => {
     expect(page).toContain('const hoveredTheme = ref<string | null>(null)')
     expect(page).toContain('const focusedTheme = ref<string | null>(null)')
     expect(page).toContain('@mouseenter="hoveredTheme = entry.id"')
+    // A pointer that stays inside a card must be able to win the preview back
+    // after the keyboard released it, so a plain move re-claims the hover.
+    expect(page).toContain('@mousemove="hoveredTheme = entry.id"')
     expect(page).toContain('@mouseleave="hoveredTheme = null"')
     // Keyboard focus releases a pointer that never moved, so Tab still previews
     // the card it lands on; a click keeps the card the pointer is over. The
@@ -206,10 +209,12 @@ describe('first frame', () => {
     expect(page).toMatch(
       /visible: visibleThemes\.value,[\s\S]{0,120}fallback: selectedTheme\.value/
     )
-    // Changing the filter or the tab removes the cards that carried the hover
-    // and the focus, so both candidates are released there.
+    // A card that leaves the list is dropped from the candidates, but a card
+    // that survives the new query keeps its claim. The rule itself is covered in
+    // theme-catalog.spec.ts, since a source assertion cannot tell it from
+    // "drop everything".
     expect(page).toMatch(
-      /watch\(\[tab, query\],[\s\S]{0,300}hoveredTheme\.value = null[\s\S]{0,200}focusedTheme\.value = null/
+      /watch\(visibleThemes,[\s\S]{0,300}prunePreviewCandidates\(themes,[\s\S]{0,160}hovered: hoveredTheme\.value/
     )
     // Selecting a card pins the tab, so a late commit cannot jump the list.
     expect(page).toMatch(/const selectTheme = async[\s\S]{0,300}tabTouched\.value = true/)

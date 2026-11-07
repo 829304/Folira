@@ -65,6 +65,7 @@
           :class="{ active: entry.id === selectedTheme }"
           @click="selectTheme(entry.id)"
           @mouseenter="hoveredTheme = entry.id"
+          @mousemove="hoveredTheme = entry.id"
           @mouseleave="hoveredTheme = null"
           @focus="focusTheme(entry.id, $event)"
           @blur="focusedTheme = null"
@@ -137,6 +138,7 @@ import {
   hoverAfterFocus,
   matchThemes,
   previewIdOf,
+  prunePreviewCandidates,
   themesOf,
   type ThemeAppearance
 } from '@/util/themeCatalog'
@@ -174,7 +176,9 @@ const visibleThemes = computed<ThemeEntry[]>(() =>
 )
 
 // Hover and keyboard focus are separate candidates: a pointer leaving one card
-// must not clear the preview of the card that still has keyboard focus.
+// must not clear the preview of the card that still has keyboard focus. The
+// pointer also re-claims the hover on every move inside a card, because keyboard
+// focus releases it while the pointer itself has not left.
 const hoveredTheme = ref<string | null>(null)
 const focusedTheme = ref<string | null>(null)
 
@@ -200,15 +204,18 @@ watch(selectedTheme, (id) => {
   if (next !== tab.value) tab.value = next
 })
 
-// Changing the filter or the tab removes the cards that carried the hover and
-// the focus, and a removed node never fires mouseleave/blur. Clearing both here
-// is what keeps the preview off a card the list no longer shows. A card that
-// survives the new query loses its preview until the pointer or the keyboard
-// asks again; that is deliberate, because keeping it would let a card removed
-// for one query come back to life when a later query lists it again.
-watch([tab, query], () => {
-  hoveredTheme.value = null
-  focusedTheme.value = null
+// A card that leaves the list unmounts before it can fire mouseleave/blur, so
+// its candidate is dropped here instead: without this, a theme removed by one
+// query would come back to life when a later query lists it again. Candidates
+// whose card survives the filter keep their claim — narrowing the list around
+// the card the pointer is already on must not stop the preview.
+watch(visibleThemes, (themes) => {
+  const kept = prunePreviewCandidates(themes, {
+    hovered: hoveredTheme.value,
+    focused: focusedTheme.value
+  })
+  hoveredTheme.value = kept.hovered
+  focusedTheme.value = kept.focused
 })
 
 const setTab = (next: ThemeAppearance): void => {
