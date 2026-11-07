@@ -25,11 +25,13 @@
         >
           <button
             v-for="option of appearanceTabs"
+            :id="`theme-tab-${option.value}`"
             :key="option.value"
             type="button"
             role="tab"
             class="theme-tab"
             :class="{ active: tab === option.value }"
+            aria-controls="theme-panel"
             :aria-selected="tab === option.value"
             :tabindex="tab === option.value ? 0 : -1"
             @click="setTab(option.value)"
@@ -47,54 +49,62 @@
       </div>
     </div>
 
-    <div class="theme-grid">
-      <button
-        v-for="entry of visibleThemes"
-        :key="entry.id"
-        type="button"
-        class="theme-card"
-        :class="{ active: entry.id === selectedTheme }"
-        @click="selectTheme(entry.id)"
-        @mouseenter="hovered = entry.id"
-        @mouseleave="hovered = null"
-        @focus="hovered = entry.id"
-        @blur="hovered = null"
-      >
-        <span
-          class="theme-swatch"
-          :style="{ background: swatch(entry, 'ui', 'editorBgColor') }"
+    <div
+      id="theme-panel"
+      class="theme-panel"
+      role="tabpanel"
+      :aria-labelledby="`theme-tab-${tab}`"
+      tabindex="0"
+    >
+      <div class="theme-grid">
+        <button
+          v-for="entry of visibleThemes"
+          :key="entry.id"
+          type="button"
+          class="theme-card"
+          :class="{ active: entry.id === selectedTheme }"
+          @click="selectTheme(entry.id)"
+          @mouseenter="hoveredTheme = entry.id"
+          @mouseleave="hoveredTheme = null"
+          @focus="focusedTheme = entry.id"
+          @blur="focusedTheme = null"
         >
           <span
-            class="theme-swatch-page"
-            :style="{ background: swatch(entry, 'md', 'editorBgColor') }"
+            class="theme-swatch"
+            :style="{ background: swatch(entry, 'ui', 'editorBgColor') }"
           >
             <span
-              class="theme-swatch-heading"
-              :style="{ background: swatch(entry, 'md', 'h1Color') }"
-            />
-            <span
-              class="theme-swatch-line"
-              :style="{ background: swatch(entry, 'md', 'editorColor') }"
-            />
-            <span
-              class="theme-swatch-link"
-              :style="{ background: swatch(entry, 'md', 'linkColor') }"
-            />
-            <span
-              class="theme-swatch-code"
-              :style="{ background: swatch(entry, 'md', 'codeBlockBgColor') }"
-            />
+              class="theme-swatch-page"
+              :style="{ background: swatch(entry, 'md', 'editorBgColor') }"
+            >
+              <span
+                class="theme-swatch-heading"
+                :style="{ background: swatch(entry, 'md', 'h1Color') }"
+              />
+              <span
+                class="theme-swatch-line"
+                :style="{ background: swatch(entry, 'md', 'editorColor') }"
+              />
+              <span
+                class="theme-swatch-link"
+                :style="{ background: swatch(entry, 'md', 'linkColor') }"
+              />
+              <span
+                class="theme-swatch-code"
+                :style="{ background: swatch(entry, 'md', 'codeBlockBgColor') }"
+              />
+            </span>
           </span>
-        </span>
-        <span class="theme-name">{{ entry.label }}</span>
-      </button>
+          <span class="theme-name">{{ entry.label }}</span>
+        </button>
+      </div>
+      <p
+        v-if="visibleThemes.length === 0"
+        class="empty"
+      >
+        {{ t('preferences.theme.noThemes') }}
+      </p>
     </div>
-    <p
-      v-if="visibleThemes.length === 0"
-      class="empty"
-    >
-      {{ t('preferences.theme.noThemes') }}
-    </p>
 
     <div class="custom-css">
       <div class="description">
@@ -125,6 +135,7 @@ import { applyThemeSet } from '@/util/theme'
 import {
   appearanceOf,
   matchThemes,
+  previewIdOf,
   themesOf,
   type ThemeAppearance
 } from '@/util/themeCatalog'
@@ -154,32 +165,51 @@ const appearanceTabs: ReadonlyArray<{ value: ThemeAppearance; labelKey: string }
   { value: 'dark', labelKey: 'preferences.theme.darkThemes' }
 ]
 
-const hovered = ref<string | null>(null)
-// Hovering a card repaints the preview only; the saved theme comes back the
-// moment the pointer leaves, so a look never rewrites a preference.
-const previewTheme = computed(() => hovered.value ?? selectedTheme.value)
+const query = ref('')
+// One query, two tabs: the grid is the current appearance filtered by the same
+// search term, and switching tabs keeps the term.
+const visibleThemes = computed<ThemeEntry[]>(() =>
+  matchThemes(themesOf(THEMES, tab.value), query.value)
+)
+
+// Hover and keyboard focus are separate candidates: a pointer leaving one card
+// must not clear the preview of the card that still has keyboard focus.
+const hoveredTheme = ref<string | null>(null)
+const focusedTheme = ref<string | null>(null)
+
+// Hovering or focusing a card repaints the preview only; the saved theme comes
+// back once neither candidate is on screen, so a look never rewrites a
+// preference. A filtered-out card unmounts before it can fire mouseleave/blur,
+// so the candidate is also checked against the list the user can see.
+const previewTheme = computed(() =>
+  previewIdOf({
+    hovered: hoveredTheme.value,
+    focused: focusedTheme.value,
+    visible: visibleThemes.value,
+    fallback: selectedTheme.value
+  })
+)
 
 // The tab follows commits made after mount — this window's first preferences
-// load, or another window's pick — until the user chooses. A commit can also
-// filter the hovered card out of the grid, and a removed node never fires
-// mouseleave, so the preview has to be released here as well as in setTab.
+// load, or another window's pick — until the user chooses one.
 watch(selectedTheme, (id) => {
   if (tabTouched.value) return
 
   const next = appearanceOf(id)
-  if (next === tab.value) return
+  if (next !== tab.value) tab.value = next
+})
 
-  tab.value = next
-  hovered.value = null
+// Changing the filter or the tab removes the cards that carried the hover and
+// the focus, and a removed node never fires mouseleave/blur. Clearing both here
+// is what keeps the preview off a card the list no longer shows.
+watch([tab, query], () => {
+  hoveredTheme.value = null
+  focusedTheme.value = null
 })
 
 const setTab = (next: ThemeAppearance): void => {
   tab.value = next
   tabTouched.value = true
-  // The card that owned the hover preview has just been filtered out of the
-  // grid, so its mouseleave/blur never fires; without this the preview would
-  // keep showing the theme from the tab the user just left.
-  hovered.value = null
 }
 
 const moveTabFocus = (event: KeyboardEvent, current: ThemeAppearance): void => {
@@ -197,13 +227,6 @@ const moveTabFocus = (event: KeyboardEvent, current: ThemeAppearance): void => {
   )
   tabButtons?.[appearanceTabs.findIndex(option => option.value === next)]?.focus()
 }
-
-const query = ref('')
-// One query, two tabs: the grid is the current appearance filtered by the same
-// search term, and switching tabs keeps the term.
-const visibleThemes = computed<ThemeEntry[]>(() =>
-  matchThemes(themesOf(THEMES, tab.value), query.value)
-)
 
 const swatch = (entry: ThemeEntry, axis: 'ui' | 'md', name: string): string =>
   entry.swatches[axis]?.[name] ?? 'transparent'
@@ -328,6 +351,16 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
 
     &:focus {
       border-color: var(--themeColor);
+    }
+  }
+
+  & .theme-panel {
+    /* Focusable so the arrow keys can scroll the results without reaching for
+       the mouse; the ring only shows for keyboard focus. */
+    &:focus-visible {
+      outline: 2px solid var(--themeColor);
+      outline-offset: 2px;
+      border-radius: 6px;
     }
   }
 

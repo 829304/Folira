@@ -37,3 +37,27 @@ export const matchThemes = (themes: ThemeEntry[], query: string): ThemeEntry[] =
     theme => theme.id.toLowerCase().includes(needle) || theme.label.toLowerCase().includes(needle)
   )
 }
+
+/**
+ * The id the preview should paint: the hovered card, then the focused one, but
+ * only while that card is still in the visible list.
+ *
+ * A filtered-out card unmounts before it can fire `mouseleave`/`blur`, so a
+ * candidate that left `visible` would otherwise pin the preview to a theme the
+ * list no longer offers. Both candidates are kept separate by the caller: a
+ * pointer leaving one card must not clear the preview of the card that still
+ * has keyboard focus.
+ */
+export const previewIdOf = (options: {
+  hovered: string | null
+  focused: string | null
+  visible: ReadonlyArray<Pick<ThemeEntry, 'id'>>
+  fallback: string
+}): string => {
+  const candidate = options.hovered ?? options.focused
+  if (candidate !== null && options.visible.some(theme => theme.id === candidate)) {
+    return candidate
+  }
+
+  return options.fallback
+}

@@ -185,17 +185,35 @@ describe('first frame', () => {
     // The tab opens on the painted theme's appearance, not the preference
     // target — otherwise a failed commit would list the wrong tab.
     expect(page).toContain('appearanceOf(selectedTheme.value)')
-    // A commit made after mount keeps the tab in step until the user picks one,
-    // and releases the hover preview with it: the hovered card leaves the grid,
-    // so its mouseleave never fires.
+    // A commit made after mount keeps the tab in step until the user picks one.
     expect(page).toMatch(/watch\(selectedTheme,[\s\S]{0,400}if \(tabTouched\.value\) return/)
-    expect(page).toMatch(/watch\(selectedTheme,[\s\S]{0,600}hovered\.value = null/)
-    // Switching tabs drops the hover preview: its card leaves the grid, so the
-    // mouseleave that would have cleared it never fires.
-    expect(page).toMatch(/const setTab[\s\S]{0,400}hovered\.value = null/)
+    // Hover and focus are separate candidates: the pointer leaving one card
+    // must not clear the preview of the card that still has keyboard focus.
+    expect(page).toContain('const hoveredTheme = ref<string | null>(null)')
+    expect(page).toContain('const focusedTheme = ref<string | null>(null)')
+    expect(page).toContain('@mouseenter="hoveredTheme = entry.id"')
+    expect(page).toContain('@mouseleave="hoveredTheme = null"')
+    expect(page).toContain('@focus="focusedTheme = entry.id"')
+    expect(page).toContain('@blur="focusedTheme = null"')
+    // The preview resolves through the pure helper, and it falls back whenever
+    // the candidate is no longer in the visible list.
+    expect(page).toContain('previewIdOf({')
+    expect(page).toMatch(
+      /visible: visibleThemes\.value,[\s\S]{0,120}fallback: selectedTheme\.value/
+    )
+    // Changing the filter or the tab removes the cards that carried the hover
+    // and the focus, so both candidates are released there.
+    expect(page).toMatch(
+      /watch\(\[tab, query\],[\s\S]{0,300}hoveredTheme\.value = null[\s\S]{0,200}focusedTheme\.value = null/
+    )
     // Selecting a card pins the tab, so a late commit cannot jump the list.
     expect(page).toMatch(/const selectTheme = async[\s\S]{0,300}tabTouched\.value = true/)
     // The grid is one tab's themes filtered by the shared query.
     expect(page).toContain('matchThemes(themesOf(THEMES, tab.value), query.value)')
+    // Tabs control the result panel they filter, for assistive tech.
+    expect(page).toContain('role="tabpanel"')
+    expect(page).toContain('aria-controls="theme-panel"')
+    expect(page).toContain(':id="`theme-tab-')
+    expect(page).toContain(':aria-labelledby="`theme-tab-')
   })
 })

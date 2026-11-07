@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { THEMES } from '@/util/themeColor'
-import { appearanceOf, matchThemes, themesOf } from '@/util/themeCatalog'
+import { appearanceOf, matchThemes, previewIdOf, themesOf } from '@/util/themeCatalog'
 
 const ids = (themes: { id: string }[]): string[] => themes.map(theme => theme.id)
 
@@ -40,5 +40,34 @@ describe('theme catalog', () => {
 
   it('returns nothing when neither an id nor a label matches', () => {
     expect(matchThemes(THEMES, 'no-such-theme')).toEqual([])
+  })
+})
+
+describe('theme preview candidate', () => {
+  const visible = [{ id: 'light' }, { id: 'dracula' }]
+
+  it('previews the hovered card while it is in the list', () => {
+    expect(
+      previewIdOf({ hovered: 'dracula', focused: 'light', visible, fallback: 'light' })
+    ).toBe('dracula')
+  })
+
+  it('keeps the focused card previewed when the pointer leaves another card', () => {
+    // Hover is null because the pointer left a different card; focus stays.
+    expect(
+      previewIdOf({ hovered: null, focused: 'dracula', visible, fallback: 'light' })
+    ).toBe('dracula')
+  })
+
+  it('falls back when the candidate was filtered out of the list', () => {
+    // Typing in the focused search box unmounts the hovered card before it can
+    // fire mouseleave; the preview must not stick to a theme no longer listed.
+    expect(
+      previewIdOf({ hovered: 'ayu-light', focused: null, visible, fallback: 'light' })
+    ).toBe('light')
+  })
+
+  it('falls back when neither hover nor focus points at a card', () => {
+    expect(previewIdOf({ hovered: null, focused: null, visible, fallback: 'nord' })).toBe('nord')
   })
 })
