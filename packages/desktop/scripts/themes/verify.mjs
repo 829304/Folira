@@ -23,17 +23,17 @@ const INDEX_CSS = path.join(RENDERER, 'assets/styles/index.css')
 const PREFIX = { ui: 'fui-', md: 'fmd-' }
 const STRUCTURAL = new Set(['editorAreaWidth'])
 
-// The themes that existed before the split. A legacy id with no pre-split file
-// means the comparison cannot prove anything, so it fails. A theme added later
-// has no pre-split file by definition and skips only this comparison — it still
-// goes through every other check below. Do not add new themes to this list.
+// The themes that still ship and existed before the split. A legacy id with no
+// pre-split file means the comparison cannot prove anything, so it fails. A
+// theme added later has no pre-split file by definition and skips only this
+// comparison — it still goes through every other check below. Do not add new
+// themes to this list, and drop an id here when its theme stops shipping.
 const PRE_SPLIT_IDS = new Set([
   'ayu-dark',
   'ayu-light',
   'ayu-mirage',
   'catppuccin-latte',
   'catppuccin-mocha',
-  'cyberdream',
   'dark',
   'dracula',
   'everforest-dark',
@@ -46,20 +46,17 @@ const PRE_SPLIT_IDS = new Set([
   'light',
   'material-dark',
   'monokai-pro',
-  'nightfox',
   'nord',
   'one-dark',
   'oxocarbon-dark',
   'palenight',
   'rose-pine',
   'rose-pine-dawn',
-  'rose-pine-moon',
   'solarized-dark',
   'solarized-light',
   'synthwave-84',
   'tokyo-night',
   'tokyo-night-light',
-  'tokyo-night-storm',
   'ulysses'
 ])
 

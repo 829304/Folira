@@ -26,7 +26,7 @@ theme only ever ships as the pair plus the palette its manifest entry names.
 
 Theme files are mostly variables, and the generator only requires that: a theme
 has to declare the public variables its half owns. Most of the inherited themes
-still carry a tail of their own selector rules (33 of the 34 ids do — only
+still carry a tail of their own selector rules (29 of the 30 ids do — only
 `ui/light.css`, `md/light.css` and `ui/github-light.css` are pure variables;
 One Dark alone has 25 rules for scrollbars, dialogs, buttons, the title bar and
 the side bar). The
@@ -57,7 +57,7 @@ themes. A theme's rules for the `--fmd-*`-backed colours and for plain element
 styling are scoped to the editor at zero specificity — the GitHub Light Prism
 palette rides on `:where(.editor-wrapper)` in `prismjs/github-light.theme.css`,
 and its inline-code rule on `:where(:not(pre))` — so a user's `.token.keyword`,
-`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. The 32
+`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. The 28
 themes inherited from upstream are the exception: their Markdown halves still
 carry the old selector tails, unscoped and in places `!important`, so overriding
 one of those takes the same selector or a stronger one. Their Prism palettes stay
@@ -140,8 +140,8 @@ real cascade without leaking into the page.
 
 The grid is split into Light and Dark tabs that only change which themes are
 browsed: the tab opens on the appearance of the theme the window is painting and
-follows later commits until the user picks a tab, while the search term is
-shared across both. Choosing a card never switches tabs, so a commit that
+follows later commits until the user picks a tab or a card, while the search term
+is shared across both. Choosing a card never switches tabs, so a commit that
 resolves late cannot move the list under the pointer.
 
 ## Adding a theme
@@ -202,7 +202,7 @@ Custom CSS stays effective across theme switches. `theme-preview.spec.ts` pins
 the two zero-weight shapes GitHub Light promises: every Prism selector in
 `prismjs/github-light.theme.css` starts with `:where(.editor-wrapper)`, and the
 inline-code rule is exactly `.editor-wrapper :where(:not(pre)) > code`. The
-other 32 upstream palettes stay global and take a plain `.token.keyword`, so
+other 28 upstream palettes stay global and take a plain `.token.keyword`, so
 the guard is scoped to the one theme that carries its own syntax palette.
 
 ## Out of scope
