@@ -170,7 +170,9 @@ const appearanceTabs: ReadonlyArray<{ value: ThemeAppearance; labelKey: string }
 
 const query = ref('')
 // One query, two tabs: the grid is the current appearance filtered by the same
-// search term, and switching tabs keeps the term.
+// search term, and switching tabs keeps the term. This list must not read the
+// hover or focus candidates below: a watcher on it writes those refs, and
+// depending on them would make the two feed each other.
 const visibleThemes = computed<ThemeEntry[]>(() =>
   matchThemes(themesOf(THEMES, tab.value), query.value)
 )
