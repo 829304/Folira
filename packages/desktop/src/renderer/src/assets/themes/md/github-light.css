@@ -1,0 +1,267 @@
+/* Folira Markdown theme: github-light.
+ *
+ * Colours, spacing and border weights follow GitHub's rendered READMEs. The
+ * reference is github-markdown-css/github-markdown-light.css at commit
+ * 5f70ccef05e1ee8f7a7962a51a48f6823916a739 (MIT, Sindre Sorhus), adapted to
+ * Muya's markup below.
+ */
+
+.editor-wrapper {
+  --fmd-themeColor: #0969da;
+  --fmd-themeColor90: rgba(9, 105, 218, 0.9);
+  --fmd-themeColor80: rgba(9, 105, 218, 0.8);
+  --fmd-themeColor70: rgba(9, 105, 218, 0.7);
+  --fmd-themeColor60: rgba(9, 105, 218, 0.6);
+  --fmd-themeColor50: rgba(9, 105, 218, 0.5);
+  --fmd-themeColor40: rgba(9, 105, 218, 0.4);
+  --fmd-themeColor30: rgba(9, 105, 218, 0.3);
+  --fmd-themeColor20: rgba(9, 105, 218, 0.2);
+  --fmd-highlightColor: rgba(9, 105, 218, 0.2);
+  --fmd-selectionColor: rgba(9, 105, 218, 0.2);
+  --fmd-editorColor: #1f2328;
+  --fmd-editorColor80: #1f2328;
+  --fmd-editorColor50: #59636e;
+  --fmd-editorColor40: #6e7781;
+  --fmd-editorColor30: #8c959f;
+  --fmd-editorColor10: #d1d9e0;
+  --fmd-editorColor04: #f6f8fa;
+  --fmd-editorBgColor: #ffffff;
+  --fmd-deleteColor: #cf222e;
+  --fmd-iconColor: #59636e;
+  --fmd-codeBlockBgColor: #f6f8fa;
+  --fmd-footnoteBgColor: #f6f8fa;
+  --fmd-inputBgColor: rgba(31, 35, 40, 0.06);
+  --fmd-buttonFontColor: var(--editorColor);
+  --fmd-buttonBgColor: #f6f8fa;
+  --fmd-buttonBorder: 1px solid #d1d9e0;
+  --fmd-buttonBgColorHover: #eef1f4;
+  --fmd-buttonBorderHover: 1px solid #afb8c1;
+  --fmd-buttonBgColorActive: #e7ebef;
+  --fmd-buttonBorderActive: 1px solid #8c959f;
+  --fmd-tableBorderColor: #d1d9e0;
+  --fmd-h1Color: #1f2328;
+  --fmd-h2Color: #1f2328;
+  --fmd-h3Color: #1f2328;
+  --fmd-h4Color: #1f2328;
+  --fmd-h5Color: #1f2328;
+  --fmd-h6Color: #59636e;
+  --fmd-blockquoteTextColor: var(--editorColor50);
+  --fmd-blockquoteBorderColor: #d1d9e0;
+  --fmd-hrColor: var(--editorColor10);
+  --fmd-linkColor: var(--themeColor);
+  --fmd-strongColor: var(--editorColor);
+  --fmd-emColor: var(--editorColor);
+  --fmd-listMarkerColor: var(--editorColor50);
+  --fmd-floatBgColor: #ffffff;
+  --fmd-floatHoverColor: rgba(31, 35, 40, 0.05);
+  --fmd-floatBorderColor: #d1d9e0;
+  --fmd-maskColor: rgba(255, 255, 255, 0.8);
+}
+
+/* Headings: GitHub's 600 weight, 1.25 line height, and the h1/h2 rules that
+ * close with a hairline. The rules reach the editor (Muya renders plain
+ * `<h1>`…`<h6>` inside `.mu-container`) and the settings preview (plain HTML
+ * inside `.editor-wrapper`). Specificity stays at one class plus one element
+ * so user CSS in `#custom-styles` can still override it. */
+
+.editor-wrapper h1,
+.editor-wrapper h2,
+.editor-wrapper h3,
+.editor-wrapper h4,
+.editor-wrapper h5,
+.editor-wrapper h6 {
+  margin: 1.5rem 0 1rem;
+  padding: 0;
+
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.editor-wrapper h1 {
+  padding-bottom: 0.3em;
+
+  font-size: 2em;
+
+  border-bottom: 1px solid rgba(209, 217, 224, 0.7);
+}
+
+.editor-wrapper h2 {
+  padding-bottom: 0.3em;
+
+  font-size: 1.5em;
+
+  border-bottom: 1px solid rgba(209, 217, 224, 0.7);
+}
+
+.editor-wrapper h3 {
+  font-size: 1.25em;
+}
+
+.editor-wrapper h4 {
+  font-size: 1em;
+}
+
+.editor-wrapper h5 {
+  font-size: 0.875em;
+}
+
+.editor-wrapper h6 {
+  font-size: 0.85em;
+}
+
+.editor-wrapper p {
+  margin: 0 0 1rem;
+}
+
+.editor-wrapper a {
+  color: var(--linkColor);
+
+  text-decoration: none;
+}
+
+.editor-wrapper a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+.editor-wrapper strong {
+  font-weight: 600;
+}
+
+/* Quotes: Muya already paints the bar with `blockquote::before`; restyling the
+ * same pseudo element keeps one bar. A `border-left` would draw a second. */
+
+.editor-wrapper blockquote {
+  position: relative;
+  margin: 0 0 1rem;
+  padding: 0 1em;
+
+  color: var(--blockquoteTextColor);
+
+  border: 0;
+}
+
+.editor-wrapper blockquote::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  display: block;
+  width: 0.25em;
+  height: 100%;
+
+  background: var(--blockquoteBorderColor);
+
+  content: '';
+}
+
+/* Lists */
+
+.editor-wrapper ul,
+.editor-wrapper ol {
+  margin: 0 0 1rem;
+  padding-left: 2em;
+}
+
+/* Tables: the cell borders are Muya's `::before` boxes coloured from
+ * `--fmd-tableBorderColor`; only the padding and the zebra rows are added
+ * here, so the editor never draws two lines per cell. */
+
+.editor-wrapper table {
+  width: auto;
+  margin: 0 0 1rem;
+
+  border-collapse: collapse;
+}
+
+.editor-wrapper th,
+.editor-wrapper td {
+  padding: 6px 13px;
+}
+
+.editor-wrapper th {
+  font-weight: 600;
+}
+
+.editor-wrapper tr:nth-child(2n) td {
+  background: var(--codeBlockBgColor);
+}
+
+/* Inline code: GitHub's translucent grey pill. `.mu-code` is the block code
+ * element and must keep the block palette. */
+
+.editor-wrapper code:not(.mu-code) {
+  padding: 0.2em 0.4em;
+
+  font-size: 85%;
+
+  background: rgba(129, 139, 152, 0.12);
+  border-radius: 6px;
+}
+
+/* Code blocks. The editor carries them on `.mu-code-block`; the settings
+ * preview renders a plain `<pre>` directly inside `.editor-wrapper`, which the
+ * `>` keeps apart from Muya's nested markup. The line-number gutter Muya
+ * reserves on `padding-left` is preserved. */
+
+.editor-wrapper .mu-code-block {
+  padding: 1rem;
+
+  font-size: 85%;
+  line-height: 1.45;
+
+  border: 0;
+  border-radius: 6px;
+}
+
+.editor-wrapper .mu-code-block:has(.mu-line-numbers-rows) {
+  padding-left: 2.5em;
+}
+
+/* The horizontal scroller is `code.mu-code`, and Chromium on Windows draws its
+ * bar as an overlay: a bottom padding keeps the last line of code clear of it. */
+.editor-wrapper .mu-code-block .mu-code {
+  padding-bottom: 0.6em;
+}
+
+.editor-wrapper > pre {
+  margin: 0 0 1rem;
+  padding: 1rem;
+
+  overflow: auto;
+
+  background: var(--codeBlockBgColor);
+  border-radius: 6px;
+}
+
+.editor-wrapper pre code {
+  padding: 0;
+
+  font-size: 85%;
+
+  background: none;
+  border-radius: 0;
+}
+
+/* Rules. The editor draws a thematic break on `p.mu-thematic-break::before`
+ * (Muya uses a dashed top border); the preview uses `<hr>`. */
+
+.editor-wrapper p.mu-thematic-break::before {
+  height: 0;
+
+  background: none;
+  border-top: 1px solid var(--hrColor);
+}
+
+.editor-wrapper hr {
+  height: 0.25em;
+  margin: 1.5rem 0;
+
+  background: var(--hrColor);
+  border: 0;
+}
+/* Task lists: Muya paints the box on `input::before` and starts round; GitHub's
+ * checkboxes are square with a soft corner. */
+.editor-wrapper li.mu-task-list-item > input::before {
+  border-radius: 3px;
+}

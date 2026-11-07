@@ -218,6 +218,13 @@ const titleCase = id =>
     )
     .join(' ')
 
+// Ids whose product name is not a title-cased slug. `titleCase` shortens a word
+// of three letters or less to upper case (`one-dark` → "One Dark"), which is
+// right for "One" and wrong for "GitHub".
+const LABELS = { 'github-light': 'GitHub Light' }
+
+const labelOf = id => LABELS[id] ?? titleCase(id)
+
 function renderBaseCss (lightLiterals, lightDefaults) {
   const themeNames = Object.keys(axis)
     .filter(name => !aliasOf.has(name))
@@ -415,8 +422,11 @@ const SWATCH_NAMES = {
   md: ['editorBgColor', 'editorColor', 'h1Color', 'linkColor', 'codeBlockBgColor', 'blockquoteBorderColor']
 }
 
-function swatchesOf (literals, id) {
-  const pick = (names) => {
+// Each half is resolved against its own palette: `editorColor` means the chrome
+// in one file and the page in the other, so a merged map would paint the
+// Markdown card with the interface colours.
+function swatchesOf (uiLiterals, mdLiterals, id) {
+  const pick = (literals, names) => {
     const picked = {}
     for (const name of names) {
       const value = resolveValue(literals, name)
@@ -426,7 +436,7 @@ function swatchesOf (literals, id) {
     return picked
   }
 
-  return { ui: pick(SWATCH_NAMES.ui), md: pick(SWATCH_NAMES.md) }
+  return { ui: pick(uiLiterals, SWATCH_NAMES.ui), md: pick(mdLiterals, SWATCH_NAMES.md) }
 }
 
 function aggregate () {
@@ -477,24 +487,28 @@ function aggregate () {
     // reading a literal: `light` spells it as rgba(), and several themes point
     // at a palette entry. A value we cannot resolve is a generator bug, not a
     // reason to guess "dark".
-    const literals = new Map()
+    const uiLiterals = new Map()
     for (const [name, value] of variablesOf(uiCss)) {
-      literals.set(name.slice(PREFIX.ui.length), value)
+      uiLiterals.set(name.slice(PREFIX.ui.length), value)
     }
+    const mdLiterals = new Map()
     for (const [name, value] of variablesOf(mdCss)) {
-      const bare = name.slice(PREFIX.md.length)
-      if (!literals.has(bare)) literals.set(bare, value)
+      mdLiterals.set(name.slice(PREFIX.md.length), value)
     }
+    // The chrome decides the light/dark flag, so it wins a name both halves
+    // declare — `editorBgColor` is the page in one file and the frame in the
+    // other, and the frame is what a card looks like.
+    const literals = new Map([...mdLiterals, ...uiLiterals])
     const background = resolveValue(literals, 'editorBgColor')
     const lum = background === null ? null : luminance(background.trim())
     if (lum === null) throw new Error(`${id}: cannot resolve editorBgColor for the appearance flag`)
     const prism = PRISM_ALIASES[id] ?? (prismIds.has(id) ? id : null)
     return {
       id,
-      label: titleCase(id),
+      label: labelOf(id),
       appearance: lum > 0.5 ? 'light' : 'dark',
       prism,
-      swatches: swatchesOf(literals, id)
+      swatches: swatchesOf(uiLiterals, mdLiterals, id)
     }
   })
 

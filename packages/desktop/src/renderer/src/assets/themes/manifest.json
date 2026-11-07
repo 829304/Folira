@@ -230,6 +230,29 @@
     }
   },
   {
+    "id": "github-light",
+    "label": "GitHub Light",
+    "appearance": "light",
+    "prism": null,
+    "swatches": {
+      "ui": {
+        "editorBgColor": "rgba(255, 255, 255, 1)",
+        "editorColor": "#4d4d4d",
+        "sideBarBgColor": "rgba(242, 242, 242, 0.9)",
+        "themeColor": "rgba(33, 181, 111, 1)",
+        "buttonPrimaryBgColor": "rgba(33, 181, 111, 1)"
+      },
+      "md": {
+        "editorBgColor": "#ffffff",
+        "editorColor": "#1f2328",
+        "h1Color": "#1f2328",
+        "linkColor": "#0969da",
+        "codeBlockBgColor": "#f6f8fa",
+        "blockquoteBorderColor": "#d1d9e0"
+      }
+    }
+  },
+  {
     "id": "graphite",
     "label": "Graphite",
     "appearance": "light",

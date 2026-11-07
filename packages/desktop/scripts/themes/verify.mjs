@@ -23,6 +23,46 @@ const INDEX_CSS = path.join(RENDERER, 'assets/styles/index.css')
 const PREFIX = { ui: 'fui-', md: 'fmd-' }
 const STRUCTURAL = new Set(['editorAreaWidth'])
 
+// The themes that existed before the split. A legacy id with no pre-split file
+// means the comparison cannot prove anything, so it fails. A theme added later
+// has no pre-split file by definition and skips only this comparison — it still
+// goes through every other check below. Do not add new themes to this list.
+const PRE_SPLIT_IDS = new Set([
+  'ayu-dark',
+  'ayu-light',
+  'ayu-mirage',
+  'catppuccin-latte',
+  'catppuccin-mocha',
+  'cyberdream',
+  'dark',
+  'dracula',
+  'everforest-dark',
+  'everforest-light',
+  'graphite',
+  'gruvbox-dark',
+  'gruvbox-light',
+  'horizon-dark',
+  'kanagawa',
+  'light',
+  'material-dark',
+  'monokai-pro',
+  'nightfox',
+  'nord',
+  'one-dark',
+  'oxocarbon-dark',
+  'palenight',
+  'rose-pine',
+  'rose-pine-dawn',
+  'rose-pine-moon',
+  'solarized-dark',
+  'solarized-light',
+  'synthwave-84',
+  'tokyo-night',
+  'tokyo-night-light',
+  'tokyo-night-storm',
+  'ulysses'
+])
+
 const tokens = JSON.parse(fs.readFileSync(path.join(ROOT, 'packages/desktop/scripts/themes/tokens.json'), 'utf8'))
 const { axis, aliases } = tokens
 const aliasOf = new Map(Object.entries(aliases))
@@ -34,6 +74,46 @@ const read = file => fs.readFileSync(path.join(THEMES, file), 'utf8')
 
 /** Declaration names as written, `--` stripped, so `--fui-x` stays `fui-x`. */
 const declarations = css => new Map(variablesOf(css))
+
+/**
+ * `#fff`, `#ffffff` and `rgba(255, 255, 255, 1)` are the same colour.
+ *
+ * A theme may spell a palette entry the way its reference does (hex) while the
+ * cascade resolves the same entry to `rgba(...)`; comparing the strings would
+ * report a colour that never changed.
+ */
+const parseColor = value => {
+  const text = String(value).trim()
+  const hex = /^#([0-9a-f]{3,8})$/i.exec(text)
+  if (hex) {
+    const digits = hex[1]
+    const expand = digit => parseInt(digit + digit, 16)
+    if (digits.length === 3 || digits.length === 4) {
+      return [expand(digits[0]), expand(digits[1]), expand(digits[2]), digits.length === 4 ? expand(digits[3]) / 255 : 1]
+    }
+    if (digits.length === 6 || digits.length === 8) {
+      return [
+        parseInt(digits.slice(0, 2), 16),
+        parseInt(digits.slice(2, 4), 16),
+        parseInt(digits.slice(4, 6), 16),
+        digits.length === 8 ? parseInt(digits.slice(6, 8), 16) / 255 : 1
+      ]
+    }
+    return null
+  }
+  const fn = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i.exec(text)
+  if (fn) return [Number(fn[1]), Number(fn[2]), Number(fn[3]), fn[4] === undefined ? 1 : Number(fn[4])]
+  return null
+}
+
+const sameColor = (actual, expected) => {
+  const left = parseColor(actual)
+  const right = parseColor(expected)
+  if (left && right) {
+    return left.every((channel, index) => Math.abs(channel - right[index]) <= (index === 3 ? 0.002 : 0.5))
+  }
+  return String(actual).trim() === String(expected).trim()
+}
 
 const blockOf = (css, selector) => {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -172,11 +252,11 @@ for (const entry of manifest) {
     }
   }
   const rootBackground = String(resolve(rootScope(entry.id), 'editorBgColor') ?? '').trim()
-  if (String(swatches.ui.editorBgColor ?? '').trim() !== rootBackground) {
+  if (!sameColor(swatches.ui.editorBgColor ?? '', rootBackground)) {
     fail(`${entry.id}: ui swatch background is ${swatches.ui.editorBgColor}, the chrome resolves to ${rootBackground}`)
   }
   const bodyBackground = String(resolve(editorScope(entry.id, entry.id), 'editorBgColor') ?? '').trim()
-  if (String(swatches.md.editorBgColor ?? '').trim() !== bodyBackground) {
+  if (!sameColor(swatches.md.editorBgColor ?? '', bodyBackground)) {
     fail(`${entry.id}: md swatch background is ${swatches.md.editorBgColor}, the body resolves to ${bodyBackground}`)
   }
 }
@@ -283,13 +363,25 @@ const legacyFor = id => {
   return legacyAt(`packages/desktop/src/renderer/src/assets/themes/${id}.theme.css`)
 }
 
+// The comparison needs the pre-split files. When they are missing altogether
+// (no git history, no THEME_LEGACY_DIR) the run cannot prove anything and the
+// report below fails unless the sandbox opts out explicitly.
+const baselineAvailable = legacyFor('light') !== null
+
 let legacyCompared = 0
-let legacySkipped = false
+const legacySkipped = !baselineAvailable
 for (const entry of manifest) {
+  if (!baselineAvailable) break
   const source = legacyFor(entry.id)
   if (source === null) {
-    legacySkipped = true
-    break
+    // A theme added after the split has nothing to compare against; it still
+    // went through the variable, cascade and override checks above. A legacy
+    // id without a file means the baseline is incomplete, which would make a
+    // green run mean "not checked".
+    if (PRE_SPLIT_IDS.has(entry.id)) {
+      fail(`${entry.id}: the pre-split baseline has no theme file to compare against`)
+    }
+    continue
   }
   const block = /:root\s*\{([^}]*)\}/.exec(source)?.[1] ?? ''
   const legacy = new Map()

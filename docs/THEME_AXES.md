@@ -127,13 +127,28 @@ into the page.
 
 No code changes are needed: the settings page reads the manifest.
 
+## Theme sources
+
+A theme that adapts an upstream style says so here, with the commit it was read
+from, so a later change can be diffed against the real source instead of guessed.
+
+- **github-light** — the Markdown half follows
+  [`github-markdown-css`](https://github.com/sindresorhus/github-markdown-css)
+  (`github-markdown-light.css`, commit `5f70ccef05e1ee8f7a7962a51a48f6823916a739`,
+  MIT, © Sindre Sorhus), scoped to `.editor-wrapper` and mapped onto the
+  `--fmd-*` variables plus the `h1`–`h6`, table, blockquote, code and rule rules
+  the engine needs. The interface half (Primer) and the syntax palette (Primer
+  Prettylights) are recorded here when they land.
+
 ## Checks
 
 `themes:check` runs `build.mjs --check`, `tokens.mjs --check`, and
 `verify.mjs` — cascade resolution for every theme, appearance, axis isolation,
 structural variables, swatches, and a comparison of 3830 values against the
-pre-split files. `verify.mjs` needs `THEME_LEGACY_DIR`; without a baseline it
-exits non-zero unless `THEMES_ALLOW_NO_BASELINE=1` is set.
+pre-split files. A theme added after the split has no pre-split file: it skips
+that one comparison (a pre-split id without a baseline still fails) and goes
+through every other check. `verify.mjs` needs `THEME_LEGACY_DIR`; without a
+baseline it exits non-zero unless `THEMES_ALLOW_NO_BASELINE=1` is set.
 
 ## Out of scope
 
