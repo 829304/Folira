@@ -1,102 +1,168 @@
-/* The sample document's own typography, injected inside the preview's shadow
-   root. The generated theme stylesheets only declare custom properties, so the
-   element rules a real document gets from Muya have to be restated here; every
-   colour still comes from a public variable, so the preview follows whatever
-   theme the card points at.
+/* The sample document's frame and fallback typography, injected inside the
+   preview's shadow root. The generated theme stylesheets only declare custom
+   properties, so the element rules a real document gets from Muya have to be
+   restated here; every colour still comes from a public variable, so the
+   preview follows the theme the card points at.
 
-   The selectors carry `.editor-wrapper` so they stay at the theme's own weight
-   and win on source order, and the chrome sheet is injected last. The sample is
-   sized to fit the frame it is pinned in: the settings page keeps the preview
-   on screen while the grid scrolls, so it cannot grow with the typography. */
+   The fallback rules ride on `:where(.editor-wrapper)` and add no specificity,
+   so a theme's rule for the same element wins, and a user rule of the same
+   shape wins on source order. They only style themes that ship no typography
+   of their own (the generated `--fmd-*` files). Two things stay outside that
+   rule on purpose: the frame, which must not follow a theme's type scale, and
+   the code-block reset at the end, which pins the preview's own code block. */
 
 :host {
   display: block;
   box-sizing: border-box;
-  max-height: 220px;
+  /* Fixed, not max: the header is sticky, so the preview must not grow or
+     shrink when the hovered theme has taller typography. The height comes from
+     index.vue's --theme-preview-height, so this frame, the sticky header and
+     its scroll padding all hang on the same number. */
+  height: var(--theme-preview-height, 216px);
   overflow: hidden;
 
-  padding: 5px;
+  padding: 2px;
   border: 1px solid var(--tableBorderColor, rgba(128, 128, 128, 0.25));
   border-radius: 9px;
   background: var(--editorBgColor, #fff);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Taller samples are cut by this fixed frame. The bottom fade makes the cut
+     read as "there is more below" instead of slicing the last line of code in
+     half; 86% keeps the code text above the fade at the default 216px. */
+  mask-image: linear-gradient(#000 86%, transparent);
+  -webkit-mask-image: linear-gradient(#000 86%, transparent);
 }
 
+/* Scale the sample as a whole instead of shrinking its font sizes: a theme's
+   rem/em spacing — heading margins, table cell padding, code-block padding —
+   scales with it, so the preview keeps the theme's proportions. 0.45 was
+   measured on PREVIEW_SAMPLE under the tallest (GitHub Light) rules: it keeps
+   the code block's text above the frame's fade at the default 216px height. */
 .editor-wrapper {
-  --preview-gap: 3px;
-
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 10.5px;
-  line-height: 1.4;
+  padding: 2px 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  zoom: 0.45;
 }
 
-.editor-wrapper h1 {
-  margin: 0 0 var(--preview-gap);
+:where(.editor-wrapper) h1,
+:where(.editor-wrapper) h2,
+:where(.editor-wrapper) h3,
+:where(.editor-wrapper) h4,
+:where(.editor-wrapper) h5,
+:where(.editor-wrapper) h6 {
+  margin: 0 0 0.45em;
+  line-height: 1.3;
+}
+
+:where(.editor-wrapper) h1 {
   color: var(--h1Color, #333);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.2;
 }
 
-.editor-wrapper p {
-  margin: 0 0 var(--preview-gap);
+:where(.editor-wrapper) h2 {
+  color: var(--h2Color, #333);
 }
 
-.editor-wrapper a {
+:where(.editor-wrapper) h3 {
+  color: var(--h3Color, #333);
+}
+
+:where(.editor-wrapper) h4 {
+  color: var(--h4Color, #333);
+}
+
+:where(.editor-wrapper) h5 {
+  color: var(--h5Color, #333);
+}
+
+:where(.editor-wrapper) h6 {
+  color: var(--h6Color, #333);
+}
+
+:where(.editor-wrapper) p {
+  margin: 0 0 0.5em;
+}
+
+:where(.editor-wrapper) a {
   color: var(--linkColor, #218e63);
 }
 
-.editor-wrapper code {
-  padding: 1px 4px;
-  border-radius: 3px;
-  background: var(--codeBgColor, rgba(0, 0, 0, 0.06));
+:where(.editor-wrapper) code {
+  padding: 0.15em 0.35em;
+
   font-family: ui-monospace, monospace;
   font-size: 0.9em;
+
+  background: var(--codeBgColor, rgba(0, 0, 0, 0.06));
+  border-radius: 4px;
 }
 
-.editor-wrapper blockquote {
-  margin: 0 0 var(--preview-gap);
-  padding: 1px 0 1px 9px;
-  border-left: 3px solid var(--blockquoteBorderColor, #ddd);
+:where(.editor-wrapper) blockquote {
+  margin: 0 0 0.5em;
+  padding-left: 0.8em;
+
   color: var(--blockquoteTextColor, #666);
+
+  border-left: 3px solid var(--blockquoteBorderColor, #ddd);
 }
 
-.editor-wrapper ul {
-  margin: 0 0 var(--preview-gap);
-  padding-left: 16px;
+:where(.editor-wrapper) ul,
+:where(.editor-wrapper) ol {
+  margin: 0 0 0.5em;
+  padding-left: 1.4em;
 }
 
-.editor-wrapper li::marker {
+:where(.editor-wrapper) li::marker {
   color: var(--listMarkerColor, #999);
 }
 
-.editor-wrapper table {
+:where(.editor-wrapper) table {
   width: 100%;
-  margin: 0 0 var(--preview-gap);
+  margin: 0 0 0.5em;
+
   border-collapse: collapse;
-  font-size: 9.5px;
 }
 
-.editor-wrapper th,
-.editor-wrapper td {
-  padding: 1px 6px;
-  border: 1px solid var(--tableBorderColor, rgba(128, 128, 128, 0.25));
+:where(.editor-wrapper) th,
+:where(.editor-wrapper) td {
+  padding: 4px 8px;
+
   text-align: left;
+
+  border: 1px solid var(--tableBorderColor, rgba(128, 128, 128, 0.25));
 }
 
-.editor-wrapper pre {
+:where(.editor-wrapper) pre {
   margin: 0;
-  padding: 6px 8px;
-  border-radius: 5px;
-  background: var(--codeBlockBgColor, rgba(0, 0, 0, 0.05));
+  padding: 0.5em 0.7em;
+
   overflow: hidden;
+
+  background: var(--codeBlockBgColor, rgba(0, 0, 0, 0.05));
+  border-radius: 5px;
 }
 
-/* Same specificity as a theme's own reset, injected after it, so the preview's
-   code block keeps this size even when the theme styles its editor block. */
+:where(.editor-wrapper) hr {
+  height: 0.25em;
+  margin: 0.75em 0;
+
+  background: var(--hrColor, rgba(0, 0, 0, 0.1));
+  border: 0;
+}
+
+/* The preview's own code block. Unlike the fallbacks above this selector keeps
+   the theme's weight, so the block keeps its size and spacing inside the
+   scaled frame even when a theme also resets the editor's `.mu-code` markup.
+   Inline code never matches it: the theme's inline rule is `:not(pre)`. */
 .editor-wrapper pre code:not(.mu-code) {
   padding: 0;
+
+  font-size: 85%;
+
   background: none;
-  font-size: 10px;
+  border-radius: 0;
 }
+
+/* The height breakpoints live in index.vue next to --theme-header-height: the
+   sticky header and its scroll padding must follow the same numbers. */

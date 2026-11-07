@@ -147,10 +147,34 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
 .pref-theme {
   max-width: 620px;
 
+  /* One number drives the whole sticky header: the preview's shadow stylesheet
+     reads --theme-preview-height, the header's height is that plus its own
+     chrome, and scroll-padding keeps a focused card below it. To change the
+     height, edit --theme-preview-height only; the totals follow from it.
+     The 84px chrome is the title row, the search box, the 8px top padding and
+     the bottom border, measured in the settings window — not estimated. */
+  --theme-preview-height: 216px; /* total 300px */
+  --theme-header-height: calc(var(--theme-preview-height) + 84px);
+  scroll-padding-top: calc(var(--theme-header-height) + 8px);
+
+  /* Short windows trade preview height for grid space. The header follows the
+     same value, so the two cannot drift apart. */
+  @media (max-height: 760px) {
+    --theme-preview-height: 176px; /* total 260px */
+  }
+
+  @media (max-height: 640px) {
+    --theme-preview-height: 140px; /* total 224px */
+  }
+
   & .pref-theme-header {
     position: sticky;
     top: 0;
     z-index: 2;
+    box-sizing: border-box;
+    /* A real height, not a minimum: the sticky header must match the variable
+       exactly, or the reserved space below it is silently wrong. */
+    height: var(--theme-header-height);
     padding-top: 8px;
     background: var(--editorBgColor);
     border-bottom: 1px solid var(--tableBorderColor);
