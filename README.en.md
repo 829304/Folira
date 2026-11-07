@@ -118,7 +118,6 @@ Repository layout, module boundaries and the finer development conventions are i
 - [x] Rebranding: name, icons, window title, installer identity
 - [x] Theme system: one theme id drives the chrome, the page and the syntax colours, browsed under Light/Dark tabs
 - [x] New theme: GitHub Light (Primer chrome, Prettylights syntax)
-- [ ] New theme: GitHub Dark
 - [ ] Image upload (PicGo or a custom script)
 - [ ] Auto-update
 - [ ] Release pipelines for Windows, macOS and Linux

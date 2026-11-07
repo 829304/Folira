@@ -118,7 +118,6 @@ pnpm lint                           # ESLint
 - [x] 品牌改造：名称、图标、窗口标题、安装包标识
 - [x] 主题系统：单一主题 id 统一界面、正文与代码高亮，浅色 / 深色分页浏览
 - [x] 新增主题：GitHub Light（Primer 界面 + Prettylights 语法）
-- [ ] 新增主题：GitHub Dark
 - [ ] 图片上传（PicGo / 自定义脚本）
 - [ ] 自动更新
 - [ ] Windows、macOS、Linux 三平台发布流水线
