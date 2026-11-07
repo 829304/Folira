@@ -134,6 +134,7 @@ import { usePaintedThemeSelection } from '@/composables/usePaintedThemeSelection
 import { applyThemeSet } from '@/util/theme'
 import {
   appearanceOf,
+  hoverAfterFocus,
   matchThemes,
   previewIdOf,
   themesOf,
@@ -239,10 +240,8 @@ const swatch = (entry: ThemeEntry, axis: 'ui' | 'md', name: string): string =>
 // keyboard. Only `:focus-visible` counts, so a click keeps the hovered card that
 // the pointer is actually over.
 const focusTheme = (id: string, event: FocusEvent): void => {
-  if ((event.currentTarget as HTMLElement | null)?.matches(':focus-visible')) {
-    hoveredTheme.value = null
-  }
-
+  const usesKeyboard = (event.currentTarget as HTMLElement | null)?.matches(':focus-visible') ?? false
+  hoveredTheme.value = hoverAfterFocus(usesKeyboard, hoveredTheme.value)
   focusedTheme.value = id
 }
 

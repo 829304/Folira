@@ -63,3 +63,15 @@ export const previewIdOf = (options: {
 
   return candidate ?? options.fallback
 }
+
+/**
+ * The hover to keep when a card takes focus.
+ *
+ * A pointer that never moved would otherwise keep winning over the card the
+ * keyboard just reached, so keyboard focus drops the pointer's claim. A click
+ * keeps it: the pointer is then genuinely over the card that got focus. The
+ * decision is a pure function because the caller can only observe the browser's
+ * `:focus-visible` verdict, which a unit test cannot reproduce.
+ */
+export const hoverAfterFocus = (usesKeyboard: boolean, hovered: string | null): string | null =>
+  usesKeyboard ? null : hovered

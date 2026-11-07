@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { THEMES } from '@/util/themeColor'
-import { appearanceOf, matchThemes, previewIdOf, themesOf } from '@/util/themeCatalog'
+import { appearanceOf, hoverAfterFocus, matchThemes, previewIdOf, themesOf } from '@/util/themeCatalog'
 
 const ids = (themes: { id: string }[]): string[] => themes.map(theme => theme.id)
 
@@ -79,6 +79,20 @@ describe('theme preview candidate', () => {
     expect(
       previewIdOf({ hovered: 'ayu-light', focused: 'nord', visible, fallback: 'light' })
     ).toBe('light')
+  })
+
+  it('drops the pointer when the keyboard moves focus', () => {
+    // Tab reached a card while the pointer still rested on another one; the
+    // keyboard is the newer input, so its card is the one to preview.
+    expect(hoverAfterFocus(true, 'dracula')).toBeNull()
+    expect(hoverAfterFocus(true, null)).toBeNull()
+  })
+
+  it('keeps the hover when the card was clicked', () => {
+    // A click means the pointer really is over that card, so hover keeps its
+    // claim and a move within the grid cannot clear what focus set.
+    expect(hoverAfterFocus(false, 'dracula')).toBe('dracula')
+    expect(hoverAfterFocus(false, null)).toBeNull()
   })
 
   it('falls back when neither hover nor focus points at a card', () => {

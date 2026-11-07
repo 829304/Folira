@@ -194,10 +194,12 @@ describe('first frame', () => {
     expect(page).toContain('@mouseenter="hoveredTheme = entry.id"')
     expect(page).toContain('@mouseleave="hoveredTheme = null"')
     // Keyboard focus releases a pointer that never moved, so Tab still previews
-    // the card it lands on; a click keeps the card the pointer is over.
+    // the card it lands on; a click keeps the card the pointer is over. The
+    // release rule itself is unit-tested in theme-catalog.spec.ts, because a
+    // source assertion cannot tell "only on keyboard focus" from "always".
     expect(page).toContain('@focus="focusTheme(entry.id, $event)"')
-    expect(page).toMatch(/const focusTheme = \([\s\S]{0,300}matches\(':focus-visible'\)[\s\S]{0,120}hoveredTheme\.value = null/)
-    expect(page).toContain('@blur="focusedTheme = null"')
+    expect(page).toMatch(/const focusTheme = \([\s\S]{0,300}matches\(':focus-visible'\)/)
+    expect(page).toContain('hoverAfterFocus(usesKeyboard, hoveredTheme.value)')
     // The preview resolves through the pure helper, and it falls back whenever
     // the candidate is no longer in the visible list.
     expect(page).toContain('previewIdOf({')
