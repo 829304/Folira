@@ -52,12 +52,13 @@ mirrors every custom property on the element that declares it
 those aliases first. Copying the declaration text instead would change its
 cascade position, its selector and its evaluation context.
 
-Syntax colours follow the same rule: the GitHub Light palette is scoped to
-`.editor-wrapper` through `:where(.editor-wrapper)` in
-`prismjs/github-light.theme.css`. `:where()` adds no specificity, so the scope
-does not raise the weight of the rules and a user's `.token.keyword` still
-overrides it from the later custom-CSS slot; the other 32 upstream palettes stay
-global and take the same selector.
+Syntax colours follow the same rule. Theme rules are scoped to the editor at
+zero or engine-level specificity — the GitHub Light Prism palette through
+`:where(.editor-wrapper)` in `prismjs/github-light.theme.css`, its inline-code
+rule through `:where(:not(pre))` — so a user's rule wins on source order. A
+`.token.keyword`, `.editor-wrapper code` or `.editor-wrapper h1` rule needs no
+theme-specific prefix and keeps working when the theme changes; the other 32
+upstream palettes stay global and take the same selectors.
 
 ## Loading a theme
 
@@ -116,11 +117,13 @@ custom CSS and anything else in `preferences.json` are unrelated and stay.
 ## The settings page
 
 One grid of complete themes, a name filter, a live preview and the custom-CSS
-box. Hovering (or keyboard-focusing) a card repaints the preview only; the
-choice is written after `applyThemeSet` returns `applied`, so a theme that
-cannot load is never saved. The preview runs in a shadow root with the same
-three sheets plus `preview.css`, so it shows the real cascade without leaking
-into the page.
+box. The preview and the filter sit in a sticky header, so the sample stays in
+view while the grid scrolls; hovering or keyboard-focusing a card repaints the
+preview only. Cards are native buttons, so Tab reaches them and Enter/Space
+selects without extra key handlers. The choice is written after `applyThemeSet`
+returns `applied`, so a theme that cannot load is never saved. The preview runs
+in a shadow root with the same three sheets plus `preview.css`, so it shows the
+real cascade without leaking into the page.
 
 ## Adding a theme
 
@@ -175,6 +178,11 @@ pre-split files. A theme added after the split has no pre-split file: it skips
 that one comparison (a pre-split id without a baseline still fails) and goes
 through every other check. `verify.mjs` needs `THEME_LEGACY_DIR`; without a
 baseline it exits non-zero unless `THEMES_VERIFY_ALLOW_NO_BASELINE=1` is set.
+
+Custom CSS stays effective across theme switches: `.token.keyword`,
+`.editor-wrapper code` and `.editor-wrapper h1` are the selector shapes a theme
+must leave overridable, and `theme-preview.spec.ts` fails if a theme raises their
+specificity (a bare `.editor-wrapper` prefix, or `:not(pre)` without `:where`).
 
 ## Out of scope
 

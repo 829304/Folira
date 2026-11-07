@@ -227,3 +227,25 @@ describe('github-light markdown rules', () => {
     expect(css.endsWith('\n')).toBe(true)
   })
 })
+
+// The custom-CSS slot is injected after the theme sheets, so a user rule wins
+// on source order only while the theme keeps its own weight. These two shapes
+// are what the app promises: the Prism palette scopes through `:where()` (zero
+// specificity) and the inline-code rule zeroes the `:not(pre)` type the same
+// way. A bare `.editor-wrapper` prefix or a plain `:not(pre)` would add weight
+// and silently beat `.token.keyword` or `.editor-wrapper code`.
+describe('theme rules custom CSS can override', () => {
+  it('scopes the GitHub Light palette with zero specificity', () => {
+    const prism = readFileSync(resolve(themesDir, 'prismjs', 'github-light.theme.css'), 'utf8')
+
+    expect(prism).toContain(':where(.editor-wrapper)')
+    expect(prism).not.toMatch(/(?<!:where\()\.editor-wrapper/)
+  })
+
+  it('scopes the GitHub Light inline code with zero specificity', () => {
+    const md = readTheme('md', 'github-light')
+
+    expect(md).toContain('.editor-wrapper :where(:not(pre)) > code')
+    expect(md).not.toMatch(/\.editor-wrapper :not\(pre\)/)
+  })
+})
