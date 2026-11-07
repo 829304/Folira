@@ -1,13 +1,17 @@
 import { resolve } from 'path'
-import { readFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { describe, expect, it } from 'vitest'
 
+import { railscastsThemes } from 'common/theme'
 import {
   DEFAULT_THEME_ID,
   firstPaintTheme,
   resolveThemeId
 } from '@/util/themeSelection'
 import { THEMES, getTheme } from '@/util/themeColor'
+
+/** Themes removed in the 34 → 30 cleanup; no path may still ship one. */
+const RETIRED_DARK_THEMES = ['tokyo-night-storm', 'rose-pine-moon', 'cyberdream', 'nightfox']
 
 describe('theme selection', () => {
   it('keeps an id the manifest ships', () => {
@@ -47,6 +51,17 @@ describe('theme selection', () => {
     }
     expect(getTheme('gone'), 'the unknown-id case needs an id that stays unknown').toBeUndefined()
   })
+
+  it('no longer ships the retired dark themes', () => {
+    // The 34 → 30 cleanup removed the themes everywhere they were named: the
+    // manifest, the id resolver and the legacy dark-theme list. A stale entry in
+    // any one of them would keep a retired id alive on a different path.
+    for (const id of RETIRED_DARK_THEMES) {
+      expect(THEMES.some(theme => theme.id === id), `${id} is still in manifest.json`).toBe(false)
+      expect(resolveThemeId(id), `${id} still resolves to itself`).toBe(DEFAULT_THEME_ID)
+      expect(railscastsThemes, `${id} is still listed as a dark theme`).not.toContain(id)
+    }
+  })
 })
 
 describe('theme assets on disk', () => {
@@ -58,6 +73,17 @@ describe('theme assets on disk', () => {
         const file = resolve(themesDir, axis, `${theme.id}.css`)
         expect(readFileSync(file, 'utf8').length).toBeGreaterThan(0)
       }
+    }
+  })
+
+  it('leaves no files behind for the retired themes', () => {
+    for (const id of RETIRED_DARK_THEMES) {
+      for (const axis of ['ui', 'md']) {
+        const file = resolve(themesDir, axis, `${id}.css`)
+        expect(existsSync(file), `${axis}/${id}.css still exists`).toBe(false)
+      }
+      const prism = resolve(themesDir, 'prismjs', `${id}.theme.css`)
+      expect(existsSync(prism), `prismjs/${id}.theme.css still exists`).toBe(false)
     }
   })
 
@@ -159,8 +185,11 @@ describe('first frame', () => {
     // The tab opens on the painted theme's appearance, not the preference
     // target — otherwise a failed commit would list the wrong tab.
     expect(page).toContain('appearanceOf(selectedTheme.value)')
-    // A commit made after mount keeps the tab in step until the user picks one.
-    expect(page).toContain('if (!tabTouched.value) tab.value = appearanceOf(id)')
+    // A commit made after mount keeps the tab in step until the user picks one,
+    // and releases the hover preview with it: the hovered card leaves the grid,
+    // so its mouseleave never fires.
+    expect(page).toMatch(/watch\(selectedTheme,[\s\S]{0,400}if \(tabTouched\.value\) return/)
+    expect(page).toMatch(/watch\(selectedTheme,[\s\S]{0,600}hovered\.value = null/)
     // Switching tabs drops the hover preview: its card leaves the grid, so the
     // mouseleave that would have cleared it never fires.
     expect(page).toMatch(/const setTab[\s\S]{0,400}hovered\.value = null/)

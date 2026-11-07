@@ -149,10 +149,6 @@ const selectedTheme = usePaintedThemeSelection()
 const tabTouched = ref(false)
 const tab = ref<ThemeAppearance>(appearanceOf(selectedTheme.value))
 
-watch(selectedTheme, (id) => {
-  if (!tabTouched.value) tab.value = appearanceOf(id)
-})
-
 const appearanceTabs: ReadonlyArray<{ value: ThemeAppearance; labelKey: string }> = [
   { value: 'light', labelKey: 'preferences.theme.lightThemes' },
   { value: 'dark', labelKey: 'preferences.theme.darkThemes' }
@@ -162,6 +158,20 @@ const hovered = ref<string | null>(null)
 // Hovering a card repaints the preview only; the saved theme comes back the
 // moment the pointer leaves, so a look never rewrites a preference.
 const previewTheme = computed(() => hovered.value ?? selectedTheme.value)
+
+// The tab follows commits made after mount — this window's first preferences
+// load, or another window's pick — until the user chooses. A commit can also
+// filter the hovered card out of the grid, and a removed node never fires
+// mouseleave, so the preview has to be released here as well as in setTab.
+watch(selectedTheme, (id) => {
+  if (tabTouched.value) return
+
+  const next = appearanceOf(id)
+  if (next === tab.value) return
+
+  tab.value = next
+  hovered.value = null
+})
 
 const setTab = (next: ThemeAppearance): void => {
   tab.value = next
@@ -291,9 +301,11 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
     border-radius: 6px;
     cursor: pointer;
 
+    /* The selected tab already carries the button border, so the focus ring has
+       to be something else or keyboard users cannot see where the focus is. */
     &:focus-visible {
-      border: var(--buttonBorder);
-      outline: none;
+      outline: 2px solid var(--themeColor);
+      outline-offset: 2px;
     }
 
     &.active {
@@ -310,7 +322,7 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
     font-size: 13px;
     color: var(--editorColor);
     background: var(--inputBgColor);
-    border: 1px solid var(--buttonBorder);
+    border: var(--buttonBorder);
     border-radius: 6px;
     outline: none;
 
@@ -427,7 +439,7 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
     font-size: 12.5px;
     color: var(--editorColor);
     background: var(--inputBgColor);
-    border: 1px solid var(--buttonBorder);
+    border: var(--buttonBorder);
     border-radius: 6px;
     resize: vertical;
   }
