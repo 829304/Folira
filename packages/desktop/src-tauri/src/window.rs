@@ -23,6 +23,18 @@ use tauri::{
 
 use crate::paths::DataRoot;
 
+/// The label the editor window is built with. Everything that has to tell the
+/// editor apart from the settings window compares against this, so a rename
+/// can only happen in one place.
+pub const MAIN_WINDOW_LABEL: &str = "main";
+
+/// Whether `label` names the editor window, the only one whose closing stops
+/// the file watcher and whose geometry is remembered.
+pub fn is_editor_window(label: &str) -> bool {
+    label == MAIN_WINDOW_LABEL
+}
+
+
 /// What `window-state.json` holds.
 ///
 /// The size is in logical pixels, because `inner_size` takes those on the
@@ -158,7 +170,7 @@ pub fn create(app: &AppHandle, data: &DataRoot) -> Result<(), Box<dyn Error>> {
 /// kept the process running: there is no window to focus, and the app looks
 /// dead. Rebuilding is what startup does, so it goes through `create`.
 pub fn focus_or_create_editor(app: &AppHandle) -> Result<(), Box<dyn Error>> {
-    if let Some(window) = app.get_webview_window("main") {
+    if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
         let _ = window.unminimize();
         let _ = window.set_focus();
         return Ok(());
@@ -194,13 +206,13 @@ fn is_on_a_monitor(app: &AppHandle, x: f64, y: f64) -> bool {
 pub fn track(window: &tauri::Window) {
     // Every window shares this handler, and only the editor's geometry is
     // stored.
-    if window.label() != "main" {
+    if !is_editor_window(window.label()) {
         return;
     }
 
     let app = window.app_handle();
     let (Some(geometry), Some(editor)) =
-        (app.try_state::<Geometry>(), app.get_webview_window("main"))
+        (app.try_state::<Geometry>(), app.get_webview_window(MAIN_WINDOW_LABEL))
     else {
         return;
     };
@@ -247,7 +259,7 @@ pub fn save(app: &AppHandle) {
     let Ok(mut state) = geometry.0.lock() else {
         return;
     };
-    if let Some(window) = app.get_webview_window("main") {
+    if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
         // The flags are read here even when the window cannot be measured: a
         // zoomed window is destroyed before the exit hook runs, and
         // `is_maximized` is the only place the state is still visible then.
@@ -398,7 +410,7 @@ static QUIT_REQUESTED: AtomicBool = AtomicBool::new(false);
 pub fn quit_request<R: Runtime>(app: &AppHandle<R>) {
     QUIT_REQUESTED.store(true, Ordering::SeqCst);
 
-    match app.get_webview_window("main") {
+    match app.get_webview_window(MAIN_WINDOW_LABEL) {
         Some(editor) => {
             let _ = editor.unminimize();
             let _ = editor.set_focus();
@@ -418,7 +430,7 @@ pub fn quit_request<R: Runtime>(app: &AppHandle<R>) {
 /// destroyed re-enters the event loop, and at least macOS refuses to tear down
 /// two windows from the same callback.
 pub fn finish_quit<R: Runtime>(app: &AppHandle<R>, label: &str) {
-    if label != "main" || !QUIT_REQUESTED.swap(false, Ordering::SeqCst) {
+    if !is_editor_window(label) || !QUIT_REQUESTED.swap(false, Ordering::SeqCst) {
         return;
     }
 
@@ -440,7 +452,7 @@ pub fn cancel_quit() {
 
 fn close_other_windows<R: Runtime>(app: &AppHandle<R>) {
     for (label, window) in app.webview_windows() {
-        if label == "main" {
+        if is_editor_window(&label) {
             continue;
         }
         if let Err(err) = window.close() {
@@ -462,7 +474,7 @@ fn close_other_windows<R: Runtime>(app: &AppHandle<R>) {
 /// with no windows left at all may leave: any window still up owes a flush, so
 /// the exit is held while it closes itself.
 pub fn veto_exit(app: &AppHandle) -> bool {
-    if let Some(editor) = app.get_webview_window("main") {
+    if let Some(editor) = app.get_webview_window(MAIN_WINDOW_LABEL) {
         QUIT_REQUESTED.store(true, Ordering::SeqCst);
         let _ = editor.unminimize();
         let _ = editor.set_focus();
@@ -541,7 +553,7 @@ pub async fn open_settings_window(app: AppHandle, url: String) -> Result<(), Str
 
     // Centring is cosmetic: a window placed by the OS default is still usable,
     // so a failure here must not report the settings page as unopenable.
-    if let Some(editor) = app.get_webview_window("main") {
+    if let Some(editor) = app.get_webview_window(MAIN_WINDOW_LABEL) {
         let _ = center_over(&app, &editor, &window);
     }
 
@@ -600,6 +612,13 @@ mod geometry_tests {
             maximized: true,
             fullscreen: false,
         }
+    }
+
+    #[test]
+    fn only_the_editor_window_counts_as_the_editor() {
+        assert!(is_editor_window(MAIN_WINDOW_LABEL));
+        assert!(!is_editor_window("settings"));
+        assert!(!is_editor_window("editor-2"));
     }
 
     #[test]

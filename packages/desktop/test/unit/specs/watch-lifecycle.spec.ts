@@ -58,39 +58,6 @@ describe('watch lifecycle and queued open transport', () => {
     expect(watchCalls()).toEqual([['watch_open_files', { paths: [] }]])
   })
 
-  it('clearing a burst of tabs sends only the final empty watch set', async() => {
-    const files = await load()
-    files.trackOpenFile('/docs/a.md')
-    files.trackOpenFile('/docs/b.md')
-    files.clearTrackedOpenFiles()
-    files.clearTrackedOpenFiles()
-    await vi.advanceTimersByTimeAsync(200)
-    expect(watchCalls()).toEqual([['watch_open_files', { paths: [] }]])
-  })
-
-  it('watches the same files again after a failed close puts them back', async() => {
-    const files = await load()
-    files.trackOpenFile('/docs/a.md')
-    await vi.advanceTimersByTimeAsync(200)
-    const watched = files.trackedOpenFiles()
-
-    // A close that cannot destroy the window drops the watchers on the way out;
-    // the failure path has to hand them back, or the still-open window never
-    // hears about an external edit again.
-    files.clearTrackedOpenFiles()
-    await vi.advanceTimersByTimeAsync(200)
-    files.restoreTrackedOpenFiles(watched)
-    await vi.advanceTimersByTimeAsync(200)
-
-    expect(files.trackedOpenFiles()).toEqual(['/docs/a.md'])
-    expect(watchCalls().at(-1)).toEqual(['watch_open_files', { paths: ['/docs/a.md'] }])
-
-    const dispatch = vi.fn()
-    await files.handleDiskChange({ pathname: '/docs/a.md', kind: 'unlink' }, dispatch, 'linux')
-    expect(dispatch).toHaveBeenCalledWith('mt::update-file', [
-      { type: 'unlink', change: { pathname: '/docs/a.md' } }
-    ])
-  })
   it('can rearm after a native watch registration failure', async() => {
     const files = await load()
     invoke.mockRejectedValueOnce(new Error('watch unavailable')).mockResolvedValue(undefined)

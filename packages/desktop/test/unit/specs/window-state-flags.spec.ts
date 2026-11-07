@@ -159,7 +159,7 @@ describe('window state', () => {
     // so `save` must fall back to the rectangle `track` recorded rather than
     // return early when the window is gone.
     const save = window.slice(window.indexOf('pub fn save('), window.indexOf('fn update_bounds'))
-    expect(save).toContain('if let Some(window) = app.get_webview_window("main")')
+    expect(save).toContain('if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL)')
     expect(save).toContain('data.window_state()')
   })
 

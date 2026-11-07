@@ -22,6 +22,7 @@ const menu = read('src-tauri/src/menu/mod.rs')
 const dispatch = read('src-tauri/src/menu/dispatch.rs')
 const boot = read('src-tauri/src/commands/boot.rs')
 const editorStore = read('src/renderer/src/store/editor.ts')
+const watcher = read('src-tauri/src/commands/watcher.rs')
 
 describe('closing a window', () => {
   it('writes the pending preferences before an auxiliary window goes away', () => {
@@ -70,6 +71,22 @@ describe('closing a window', () => {
     expect(bridgeWindow).toContain("invoke('cancel_quit')")
     const cancelBranch = bridgeWindow.slice(bridgeWindow.indexOf('export const closeWindowConfirm'))
     expect(cancelBranch.match(/await cancelQuit\(\)/g)?.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('keeps watching files until the window is actually gone', () => {
+    // The watcher lives in Rust, so it outlives the last message a closing window
+    // can send. Clearing it here meant a close that failed left a window that
+    // never heard about an external edit again — and dropped a reload already on
+    // its way. It is dropped when the editor window is really destroyed instead.
+    expect(bridgeWindow).not.toContain('open-files')
+    expect(bridgeWindow).not.toContain('clearTrackedOpenFiles')
+    expect(watcher).toContain('pub fn unwatch_open_files()')
+    const destroyed = lib.slice(lib.indexOf('tauri::WindowEvent::Destroyed'))
+    expect(destroyed).toContain('commands::watcher::unwatch_open_files()')
+    expect(destroyed.indexOf('window::is_editor_window(window.label())')).toBeGreaterThan(-1)
+    expect(destroyed.indexOf('window::is_editor_window(window.label())')).toBeLessThan(
+      destroyed.indexOf('commands::watcher::unwatch_open_files()')
+    )
   })
 
   it('lets the editor give a question back when it cannot answer', () => {
@@ -141,7 +158,7 @@ describe('closing a window', () => {
 
   it('rebuilds the editor when a second launch finds it closed', () => {
     expect(rustWindow).toContain('pub fn focus_or_create_editor')
-    expect(rustWindow).toContain('app.get_webview_window("main")')
+    expect(rustWindow).toContain('app.get_webview_window(MAIN_WINDOW_LABEL)')
     // Rebuilding must not try to manage the geometry state a second time.
     expect(rustWindow).toContain('app.try_state::<Geometry>()')
     expect(lib).toContain('window::focus_or_create_editor(app)')

@@ -295,9 +295,37 @@ pub fn watch_open_files(app: AppHandle, paths: Vec<String>) -> Result<(), String
     Ok(())
 }
 
+/// Stop watching the files opened in the editor window.
+///
+/// The watcher lives here, not in the renderer, so it outlives the last message
+/// a closing window can send. Clearing it there turned a failed close into a
+/// permanently deaf window; dropping it when the window is really gone keeps the
+/// watch alive for as long as the editor is.
+pub fn unwatch_open_files() {
+    if let Ok(mut active) = open_file_watcher().lock() {
+        *active = None;
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dropping_the_watch_leaves_no_watcher_behind() {
+        // The renderer used to clear this before the window was gone, which
+        // made a close that failed stop hearing about external edits. It is
+        // cleared here now, and only once the window is really destroyed.
+        let watcher = notify::recommended_watcher(|_result: notify::Result<notify::Event>| {})
+            .expect("the platform should offer a watcher");
+        *open_file_watcher().lock().unwrap() = Some(watcher);
+
+        unwatch_open_files();
+
+        assert!(open_file_watcher().lock().unwrap().is_none());
+        // A second call after a successful close must stay harmless.
+        unwatch_open_files();
+        assert!(open_file_watcher().lock().unwrap().is_none());
+    }
 
     #[test]
     fn events_from_skipped_directories_are_dropped_at_any_depth() {

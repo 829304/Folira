@@ -120,6 +120,12 @@ pub fn run() {
             // rest of the quit continues here.
             tauri::WindowEvent::Destroyed => {
                 window::finish_quit(&window.app_handle().clone(), window.label());
+                // The watcher outlives the window, so the only honest moment to
+                // drop it is here. Doing it from the renderer meant a close that
+                // failed had already stopped the watch.
+                if window::is_editor_window(window.label()) {
+                    commands::watcher::unwatch_open_files();
+                }
             }
             _ => {}
         })

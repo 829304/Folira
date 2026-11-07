@@ -11,7 +11,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
-import { clearTrackedOpenFiles, restoreTrackedOpenFiles, trackedOpenFiles } from './open-files'
 import { flushStoredPreferences } from './preferences'
 import {
   askAboutUnsavedFiles,
@@ -36,22 +35,16 @@ let asking = false
 
 const flushAndDestroy = (): Promise<void> => {
   closing ??= (async() => {
-    // Dropping the watchers before the window goes away is fine; dropping them
-    // when it does not is not — the window is still in use and external edits
-    // would stop reaching it, so the set is kept for the failure path.
-    const watched = trackedOpenFiles()
-    clearTrackedOpenFiles()
-    try {
-      await writePendingPreferences()
-      await rememberWindowState()
-      // A request that lands between the flush and this line would otherwise
-      // destroy the window without ever seeing the destroyed flag set.
-      closeConfirmed = true
-      await getCurrentWindow().destroy()
-    } catch (err) {
-      restoreTrackedOpenFiles(watched)
-      throw err
-    }
+    // The file watchers stay: they live in Rust and are dropped when the window
+    // is really gone (`WindowEvent::Destroyed` in lib.rs). Clearing them here
+    // would leave a failed close with a window that no longer hears about
+    // external edits, and would drop a reload already on its way.
+    await writePendingPreferences()
+    await rememberWindowState()
+    // A request that lands between the flush and this line would otherwise
+    // destroy the window without ever seeing the destroyed flag set.
+    closeConfirmed = true
+    await getCurrentWindow().destroy()
   })().catch(async(err) => {
     // A failed destroy leaves the window alive; forgetting the attempt lets the
     // next close request try again instead of being vetoed forever — including
