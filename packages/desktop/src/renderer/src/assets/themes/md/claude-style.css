@@ -1,0 +1,297 @@
+/* Folira Markdown theme: claude-style.
+ *
+ * Claude's paper/ink/terracotta palette: a warm paper background, near-black
+ * ink and one terracotta accent. This file is the document half only; the
+ * interface half is still the light placeholder until stage 2.
+ */
+
+.editor-wrapper {
+  --fmd-themeColor: #d97757;
+  --fmd-themeColor80: rgba(217, 119, 87, 0.8);
+  --fmd-themeColor70: rgba(217, 119, 87, 0.7);
+  --fmd-themeColor60: rgba(217, 119, 87, 0.6);
+  --fmd-themeColor50: rgba(217, 119, 87, 0.5);
+  --fmd-themeColor40: rgba(217, 119, 87, 0.4);
+  --fmd-themeColor30: rgba(217, 119, 87, 0.3);
+  --fmd-themeColor20: rgba(217, 119, 87, 0.2);
+  --fmd-highlightColor: rgba(217, 119, 87, 0.14);
+  --fmd-selectionColor: rgba(217, 119, 87, 0.22);
+  --fmd-editorColor: #141413;
+  --fmd-editorColor80: #232220;
+  --fmd-editorColor50: #6b6862;
+  --fmd-editorColor40: #85817a;
+  --fmd-editorColor30: #a8a39a;
+  --fmd-editorColor10: #e4dfd4;
+  --fmd-editorColor04: #ece7dc;
+  --fmd-editorBgColor: #faf9f5;
+  --fmd-sideBarBgColor: #f2efe6;
+  --fmd-deleteColor: #b4342a;
+  --fmd-iconColor: #6b6862;
+  --fmd-codeBlockBgColor: #f3efe6;
+  --fmd-footnoteBgColor: #f3efe6;
+  --fmd-inputBgColor: rgba(20, 20, 19, 0.05);
+  --fmd-buttonFontColor: var(--editorColor);
+  --fmd-buttonBgColor: #ffffff;
+  --fmd-buttonBorder: 1px solid #e2ddd2;
+  --fmd-buttonBgColorHover: #f6f2e9;
+  --fmd-buttonBorderHover: var(--buttonBorder);
+  --fmd-buttonBgColorActive: #efe9dd;
+  --fmd-buttonBorderActive: var(--buttonBorder);
+  --fmd-tableBorderColor: #e2ddd2;
+  --fmd-borderColor: #e2ddd2;
+  --fmd-h1Color: #141413;
+  --fmd-h2Color: #141413;
+  --fmd-h3Color: #141413;
+  --fmd-h4Color: #141413;
+  --fmd-h5Color: #141413;
+  --fmd-h6Color: #6b6862;
+  --fmd-blockquoteTextColor: var(--editorColor50);
+  --fmd-blockquoteBorderColor: rgba(217, 119, 87, 0.55);
+  --fmd-hrColor: #e2ddd2;
+  --fmd-linkColor: #a34f38;
+  --fmd-strongColor: var(--editorColor);
+  --fmd-emColor: var(--editorColor);
+  --fmd-listMarkerColor: var(--editorColor50);
+  --fmd-floatBgColor: #ffffff;
+  --fmd-floatShadow: rgba(15, 15, 15, 0.03) 0px 0px 0px 1px,
+    rgba(15, 15, 15, 0.04) 0px 3px 6px, rgba(15, 15, 15, 0.05) 0px 9px 24px;
+  --fmd-floatBorderColor: #e2ddd2;
+  --fmd-maskColor: rgba(250, 249, 245, 0.82);
+}
+
+/* Headings: 600 weight at a 1.25 line height, with a hairline under h1/h2.
+ * The rules reach the editor (Muya renders plain `<h1>`…`<h6>` inside
+ * `.mu-container`) and the settings preview (plain HTML inside
+ * `.editor-wrapper`); one class plus one element keeps them equal to a user's
+ * same-shaped selector. */
+
+.editor-wrapper h1,
+.editor-wrapper h2,
+.editor-wrapper h3,
+.editor-wrapper h4,
+.editor-wrapper h5,
+.editor-wrapper h6 {
+  margin: 1.5rem 0 1rem;
+  padding: 0;
+
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.editor-wrapper h1 {
+  padding-bottom: 0.3em;
+
+  font-size: 2em;
+
+  border-bottom: 1px solid rgba(226, 221, 210, 0.9);
+}
+
+.editor-wrapper h2 {
+  padding-bottom: 0.3em;
+
+  font-size: 1.5em;
+
+  border-bottom: 1px solid rgba(226, 221, 210, 0.9);
+}
+
+.editor-wrapper h3 {
+  font-size: 1.25em;
+}
+
+.editor-wrapper h4 {
+  font-size: 1em;
+}
+
+.editor-wrapper h5 {
+  font-size: 0.875em;
+}
+
+.editor-wrapper h6 {
+  font-size: 0.85em;
+}
+
+.editor-wrapper p {
+  margin: 0 0 1rem;
+}
+
+.editor-wrapper a {
+  color: var(--linkColor);
+
+  text-decoration: none;
+}
+
+.editor-wrapper a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+/* Quotes: Muya already paints the bar with `blockquote::before`; restyling the
+ * same pseudo element keeps one bar. A `border-left` would draw a second. The
+ * positioning is repeated for the settings preview, where the engine sheet is
+ * not loaded. */
+
+.editor-wrapper blockquote {
+  position: relative;
+  margin: 0 0 1rem;
+  padding: 0 1em;
+
+  color: var(--blockquoteTextColor);
+
+  border: 0;
+}
+
+.editor-wrapper blockquote::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  display: block;
+  width: 0.25em;
+  height: 100%;
+
+  background: var(--blockquoteBorderColor);
+
+  content: '';
+}
+
+/* Muya zeroes the right padding of a nested quote; the Claude look keeps both
+ * sides inset, so the inner bar is not flush against the outer quote's text. */
+
+.editor-wrapper blockquote blockquote {
+  padding-right: 1em;
+}
+
+/* Lists */
+
+.editor-wrapper ul,
+.editor-wrapper ol {
+  padding-left: 2em;
+}
+
+/* Tables: the cell borders are Muya's `::before` boxes coloured from
+ * `--fmd-tableBorderColor`; only the padding and the zebra rows are added
+ * here, so the editor never draws two lines per cell.
+ *
+ * Muya has no `tbody`, and its first `tr` is the header (the engine bolds
+ * `tr:first-child`), so the editor counts from the header while the preview
+ * has a real `tbody`; both selectors land on data rows 2 and 4. */
+
+.editor-wrapper table {
+  width: auto;
+
+  border-collapse: collapse;
+}
+
+.editor-wrapper th,
+.editor-wrapper td {
+  padding: 6px 13px;
+}
+
+.editor-wrapper th {
+  font-weight: 600;
+}
+
+/* Muya renders the header row as `td`, so the engine's own
+ * `.mu-table-inner tr:first-child td { font-weight: bold }` (700) is what shows.
+ * Match it at one step above (0,2,2) to bring the header down to 600. */
+
+.editor-wrapper .mu-table-inner tr:first-child td {
+  font-weight: 600;
+}
+
+.editor-wrapper .mu-table-inner tr:nth-child(odd):not(:first-child) td,
+.editor-wrapper tbody tr:nth-child(2n) td {
+  background: rgba(20, 20, 19, 0.03);
+}
+
+/* Inline code: a translucent terracotta pill. `:where(:not(pre))` zeroes the
+ * exclusion's specificity, so the rule stays at (0,1,1) — equal to a user's
+ * `.editor-wrapper code` and to the engine's `code.mu-inline-rule`. It comes
+ * after the engine stylesheet and before `#custom-styles`, so it wins the tie
+ * against the engine and yields to user CSS. */
+
+.editor-wrapper :where(:not(pre)) > code {
+  padding: 0.2em 0.4em;
+
+  font-size: 85%;
+
+  color: var(--editorColor);
+
+  background: rgba(217, 119, 87, 0.1);
+  border-radius: 5px;
+}
+
+/* Code blocks. The editor carries them on `.mu-code-block`; the settings
+ * preview renders a plain `<pre>` directly inside `.editor-wrapper`, which the
+ * `>` keeps apart from Muya's nested markup. The line-number gutter Muya
+ * reserves on `padding-left` is preserved. */
+
+.editor-wrapper .mu-code-block {
+  padding: 1rem;
+
+  border: 0;
+  border-radius: 6px;
+}
+
+.editor-wrapper .mu-code-block:has(.mu-line-numbers-rows) {
+  padding-left: 2.5em;
+}
+
+/* Muya offsets the gutter by one em of the code font while the theme reserves
+ * one rem, so the two only agree at a 16px code size. Pin the gutter to the
+ * padding the theme actually reserves so the numbers stay level with the first
+ * code line at any size. */
+.editor-wrapper .mu-code-block .mu-line-numbers-rows {
+  top: 1rem;
+}
+
+/* The horizontal scroller is `code.mu-code`, and Chromium on Windows draws its
+ * bar as an overlay: a bottom padding keeps the last line of code clear of it. */
+.editor-wrapper .mu-code-block .mu-code {
+  padding-bottom: 0.6em;
+}
+
+.editor-wrapper > pre {
+  margin: 0 0 1rem;
+  padding: 1rem;
+
+  overflow: auto;
+
+  background: var(--codeBlockBgColor);
+  border-radius: 6px;
+}
+
+/* The preview renders a plain `<pre>`; its own code block keeps the theme's
+ * padding but must not inherit the inline pill. */
+
+.editor-wrapper pre code:not(.mu-code) {
+  padding: 0;
+
+  background: none;
+  border-radius: 0;
+}
+
+/* Rules. The editor draws a thematic break on `p.mu-thematic-break::before`
+ * (Muya uses a dashed top border); the preview uses `<hr>`. */
+
+.editor-wrapper p.mu-thematic-break::before {
+  height: 0;
+
+  background: none;
+  border-top: 1px solid var(--hrColor);
+}
+
+.editor-wrapper hr {
+  height: 0;
+  margin: 1.5rem 0;
+
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--hrColor);
+}
+
+/* Task lists: Muya paints the box on `input::before` and starts round; the
+ * Claude look uses the same soft corner as the inline-code pill. */
+.editor-wrapper li.mu-task-list-item > input::before {
+  border-radius: 4px;
+}

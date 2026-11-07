@@ -115,6 +115,29 @@
     }
   },
   {
+    "id": "claude-style",
+    "label": "Claude Style",
+    "appearance": "light",
+    "prism": "solarized-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "rgba(255, 255, 255, 1)",
+        "editorColor": "#4d4d4d",
+        "sideBarBgColor": "rgba(242, 242, 242, 0.9)",
+        "themeColor": "rgba(33, 181, 111, 1)",
+        "buttonPrimaryBgColor": "rgba(33, 181, 111, 1)"
+      },
+      "md": {
+        "editorBgColor": "#faf9f5",
+        "editorColor": "#141413",
+        "h1Color": "#141413",
+        "linkColor": "#a34f38",
+        "codeBlockBgColor": "#f3efe6",
+        "blockquoteBorderColor": "rgba(217, 119, 87, 0.55)"
+      }
+    }
+  },
+  {
     "id": "dark",
     "label": "Dark",
     "appearance": "dark",

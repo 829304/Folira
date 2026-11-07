@@ -1,6 +1,6 @@
 # Themes
 
-Folira ships **30 built-in themes** — 11 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables, links) and the syntax-highlighting palette at once, so the three always agree with each other.
+Folira ships **31 built-in themes** — 12 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables, links) and the syntax-highlighting palette at once, so the three always agree with each other.
 
 ## Choosing a theme
 
@@ -37,6 +37,7 @@ A handful of the inherited themes still mark individual rules (code blocks, them
 | --- | --- | --- |
 | AYU Light | `ayu-light` | Warm grey paper, gentle contrast |
 | Catppuccin Latte | `catppuccin-latte` | Pastel light with warm neutrals |
+| Claude Style | `claude-style` | Warm paper, ink text, terracotta accents; tuned for long Chinese prose |
 | Everforest Light | `everforest-light` | Green-tinted paper |
 | GitHub Light | `github-light` | GitHub's own Markdown look: Primer chrome, Prettylights syntax |
 | Graphite | `graphite` | Neutral grey light |
@@ -76,6 +77,7 @@ A handful of the inherited themes still mark individual rules (code blocks, them
 Many of these themes follow colour schemes published by the developer community. Each project keeps its own license; the links below are the upstream sources.
 
 - [Ayu](https://github.com/ayu-theme) — MIT
+- [Anthropic brand palette](https://www.anthropic.com) — paper `#faf9f5`, ink `#141413` and terracotta `#d97757` are the starting point for Claude Style. Its look was checked against [Typora Claude-Like Theme](https://github.com/Muyiiiii/Typora_Claude-Like_Theme) and [Claude Paper for Obsidian](https://github.com/Law-Of-Cycles/claude-paper-obsidian) (both MIT); the Folira theme is written from scratch, no upstream CSS is copied.
 - [Catppuccin](https://github.com/catppuccin/catppuccin) — MIT
 - [Dracula](https://github.com/dracula/dracula-theme) — MIT
 - [Everforest](https://github.com/sainnhe/everforest) — MIT

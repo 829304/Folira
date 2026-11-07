@@ -17,6 +17,7 @@ const SWATCHES: Swatch[] = [
   { name: 'Light', bg: '#fff', fg: '#4d4d4d', accent: '#21b56f', bgBorder: '#e2e2e2' },
   { name: 'Dark', bg: '#282828', fg: '#cfcfcf', accent: '#409eff' },
   { name: 'GitHub Light', bg: '#fff', fg: '#1f2328', accent: '#0969da', bgBorder: '#d1d9e0' },
+  { name: 'Claude Style', bg: '#faf9f5', fg: '#141413', accent: '#d97757', bgBorder: '#e2ddd2' },
   { name: 'Material Dark', bg: '#34393f', fg: '#abb2bf', accent: '#f48237' },
   { name: 'Ulysses', bg: '#f3f3f3', fg: '#656565', accent: '#0c8bba', bgBorder: '#e4e4e4' },
   { name: 'ONE Dark', bg: '#282c34', fg: '#9da5b4', accent: '#e06c75' }
@@ -32,7 +33,7 @@ export default function Themes() {
               <span className="kicker">Themes</span>
               <h2 className="sec-title">Make it yours.</h2>
               <p className="sec-desc">
-                30 built-in themes, light and dark. One choice sets the window chrome, the page and
+                31 built-in themes, light and dark. One choice sets the window chrome, the page and
                 the syntax colours together — and every theme is plain CSS.
               </p>
             </div>

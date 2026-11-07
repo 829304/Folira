@@ -1,0 +1,75 @@
+/* Folira UI theme: claude-style.
+ *
+ * Placeholder: the interface half lands in stage 2 (Claude paper/ink/terracotta).
+ * Until then every --fui-* value is copied from ui/light.css so the pair can be
+ * registered and the Markdown half can be previewed in the editor.
+ */
+
+:root {
+  --fui-themeColor: rgba(33, 181, 111, 1);
+  --fui-themeColor90: rgba(33, 181, 111, 0.9);
+  --fui-themeColor80: rgba(33, 181, 111, 0.8);
+  --fui-themeColor70: rgba(33, 181, 111, 0.7);
+  --fui-themeColor60: rgba(33, 181, 111, 0.6);
+  --fui-themeColor50: rgba(33, 181, 111, 0.5);
+  --fui-themeColor40: rgba(33, 181, 111, 0.4);
+  --fui-themeColor30: rgba(33, 181, 111, 0.3);
+  --fui-themeColor20: rgba(33, 181, 111, 0.2);
+  --fui-themeColor10: rgba(33, 181, 111, 0.1);
+  --fui-highlightThemeColor: var(--themeColor);
+  --fui-highlightColor: rgba(33, 181, 111, 0.4);
+  --fui-selectionColor: rgba(0, 0, 0, 0.1);
+  --fui-editorColor: #4d4d4d;
+  --fui-editorColor80: #333333;
+  --fui-editorColor60: #666666;
+  --fui-editorColor50: #808080;
+  --fui-editorColor40: #999999;
+  --fui-editorColor30: #b3b3b3;
+  --fui-editorColor10: #e6e6e6;
+  --fui-editorColor04: #f7f7f7;
+  --fui-editorBgColor: rgba(255, 255, 255, 1);
+  --fui-deleteColor: #ff6969;
+  --fui-iconColor: #6b737b;
+  --fui-codeBgColor: #d8d8d869;
+  --fui-footnoteBgColor: rgba(0, 0, 0, 0.03);
+  --fui-inputBgColor: rgba(0, 0, 0, 0.06);
+  --fui-focusColor: var(--themeColor);
+  --fui-buttonFontColor: var(--editorColor);
+  --fui-buttonBgColor: #ffffff;
+  --fui-buttonBorder: 1px solid #dcdfe6;
+  --fui-buttonShadow: none;
+  --fui-buttonFontColorHover: var(--buttonFontColor);
+  --fui-buttonBgColorHover: linear-gradient(#f9f9f9, #f2f2f2);
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
+  --fui-buttonBgColorActive: #f0f0f0;
+  --fui-buttonBorderActive: var(--buttonBorder);
+  --fui-buttonFocusBorder: 1px solid var(--themeColor);
+  --fui-buttonPrimaryFontColor: #ffffff;
+  --fui-buttonPrimaryBgColor: var(--themeColor);
+  --fui-buttonPrimaryBorder: none;
+  --fui-buttonPrimaryShadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: var(--buttonPrimaryBgColor);
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: var(--buttonPrimaryBgColor);
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFocusBorder: none;
+  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(13, 91, 55, 0.5), 0 0 0 1px var(--themeColor);
+  --fui-tableBorderColor: #e5e5e5;
+  --fui-headingColor: var(--editorColor80);
+  --fui-sideBarColor: rgba(0, 0, 0, 0.6);
+  --fui-sideBarIconColor: var(--iconColor);
+  --fui-sideBarTitleColor: rgba(0, 0, 0, 1);
+  --fui-sideBarTextColor: rgba(0, 0, 0, 0.4);
+  --fui-sideBarBgColor: rgba(242, 242, 242, 0.9);
+  --fui-sideBarItemHoverBgColor: rgba(0, 0, 0, 0.03);
+  --fui-itemBgColor: rgba(255, 255, 255, 0.6);
+  --fui-floatFontColor: rgba(0, 0, 0, 0.6);
+  --fui-floatBgColor: #fff;
+  --fui-floatHoverColor: rgba(0, 0, 0, 0.04);
+  --fui-floatBorderColor: rgba(0, 0, 0, 0.1);
+  --fui-floatShadow: rgba(15, 15, 15, 0.03) 0px 0px 0px 1px, rgba(15, 15, 15, 0.04) 0px 3px 6px, rgba(15, 15, 15, 0.05) 0px 9px 24px;
+  --fui-maskColor: rgba(232, 232, 232, 0.8);
+}

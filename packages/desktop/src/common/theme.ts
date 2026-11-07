@@ -39,6 +39,7 @@ const themeBackgroundColors: ReadonlyMap<string, string> = new Map([
   ['ayu-mirage', '#1f2430'],
   ['catppuccin-latte', '#eff1f5'],
   ['catppuccin-mocha', '#1e1e2e'],
+  ['claude-style', '#faf9f5'],
   ['dark', '#282828'],
   ['dracula', '#282a36'],
   ['everforest-dark', '#2d353b'],
