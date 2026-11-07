@@ -14,7 +14,30 @@
         <theme-preview :theme="previewTheme" />
       </section>
 
-      <div class="search-row">
+      <!-- The tabs only change what the list browses. Keeping them on the search
+           row leaves the header's own chrome (and therefore the preview height,
+           zoom and scroll padding) untouched. -->
+      <div class="filter-row">
+        <div
+          class="theme-tabs"
+          role="tablist"
+          :aria-label="t('preferences.theme.title')"
+        >
+          <button
+            v-for="option of appearanceTabs"
+            :key="option.value"
+            type="button"
+            role="tab"
+            class="theme-tab"
+            :class="{ active: tab === option.value }"
+            :aria-selected="tab === option.value"
+            :tabindex="tab === option.value ? 0 : -1"
+            @click="setTab(option.value)"
+            @keydown="moveTabFocus($event, option.value)"
+          >
+            {{ t(option.labelKey) }}
+          </button>
+        </div>
         <input
           v-model="query"
           class="search-input"
@@ -91,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 
@@ -99,6 +122,12 @@ import { usePreferencesStore } from '@/store/preferences'
 import type { PreferencesState } from '@/store/preferences'
 import { usePaintedThemeSelection } from '@/composables/usePaintedThemeSelection'
 import { applyThemeSet } from '@/util/theme'
+import {
+  appearanceOf,
+  matchThemes,
+  themesOf,
+  type ThemeAppearance
+} from '@/util/themeCatalog'
 import { THEMES, type ThemeEntry } from '@/util/themeColor'
 import ThemePreview from './preview.vue'
 
@@ -111,25 +140,69 @@ const { customCss } = storeToRefs(preferenceStore)
 // here, and the preference stays that target while the paint stays the old one.
 const selectedTheme = usePaintedThemeSelection()
 
+// The tab only filters the list, so it opens on the theme already on screen:
+// the appearance of the painted theme, the same computed the cards highlight.
+// Reading the preference here would open the target tab while a failed commit
+// still paints the previous look. `tabTouched` keeps the tab following commits
+// made after mount (another window, the first preferences load) until the user
+// chooses a tab themselves.
+const tabTouched = ref(false)
+const tab = ref<ThemeAppearance>(appearanceOf(selectedTheme.value))
+
+watch(selectedTheme, (id) => {
+  if (!tabTouched.value) tab.value = appearanceOf(id)
+})
+
+const appearanceTabs: ReadonlyArray<{ value: ThemeAppearance; labelKey: string }> = [
+  { value: 'light', labelKey: 'preferences.theme.lightThemes' },
+  { value: 'dark', labelKey: 'preferences.theme.darkThemes' }
+]
+
 const hovered = ref<string | null>(null)
 // Hovering a card repaints the preview only; the saved theme comes back the
 // moment the pointer leaves, so a look never rewrites a preference.
 const previewTheme = computed(() => hovered.value ?? selectedTheme.value)
 
-const query = ref('')
-const visibleThemes = computed<ThemeEntry[]>(() => {
-  const needle = query.value.trim().toLowerCase()
-  if (!needle) return THEMES
+const setTab = (next: ThemeAppearance): void => {
+  tab.value = next
+  tabTouched.value = true
+  // The card that owned the hover preview has just been filtered out of the
+  // grid, so its mouseleave/blur never fires; without this the preview would
+  // keep showing the theme from the tab the user just left.
+  hovered.value = null
+}
 
-  return THEMES.filter(
-    theme => theme.id.includes(needle) || theme.label.toLowerCase().includes(needle)
+const moveTabFocus = (event: KeyboardEvent, current: ThemeAppearance): void => {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+  event.preventDefault()
+
+  // Two tabs: either arrow wraps onto the other one.
+  const next: ThemeAppearance = current === 'light' ? 'dark' : 'light'
+  setTab(next)
+
+  // Roving tabindex keeps only the selected tab in the Tab order, so the arrow
+  // key has to move focus together with the selection.
+  const tabButtons = (event.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLButtonElement>(
+    '[role="tab"]'
   )
-})
+  tabButtons?.[appearanceTabs.findIndex(option => option.value === next)]?.focus()
+}
+
+const query = ref('')
+// One query, two tabs: the grid is the current appearance filtered by the same
+// search term, and switching tabs keeps the term.
+const visibleThemes = computed<ThemeEntry[]>(() =>
+  matchThemes(themesOf(THEMES, tab.value), query.value)
+)
 
 const swatch = (entry: ThemeEntry, axis: 'ui' | 'md', name: string): string =>
   entry.swatches[axis]?.[name] ?? 'transparent'
 
 const selectTheme = async (id: string): Promise<void> => {
+  // A card selection is not a tab switch: pin the tab so the commit's later
+  // selectedTheme update cannot move the user off the list they are browsing.
+  tabTouched.value = true
+
   const result = await applyThemeSet(id)
   // A failure or a newer selection leaves the previous theme on screen, so it
   // must leave the previous preference in place as well.
@@ -196,9 +269,38 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
     color: var(--editorColor);
   }
 
-  & .search-row {
+  & .filter-row {
     display: flex;
+    align-items: center;
+    gap: 8px;
     margin: 4px 0 12px;
+  }
+
+  & .theme-tabs {
+    display: flex;
+    flex: none;
+    gap: 2px;
+  }
+
+  & .theme-tab {
+    padding: 5px 10px;
+    font-size: 13px;
+    color: var(--editorColor50);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:focus-visible {
+      border: var(--buttonBorder);
+      outline: none;
+    }
+
+    &.active {
+      color: var(--themeColor);
+      background: var(--itemBgColor);
+      border: var(--buttonBorder);
+    }
   }
 
   & .search-input {

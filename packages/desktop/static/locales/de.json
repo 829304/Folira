@@ -635,6 +635,8 @@
     },
     "theme": {
       "title": "Design",
+      "lightThemes": "Hell",
+      "darkThemes": "Dunkel",
       "customCss": "Benutzerdefiniertes CSS",
       "importCustomThemes": "Benutzerdefinierte Designs importieren",
       "importTheme": "Design importieren",

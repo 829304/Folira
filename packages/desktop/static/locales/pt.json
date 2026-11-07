@@ -635,6 +635,8 @@
     },
     "theme": {
       "title": "Tema",
+      "lightThemes": "Claro",
+      "darkThemes": "Escuro",
       "customCss": "CSS Personalizado",
       "importCustomThemes": "Importar temas personalizados",
       "importTheme": "Importar Tema",

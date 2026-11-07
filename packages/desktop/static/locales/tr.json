@@ -635,6 +635,8 @@
     },
     "theme": {
       "title": "Tema",
+      "lightThemes": "Açık",
+      "darkThemes": "Koyu",
       "customCss": "Özel CSS",
       "importCustomThemes": "Özel temaları içe aktar",
       "importTheme": "Temayı İçe Aktar",

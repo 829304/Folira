@@ -635,6 +635,8 @@
     },
     "theme": {
       "title": "テーマ",
+      "lightThemes": "ライト",
+      "darkThemes": "ダーク",
       "customCss": "カスタムCSS",
       "importCustomThemes": "カスタムテーマをインポート",
       "importTheme": "テーマをインポート",

@@ -635,6 +635,8 @@
     },
     "theme": {
       "title": "主題",
+      "lightThemes": "淺色",
+      "darkThemes": "深色",
       "customCss": "自訂 CSS",
       "importCustomThemes": "匯入自訂主題",
       "importTheme": "匯入主題",

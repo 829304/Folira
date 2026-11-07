@@ -138,6 +138,12 @@ returns `applied`, so a theme that cannot load is never saved. The preview runs
 in a shadow root with the same three sheets plus `preview.css`, so it shows the
 real cascade without leaking into the page.
 
+The grid is split into Light and Dark tabs that only change which themes are
+browsed: the tab opens on the appearance of the theme the window is painting and
+follows later commits until the user picks a tab, while the search term is
+shared across both. Choosing a card never switches tabs, so a commit that
+resolves late cannot move the list under the pointer.
+
 ## Adding a theme
 
 1. Add `ui/<id>.css` and `md/<id>.css`, declaring only that axis's variables.

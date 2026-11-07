@@ -146,4 +146,27 @@ describe('first frame', () => {
     expect(page).not.toContain('paintedTheme()')
     expect(page).not.toMatch(/selectedTheme[^\n]*preferenceStore\.theme/)
   })
+
+  it('browses the catalog by appearance without a second selection source', () => {
+    // The two tabs split the manifest by appearance; they must only move the
+    // list, never the selection. These source reads pin the wiring that has no
+    // smaller unit (the page mounts a store and loads stylesheets).
+    const page = readFileSync(
+      resolve(renderer, 'prefComponents/theme/index.vue'),
+      'utf8'
+    )
+
+    // The tab opens on the painted theme's appearance, not the preference
+    // target — otherwise a failed commit would list the wrong tab.
+    expect(page).toContain('appearanceOf(selectedTheme.value)')
+    // A commit made after mount keeps the tab in step until the user picks one.
+    expect(page).toContain('if (!tabTouched.value) tab.value = appearanceOf(id)')
+    // Switching tabs drops the hover preview: its card leaves the grid, so the
+    // mouseleave that would have cleared it never fires.
+    expect(page).toMatch(/const setTab[\s\S]{0,400}hovered\.value = null/)
+    // Selecting a card pins the tab, so a late commit cannot jump the list.
+    expect(page).toMatch(/const selectTheme = async[\s\S]{0,300}tabTouched\.value = true/)
+    // The grid is one tab's themes filtered by the shared query.
+    expect(page).toContain('matchThemes(themesOf(THEMES, tab.value), query.value)')
+  })
 })

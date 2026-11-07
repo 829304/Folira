@@ -635,6 +635,8 @@
     },
     "theme": {
       "title": "테마",
+      "lightThemes": "라이트",
+      "darkThemes": "다크",
       "customCss": "사용자 정의 CSS",
       "importCustomThemes": "사용자 정의 테마 가져오기",
       "importTheme": "테마 가져오기",
