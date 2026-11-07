@@ -161,9 +161,11 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
   /* Short windows trade preview height for grid space. The header follows the
      same value, so the two cannot drift apart. The shorter frames crop the
      sample's tail (the display rules live in preview.css's media queries) and
-     raise the zoom because fewer blocks have to fit. 0.58 is measured against
-     the cropped samples: it keeps body text at 8.1px while the visible blocks
-     still fit the 176px and 140px frames. */
+     raise the zoom because fewer blocks have to fit. The 176px frame keeps the
+     code block — it is the only place the Prism palette shows in the preview —
+     and drops the table and list; the 140px frame drops the code block too.
+     0.58 is measured against the cropped samples: it keeps body text at 8.1px
+     while the visible blocks still fit both frames. */
   @media (max-height: 760px) {
     --theme-preview-height: 176px; /* total 260px */
     --theme-preview-zoom: 0.58;

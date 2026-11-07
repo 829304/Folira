@@ -254,42 +254,61 @@ const selectorsIn = (css: string): string[] =>
     })
 
 describe('theme rules custom CSS can override', () => {
-  /** Drop the subtrees that are already zero-weight, so their insides do not count. */
-  const withoutWhere = (selector: string): string => {
-    let result = ''
-    let cursor = 0
-    for (;;) {
-      const start = selector.indexOf(':where(', cursor)
-      if (start < 0) return result + selector.slice(cursor)
-      result += selector.slice(cursor, start)
-      let depth = 0
-      let end = start + 6
-      for (; end < selector.length; end++) {
-        if (selector[end] === '(') depth++
-        else if (selector[end] === ')') {
-          depth--
-          if (depth === 0) break
-        }
-      }
-      cursor = end + 1
-    }
-  }
+  // FROZEN CONTRACT, not a convenience list: every selector below is the
+  // zero-weight shape the Prism palette promises, so changing a colour means
+  // editing this array deliberately — and the diff shows that the selector
+  // still starts with `:where(.editor-wrapper)` and has no specificity-raising
+  // suffix (`:not()`, `:is()`, `:has()`, an attribute, `:nth-child()`, a
+  // pseudo-element, an ID). A snapshot catches those because it compares the
+  // whole selector, not just its prefix; compare the old structural check,
+  // which was blind to any tail appended to a valid prefix.
+  const GITHUB_LIGHT_PRISM_SELECTORS = [
+    ':where(.editor-wrapper) code[class*=\'language-\']',
+    ':where(.editor-wrapper) pre.ag-paragraph',
+    ':where(.editor-wrapper) pre.ag-paragraph',
+    ':where(.editor-wrapper) :where(:not(pre)) > code[class*=\'language-\']',
+    ':where(.editor-wrapper) pre.ag-paragraph',
+    ':where(.editor-wrapper) :where(:not(pre)) > code[class*=\'language-\']',
+    ':where(.editor-wrapper) .token.comment',
+    ':where(.editor-wrapper) .token.prolog',
+    ':where(.editor-wrapper) .token.doctype',
+    ':where(.editor-wrapper) .token.cdata',
+    ':where(.editor-wrapper) .token.punctuation',
+    ':where(.editor-wrapper) .namespace',
+    ':where(.editor-wrapper) .token.property',
+    ':where(.editor-wrapper) .token.tag',
+    ':where(.editor-wrapper) .token.constant',
+    ':where(.editor-wrapper) .token.symbol',
+    ':where(.editor-wrapper) .token.boolean',
+    ':where(.editor-wrapper) .token.number',
+    ':where(.editor-wrapper) .token.deleted',
+    ':where(.editor-wrapper) .token.selector',
+    ':where(.editor-wrapper) .token.attr-name',
+    ':where(.editor-wrapper) .token.string',
+    ':where(.editor-wrapper) .token.char',
+    ':where(.editor-wrapper) .token.builtin',
+    ':where(.editor-wrapper) .token.attr-value',
+    ':where(.editor-wrapper) .token.inserted',
+    ':where(.editor-wrapper) .token.operator',
+    ':where(.editor-wrapper) .token.entity',
+    ':where(.editor-wrapper) .token.url',
+    ':where(.editor-wrapper) .language-css .token.string',
+    ':where(.editor-wrapper) .style .token.string',
+    ':where(.editor-wrapper) .token.atrule',
+    ':where(.editor-wrapper) .token.keyword',
+    ':where(.editor-wrapper) .token.function',
+    ':where(.editor-wrapper) .token.class-name',
+    ':where(.editor-wrapper) .token.regex',
+    ':where(.editor-wrapper) .token.variable',
+    ':where(.editor-wrapper) .token.important',
+    ':where(.editor-wrapper) .token.bold',
+    ':where(.editor-wrapper) .token.italic',
+    ':where(.editor-wrapper) .token.entity'
+  ]
 
-  it('scopes every GitHub Light Prism selector with :where()', () => {
+  it('pins every GitHub Light Prism selector and its order', () => {
     const prism = readFileSync(resolve(themesDir, 'prismjs', 'github-light.theme.css'), 'utf8')
-    const selectors = selectorsIn(prism)
-    const prefix = ':where(.editor-wrapper)'
-    // The prefix alone is not enough: a suffix such as `:not(.x)` leaves the
-    // scope intact but raises the selector to (0,3,0), beating the user's
-    // `.token.keyword` again. So anything outside a `:where()` in the rest of
-    // the selector must stay free of specificity-raising pseudo-classes and IDs.
-    const offenders = selectors.filter(selector => (
-      !selector.startsWith(prefix) ||
-      /:(?:not|is|has)\(|#/.test(withoutWhere(selector.slice(prefix.length)))
-    ))
-
-    expect(selectors.length).toBe(41)
-    expect(offenders).toEqual([])
+    expect(selectorsIn(prism)).toEqual(GITHUB_LIGHT_PRISM_SELECTORS)
   })
 
   it('keeps the GitHub Light inline-code selector exactly zero-weight', () => {
@@ -302,5 +321,45 @@ describe('theme rules custom CSS can override', () => {
     expect(selectors.filter(selector => selector.includes(':not(pre)'))).toEqual([
       '.editor-wrapper :where(:not(pre)) > code'
     ])
+  })
+})
+
+// The short breakpoints crop the sample's tail so its text stays legible. These
+// checks pin which blocks survive at each frame: the default settings window
+// lands on the 176px frame, so the code block has to stay visible there — it is
+// the only place the Prism palette shows — and the table and list are what go.
+describe('preview cropping at the short breakpoints', () => {
+  const previewCss = readFileSync(resolve(__dirname, '../../../src/renderer/src/prefComponents/theme/preview.css'), 'utf8')
+  const pageVue = readFileSync(resolve(__dirname, '../../../src/renderer/src/prefComponents/theme/index.vue'), 'utf8')
+
+  /** The declaration body of one `@media (max-height: Npx)` block. */
+  const mediaBlock = (css: string, height: string): string => {
+    const match = new RegExp(`@media \\(max-height: ${height}px\\) \\{([\\s\\S]*?)\\n\\}`).exec(css)
+    if (!match) throw new Error(`preview.css has no @media (max-height: ${height}px) block`)
+    return match[1]
+  }
+
+  it('keeps the Prism-visible code block at the default-window frame', () => {
+    const block = mediaBlock(previewCss, '760')
+    expect(block).toContain('.sample-table')
+    expect(block).toContain('.sample-list')
+    // Hiding the code block here would hide the Prism palette in the window
+    // users open first; the review caught exactly that.
+    expect(block).not.toContain('.sample-code')
+  })
+
+  it('drops all three tail blocks at the smallest frame', () => {
+    const block = mediaBlock(previewCss, '640')
+    for (const selector of ['.sample-code', '.sample-table', '.sample-list']) {
+      expect(block).toContain(selector)
+    }
+  })
+
+  it('uses the same breakpoints as the header height variables', () => {
+    const mediaHeights = [...previewCss.matchAll(/@media \(max-height: (\d+)px\)/g)].map(match => match[1])
+    expect(mediaHeights).toEqual(['760', '640'])
+    // index.vue defines the frame height and zoom at those same two heights.
+    expect(pageVue).toContain('@media (max-height: 760px)')
+    expect(pageVue).toContain('@media (max-height: 640px)')
   })
 })

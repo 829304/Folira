@@ -28,9 +28,10 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* The sample is scaled per breakpoint to fit this frame, so the mask only
-     needs to guard against overflow: 96% leaves the last ~7px at 216px for a
-     rare taller sample. Starting it earlier faded the sample's last block — the
-     code block — to near invisibility at the 176px and 140px breakpoints. */
+     needs to guard against overflow: it keeps the last 4% of the frame for a
+     rare taller sample. The guard is a fraction of whatever height the current
+     breakpoint uses — not a fixed number of pixels at one height. Starting the
+     fade earlier dimmed the last visible block at every breakpoint. */
   mask-image: linear-gradient(#000 96%, transparent);
   -webkit-mask-image: linear-gradient(#000 96%, transparent);
 }
@@ -58,14 +59,18 @@
    block is hidden here, its frame space (and the zoom) changes in the same
    breakpoint there.
 
-   At 176px the code block and the bullet list go, which leaves the heading,
-   paragraph, quote and table. That is the smallest crop that can show them at
-   a readable size: with only the code block hidden, the 174px client height
-   caps body text at about 7.1px (174 / (343px / 14px)) no matter how the zoom
-   is chosen, because content height scales with the base font size. Dropping
-   the list lowers that ceiling to about 8.2px, so 0.58 keeps text at 8.1px. */
+   The default settings window is 950×650 content, so it lands on the 176px
+   frame. The code block stays visible there on purpose: it is the only place
+   the Prism palette appears, and hiding it would hide the one thing the syntax
+   half of a theme adds. The table and the bullet list go instead. A table-only
+   crop was measured and cannot fit: with the table hidden the sample is still
+   312px tall (layout height), and the 174px client height would need a zoom
+   below the 0.575 readability floor (14px × 0.575 ≈ 8.1px). Dropping the list
+   too leaves 254px, so 0.58 keeps the body text at 8.1px and the code block
+   above the frame's fade (measured: 147px tall, code bottom 140px, fade starts
+   at 169px). */
 @media (max-height: 760px) {
-  .sample-code,
+  .sample-table,
   .sample-list {
     display: none;
   }
