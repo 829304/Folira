@@ -137,10 +137,19 @@ from, so a later change can be diffed against the real source instead of guessed
   (`github-markdown-light.css`, commit `5f70ccef05e1ee8f7a7962a51a48f6823916a739`,
   MIT, © Sindre Sorhus), scoped to `.editor-wrapper` and mapped onto the
   `--fmd-*` variables plus the `h1`–`h6`, table, blockquote, code and rule rules
-  the engine needs. The interface half (Primer) and the syntax palette (Primer
-  Prettylights) are recorded here when they land. The line-number gutter rule
-  uses `:has()`, as the engine already does, so the theme does not raise the
-  minimum WebView version (Chromium 105+ / WebKit 15.4+).
+  the engine needs. The interface half follows
+  [`@primer/primitives`](https://github.com/primer/primitives) 11.10.0
+  (`dist/css/functional/themes/light.css`, MIT, © 2018 GitHub, Inc., gitHead
+  `3f51f80ee9510974032917c9b8ac9586656c88bc`, npm dist shasum
+  `affc83ae02229e05dbc599d9903643f3b08dc3bd`) and maps its semantic colours
+  onto `--fui-*`. The syntax palette is Prettylights from the same stylesheet
+  (`--prettylights-syntax-*`), shipped as `prismjs/github-light.theme.css`.
+  The primary button keeps Primer's green action colour (`#1f883d`) instead of
+  following `--themeColor`, like GitHub's main action, so the check that a
+  `--themeColor` override reaches the primary button does not apply to this
+  theme. The line-number gutter rule uses `:has()`, as the engine already does,
+  so the theme does not raise the minimum WebView version (Chromium 105+ /
+  WebKit 15.4+).
 
 ## Checks
 

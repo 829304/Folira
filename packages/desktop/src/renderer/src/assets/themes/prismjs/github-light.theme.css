@@ -1,0 +1,130 @@
+/*
+ * Prism.js GitHub Light theme
+ * Syntax palette: Primer Prettylights, published by @primer/primitives 11.10.0
+ * (MIT, © 2018 GitHub, Inc.; dist/css/functional/themes/light.css).
+ */
+
+code[class*='language-'],
+pre.ag-paragraph {
+  color: #1f2328;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+  overflow: visible;
+  text-shadow: none;
+}
+
+pre.ag-paragraph {
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 0.3em;
+}
+
+:not(pre) > code[class*='language-'],
+pre.ag-paragraph {
+  background: #f6f8fa;
+}
+
+:not(pre) > code[class*='language-'] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #59636e;
+}
+
+.token.punctuation {
+  color: #1f2328;
+}
+
+.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.boolean,
+.token.number {
+  color: #0550ae;
+}
+
+.token.deleted {
+  color: #82071e;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.attr-value {
+  color: #0a3069;
+}
+
+.token.inserted {
+  color: #116329;
+}
+
+.token.operator,
+.token.entity {
+  color: #1f2328;
+}
+
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #0a3069;
+}
+
+.token.atrule,
+.token.keyword {
+  color: #cf222e;
+}
+
+.token.function,
+.token.class-name {
+  color: #6639ba;
+}
+
+.token.regex {
+  color: #116329;
+}
+
+.token.variable {
+  color: #953800;
+}
+
+.token.important {
+  color: #cf222e;
+  font-weight: bold;
+}
+
+.token.bold {
+  color: #1f2328;
+  font-weight: bold;
+}
+
+.token.italic {
+  color: #1f2328;
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}

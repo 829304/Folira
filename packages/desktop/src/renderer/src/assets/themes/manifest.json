@@ -233,14 +233,14 @@
     "id": "github-light",
     "label": "GitHub Light",
     "appearance": "light",
-    "prism": null,
+    "prism": "github-light",
     "swatches": {
       "ui": {
-        "editorBgColor": "rgba(255, 255, 255, 1)",
-        "editorColor": "#4d4d4d",
-        "sideBarBgColor": "rgba(242, 242, 242, 0.9)",
-        "themeColor": "rgba(33, 181, 111, 1)",
-        "buttonPrimaryBgColor": "rgba(33, 181, 111, 1)"
+        "editorBgColor": "#ffffff",
+        "editorColor": "#1f2328",
+        "sideBarBgColor": "#f6f8fa",
+        "themeColor": "#0969da",
+        "buttonPrimaryBgColor": "#1f883d"
       },
       "md": {
         "editorBgColor": "#ffffff",

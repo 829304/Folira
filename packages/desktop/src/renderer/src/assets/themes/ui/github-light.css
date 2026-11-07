@@ -1,74 +1,79 @@
-/* Folira UI theme: github-light (placeholder).
+/* Folira UI theme: github-light.
  *
- * Stage 1 only needs the UI half so the generator can pair it with
- * md/github-light.css; the interface palette is still the built-in Light one.
- * Stage 2 replaces every value below with the GitHub Primer light palette.
+ * Interface palette: @primer/primitives 11.10.0, MIT, © 2018 GitHub, Inc.
+ * Read from dist/css/functional/themes/light.css
+ * (gitHead 3f51f80ee9510974032917c9b8ac9586656c88bc,
+ * npm dist shasum affc83ae02229e05dbc599d9903643f3b08dc3bd).
+ *
+ * The primary button keeps Primer's green action colour instead of deriving
+ * from --themeColor: GitHub's main action is green, and this theme is meant to
+ * read like GitHub. themes:check's accent-propagation rule therefore skips it.
  */
 :root {
-  --fui-themeColor: rgba(33, 181, 111, 1);
-  --fui-themeColor90: rgba(33, 181, 111, 0.9);
-  --fui-themeColor80: rgba(33, 181, 111, 0.8);
-  --fui-themeColor70: rgba(33, 181, 111, 0.7);
-  --fui-themeColor60: rgba(33, 181, 111, 0.6);
-  --fui-themeColor50: rgba(33, 181, 111, 0.5);
-  --fui-themeColor40: rgba(33, 181, 111, 0.4);
-  --fui-themeColor30: rgba(33, 181, 111, 0.3);
-  --fui-themeColor20: rgba(33, 181, 111, 0.2);
-  --fui-themeColor10: rgba(33, 181, 111, 0.1);
+  --fui-themeColor: #0969da;
+  --fui-themeColor90: rgba(9, 105, 218, 0.9);
+  --fui-themeColor80: rgba(9, 105, 218, 0.8);
+  --fui-themeColor70: rgba(9, 105, 218, 0.7);
+  --fui-themeColor60: rgba(9, 105, 218, 0.6);
+  --fui-themeColor50: rgba(9, 105, 218, 0.5);
+  --fui-themeColor40: rgba(9, 105, 218, 0.4);
+  --fui-themeColor30: rgba(9, 105, 218, 0.3);
+  --fui-themeColor20: rgba(9, 105, 218, 0.2);
+  --fui-themeColor10: rgba(9, 105, 218, 0.1);
   --fui-highlightThemeColor: var(--themeColor);
-  --fui-highlightColor: rgba(33, 181, 111, 0.4);
-  --fui-selectionColor: rgba(0, 0, 0, 0.1);
-  --fui-editorColor: #4d4d4d;
-  --fui-editorColor80: #333333;
-  --fui-editorColor60: #666666;
-  --fui-editorColor50: #808080;
-  --fui-editorColor40: #999999;
-  --fui-editorColor30: #b3b3b3;
-  --fui-editorColor10: #e6e6e6;
-  --fui-editorColor04: #f7f7f7;
-  --fui-editorBgColor: rgba(255, 255, 255, 1);
-  --fui-deleteColor: #ff6969;
-  --fui-iconColor: #6b737b;
-  --fui-codeBgColor: #d8d8d869;
-  --fui-footnoteBgColor: rgba(0, 0, 0, 0.03);
-  --fui-inputBgColor: rgba(0, 0, 0, 0.06);
+  --fui-highlightColor: rgba(9, 105, 218, 0.4);
+  --fui-selectionColor: rgba(9, 105, 218, 0.2);
+  --fui-editorColor: #1f2328;
+  --fui-editorColor80: #1f2328;
+  --fui-editorColor60: #59636e;
+  --fui-editorColor50: #59636e;
+  --fui-editorColor40: #818b98;
+  --fui-editorColor30: rgba(129, 139, 152, 0.7);
+  --fui-editorColor10: #d1d9e0;
+  --fui-editorColor04: #f6f8fa;
+  --fui-editorBgColor: #ffffff;
+  --fui-deleteColor: #d1242f;
+  --fui-iconColor: #59636e;
+  --fui-codeBgColor: rgba(129, 139, 152, 0.12);
+  --fui-footnoteBgColor: #f6f8fa;
+  --fui-inputBgColor: rgba(129, 139, 152, 0.12);
   --fui-focusColor: var(--themeColor);
   --fui-buttonFontColor: var(--editorColor);
-  --fui-buttonBgColor: #ffffff;
-  --fui-buttonBorder: 1px solid #dcdfe6;
-  --fui-buttonShadow: none;
+  --fui-buttonBgColor: #f6f8fa;
+  --fui-buttonBorder: 1px solid #d1d9e0;
+  --fui-buttonShadow: 0 1px 0 0 rgba(31, 35, 40, 0.04);
   --fui-buttonFontColorHover: var(--buttonFontColor);
-  --fui-buttonBgColorHover: linear-gradient(#f9f9f9, #f2f2f2);
+  --fui-buttonBgColorHover: #eff2f5;
   --fui-buttonBorderHover: var(--buttonBorder);
   --fui-buttonFontColorActive: var(--buttonFontColor);
-  --fui-buttonBgColorActive: #f0f0f0;
+  --fui-buttonBgColorActive: #e6eaef;
   --fui-buttonBorderActive: var(--buttonBorder);
   --fui-buttonFocusBorder: 1px solid var(--themeColor);
   --fui-buttonPrimaryFontColor: #ffffff;
-  --fui-buttonPrimaryBgColor: var(--themeColor);
+  --fui-buttonPrimaryBgColor: #1f883d;
   --fui-buttonPrimaryBorder: none;
-  --fui-buttonPrimaryShadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
+  --fui-buttonPrimaryShadow: 0 1px 0 0 rgba(31, 35, 40, 0.04);
   --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
-  --fui-buttonPrimaryBgColorHover: var(--buttonPrimaryBgColor);
+  --fui-buttonPrimaryBgColorHover: #1c8139;
   --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
   --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
-  --fui-buttonPrimaryBgColorActive: var(--buttonPrimaryBgColor);
+  --fui-buttonPrimaryBgColorActive: #197935;
   --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
   --fui-buttonPrimaryFocusBorder: none;
-  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(13, 91, 55, 0.5), 0 0 0 1px var(--themeColor);
-  --fui-tableBorderColor: #e5e5e5;
+  --fui-buttonPrimaryFocusShadow: 0 0 0 3px rgba(9, 105, 218, 0.3);
+  --fui-tableBorderColor: #d1d9e0;
   --fui-headingColor: var(--editorColor80);
-  --fui-sideBarColor: rgba(0, 0, 0, 0.6);
+  --fui-sideBarColor: #59636e;
   --fui-sideBarIconColor: var(--iconColor);
-  --fui-sideBarTitleColor: rgba(0, 0, 0, 1);
-  --fui-sideBarTextColor: rgba(0, 0, 0, 0.4);
-  --fui-sideBarBgColor: rgba(242, 242, 242, 0.9);
-  --fui-sideBarItemHoverBgColor: rgba(0, 0, 0, 0.03);
+  --fui-sideBarTitleColor: #1f2328;
+  --fui-sideBarTextColor: #818b98;
+  --fui-sideBarBgColor: #f6f8fa;
+  --fui-sideBarItemHoverBgColor: rgba(129, 139, 152, 0.12);
   --fui-itemBgColor: rgba(255, 255, 255, 0.6);
-  --fui-floatFontColor: rgba(0, 0, 0, 0.6);
-  --fui-floatBgColor: #fff;
-  --fui-floatHoverColor: rgba(0, 0, 0, 0.04);
-  --fui-floatBorderColor: rgba(0, 0, 0, 0.1);
-  --fui-floatShadow: rgba(15, 15, 15, 0.03) 0px 0px 0px 1px, rgba(15, 15, 15, 0.04) 0px 3px 6px, rgba(15, 15, 15, 0.05) 0px 9px 24px;
-  --fui-maskColor: rgba(232, 232, 232, 0.8);
+  --fui-floatFontColor: #59636e;
+  --fui-floatBgColor: #ffffff;
+  --fui-floatHoverColor: rgba(129, 139, 152, 0.12);
+  --fui-floatBorderColor: #d1d9e0;
+  --fui-floatShadow: 0 0 0 1px #d1d9e040, 0 6px 12px -3px #25292e0a, 0 6px 18px 0 #25292e1f;
+  --fui-maskColor: #c8d1da66;
 }
