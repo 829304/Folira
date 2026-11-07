@@ -70,7 +70,7 @@ export const PREVIEW_SAMPLE = `<h1>Folira</h1>
 </ul>
 <table>
   <thead><tr><th>Column</th><th>Value</th></tr></thead>
-  <tbody><tr><td>Row</td><td>42</td></tr></tbody>
+  <tbody><tr><td>Row</td><td>42</td></tr><tr><td>Next row</td><td>43</td></tr></tbody>
 </table>
 <pre><code class="language-javascript"><span class="token keyword">const</span> <span class="token function">sum</span> <span class="token operator">=</span> <span class="token number">1</span> <span class="token operator">+</span> <span class="token number">1</span>
 <span class="token comment">// a preview is worth a thousand swatches</span></code></pre>`

@@ -172,7 +172,10 @@ describe('github-light markdown rules', () => {
   const css = readTheme('md', 'github-light')
   const rule = (selector: string): string => {
     const start = css.indexOf(`${selector} {`)
-    return start < 0 ? '' : css.slice(start, css.indexOf('}', start) + 1)
+    // A renamed or deleted rule must fail the caller, not hand it an empty
+    // string that makes `not.toContain(...)` pass on nothing.
+    if (start < 0) throw new Error(`github-light.css has no rule for ${selector}`)
+    return css.slice(start, css.indexOf('}', start) + 1)
   }
 
   it('leaves the code block font size to the user preference', () => {
@@ -183,6 +186,15 @@ describe('github-light markdown rules', () => {
   it('keeps the inline pill off a preview code block', () => {
     expect(css).toContain('.editor-wrapper :not(pre) > code:not(.mu-code)')
     expect(css).toContain('.editor-wrapper pre code:not(.mu-code)')
+  })
+
+  it('orders the inline rule before the reset that follows it', () => {
+    // The reset has to stay last: if a later edit lets the inline selector match
+    // a preview `<pre>`, the reset still wins the cascade.
+    const inline = css.indexOf('.editor-wrapper :not(pre) > code:not(.mu-code) {')
+    const reset = css.indexOf('.editor-wrapper pre code:not(.mu-code) {')
+    expect(inline).toBeGreaterThan(-1)
+    expect(reset).toBeGreaterThan(inline)
   })
 
   it('paints every second data row instead of every second row', () => {

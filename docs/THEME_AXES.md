@@ -26,9 +26,10 @@ theme only ever ships as the pair plus the palette its manifest entry names.
 
 Theme files are mostly variables, and the generator only requires that: a theme
 has to declare the public variables its half owns. Most of the inherited themes
-still carry a tail of their own selector rules (32 of the 33 ids do — only
-`ui/light.css` and `md/light.css` are pure variables; One Dark alone has 25
-rules for scrollbars, dialogs, buttons, the title bar and the side bar). The
+still carry a tail of their own selector rules (33 of the 34 ids do — only
+`ui/light.css`, `md/light.css` and `ui/github-light.css` are pure variables;
+One Dark alone has 25 rules for scrollbars, dialogs, buttons, the title bar and
+the side bar). The
 generator keeps those tails as written, so do not delete them while converting
 a theme to variables only. What no theme may do is move the writing column or
 change layout: those stay the app's decisions and the user's preferences.
@@ -117,9 +118,11 @@ into the page.
 ## Adding a theme
 
 1. Add `ui/<id>.css` and `md/<id>.css`, declaring only that axis's variables.
-2. If the theme needs its own syntax palette, add
-   `prismjs/<name>.theme.css` and point the manifest entry at it; themes
-   without one fall back to `default`.
+2. If the theme needs its own syntax palette, add a `prismjs/<id>.theme.css`
+   and point the manifest entry at that palette name (`default` is the built-in
+   Prism palette, and `light` names it explicitly). A `null` palette is valid
+   and means the theme ships no syntax colouring: `loadPrismCss` returns an
+   empty sheet and the theme applies without one.
 3. `pnpm --filter folira themes` regenerates `base.css` and `manifest.json`;
    `pnpm --filter folira themes:check` runs the generator check, the token
    check and the cascade verification (`THEME_LEGACY_DIR` must point at a

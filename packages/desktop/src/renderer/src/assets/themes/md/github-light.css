@@ -63,9 +63,10 @@
  * `<h1>`…`<h6>` inside `.mu-container`) and the settings preview (plain HTML
  * inside `.editor-wrapper`). The heading selectors stay at one class plus one
  * element, so a custom stylesheet can beat them with the same selector. The
- * deeper rules below (inline code, zebra rows, nested quotes, task boxes) need
- * their higher specificity to outrank Muya's own stylesheet, so user CSS has
- * to match those selectors to win. */
+ * remaining rules coexist with Muya's own stylesheet instead: inline code and
+ * zebra rows outrank it on specificity, while nested quotes and task boxes
+ * deliberately match Muya's specificity and win on order — the theme sheet is
+ * injected after the engine's. */
 
 .editor-wrapper h1,
 .editor-wrapper h2,
