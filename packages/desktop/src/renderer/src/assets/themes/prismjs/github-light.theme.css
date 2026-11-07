@@ -3,12 +3,14 @@
  * Syntax palette: Primer Prettylights, published by @primer/primitives 11.10.0
  * (MIT, © 2018 GitHub, Inc.; dist/css/functional/themes/light.css).
  *
- * Every selector is scoped to `.editor-wrapper`, so the palette only reaches the
- * editor body and the settings preview.
+ * The scope rides on `:where(.editor-wrapper)`, which adds no specificity, so
+ * each rule below keeps only the weight of its own token classes. The palette
+ * therefore reaches the editor body and the settings preview without outranking
+ * a user's `.token.keyword` in the later custom-CSS slot.
  */
 
-.editor-wrapper code[class*='language-'],
-.editor-wrapper pre.ag-paragraph {
+:where(.editor-wrapper) code[class*='language-'],
+:where(.editor-wrapper) pre.ag-paragraph {
   color: #1f2328;
   text-align: left;
   white-space: pre;
@@ -26,108 +28,108 @@
   text-shadow: none;
 }
 
-.editor-wrapper pre.ag-paragraph {
+:where(.editor-wrapper) pre.ag-paragraph {
   padding: 1em;
   margin: 1em 0;
   border-radius: 0.3em;
 }
 
-.editor-wrapper :not(pre) > code[class*='language-'],
-.editor-wrapper pre.ag-paragraph {
+:where(.editor-wrapper) :not(pre) > code[class*='language-'],
+:where(.editor-wrapper) pre.ag-paragraph {
   background: #f6f8fa;
 }
 
-.editor-wrapper :not(pre) > code[class*='language-'] {
+:where(.editor-wrapper) :not(pre) > code[class*='language-'] {
   padding: 0.1em;
   border-radius: 0.3em;
   white-space: normal;
 }
 
-.editor-wrapper .token.comment,
-.editor-wrapper .token.prolog,
-.editor-wrapper .token.doctype,
-.editor-wrapper .token.cdata {
+:where(.editor-wrapper) .token.comment,
+:where(.editor-wrapper) .token.prolog,
+:where(.editor-wrapper) .token.doctype,
+:where(.editor-wrapper) .token.cdata {
   color: #59636e;
 }
 
-.editor-wrapper .token.punctuation {
+:where(.editor-wrapper) .token.punctuation {
   color: #1f2328;
 }
 
-.editor-wrapper .namespace {
+:where(.editor-wrapper) .namespace {
   opacity: 0.7;
 }
 
-.editor-wrapper .token.property,
-.editor-wrapper .token.tag,
-.editor-wrapper .token.constant,
-.editor-wrapper .token.symbol,
-.editor-wrapper .token.boolean,
-.editor-wrapper .token.number {
+:where(.editor-wrapper) .token.property,
+:where(.editor-wrapper) .token.tag,
+:where(.editor-wrapper) .token.constant,
+:where(.editor-wrapper) .token.symbol,
+:where(.editor-wrapper) .token.boolean,
+:where(.editor-wrapper) .token.number {
   color: #0550ae;
 }
 
-.editor-wrapper .token.deleted {
+:where(.editor-wrapper) .token.deleted {
   color: #82071e;
 }
 
-.editor-wrapper .token.selector,
-.editor-wrapper .token.attr-name,
-.editor-wrapper .token.string,
-.editor-wrapper .token.char,
-.editor-wrapper .token.builtin,
-.editor-wrapper .token.attr-value {
+:where(.editor-wrapper) .token.selector,
+:where(.editor-wrapper) .token.attr-name,
+:where(.editor-wrapper) .token.string,
+:where(.editor-wrapper) .token.char,
+:where(.editor-wrapper) .token.builtin,
+:where(.editor-wrapper) .token.attr-value {
   color: #0a3069;
 }
 
-.editor-wrapper .token.inserted {
+:where(.editor-wrapper) .token.inserted {
   color: #116329;
 }
 
-.editor-wrapper .token.operator,
-.editor-wrapper .token.entity {
+:where(.editor-wrapper) .token.operator,
+:where(.editor-wrapper) .token.entity {
   color: #1f2328;
 }
 
-.editor-wrapper .token.url,
-.editor-wrapper .language-css .token.string,
-.editor-wrapper .style .token.string {
+:where(.editor-wrapper) .token.url,
+:where(.editor-wrapper) .language-css .token.string,
+:where(.editor-wrapper) .style .token.string {
   color: #0a3069;
 }
 
-.editor-wrapper .token.atrule,
-.editor-wrapper .token.keyword {
+:where(.editor-wrapper) .token.atrule,
+:where(.editor-wrapper) .token.keyword {
   color: #cf222e;
 }
 
-.editor-wrapper .token.function,
-.editor-wrapper .token.class-name {
+:where(.editor-wrapper) .token.function,
+:where(.editor-wrapper) .token.class-name {
   color: #6639ba;
 }
 
-.editor-wrapper .token.regex {
+:where(.editor-wrapper) .token.regex {
   color: #116329;
 }
 
-.editor-wrapper .token.variable {
+:where(.editor-wrapper) .token.variable {
   color: #953800;
 }
 
-.editor-wrapper .token.important {
+:where(.editor-wrapper) .token.important {
   color: #cf222e;
   font-weight: bold;
 }
 
-.editor-wrapper .token.bold {
+:where(.editor-wrapper) .token.bold {
   color: #1f2328;
   font-weight: bold;
 }
 
-.editor-wrapper .token.italic {
+:where(.editor-wrapper) .token.italic {
   color: #1f2328;
   font-style: italic;
 }
 
-.editor-wrapper .token.entity {
+:where(.editor-wrapper) .token.entity {
   cursor: help;
 }

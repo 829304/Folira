@@ -53,9 +53,11 @@ those aliases first. Copying the declaration text instead would change its
 cascade position, its selector and its evaluation context.
 
 Syntax colours follow the same rule: the GitHub Light palette is scoped to
-`.editor-wrapper` (`prismjs/github-light.theme.css`), so overriding its tokens
-takes `.editor-wrapper .token.keyword`, while the other 32 upstream palettes
-stay global and take `.token.keyword`.
+`.editor-wrapper` through `:where(.editor-wrapper)` in
+`prismjs/github-light.theme.css`. `:where()` adds no specificity, so the scope
+does not raise the weight of the rules and a user's `.token.keyword` still
+overrides it from the later custom-CSS slot; the other 32 upstream palettes stay
+global and take the same selector.
 
 ## Loading a theme
 
@@ -154,8 +156,9 @@ from, so a later change can be diffed against the real source instead of guessed
   `affc83ae02229e05dbc599d9903643f3b08dc3bd`) and maps its semantic colours
   onto `--fui-*`. The syntax palette is Prettylights from the same stylesheet
   (`--prettylights-syntax-*`), shipped as `prismjs/github-light.theme.css` and
-  scoped to `.editor-wrapper`, so it colours the editor body and the settings
-  preview without reaching chrome outside the writing surface.
+  scoped to `.editor-wrapper` through a zero-specificity `:where()`, so it
+  colours the editor body and the settings preview without reaching chrome
+  outside the writing surface or outranking user overrides.
   The primary button keeps Primer's green action colour (`#1f883d`) instead of
   following `--themeColor`, like GitHub's main action, so the check that a
   `--themeColor` override reaches the primary button does not apply to this

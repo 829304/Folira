@@ -422,30 +422,32 @@ const SWATCH_NAMES = {
   md: ['editorBgColor', 'editorColor', 'h1Color', 'linkColor', 'codeBlockBgColor', 'blockquoteBorderColor']
 }
 
-// Each half is resolved against its own palette: `editorColor` means the chrome
-// in one file and the page in the other, so a merged map would paint the
-// Markdown card with the interface colours. The Markdown side falls back to the
-// interface palette when its own file omits a swatch, matching the same-name
-// `--fmd-* → --fui-*` shape base.css publishes inside `.editor-wrapper`. The
-// fallback only covers names both halves declare: chains such as
-// `--fmd-h1Color → --headingColor/--editorColor80`, `--fmd-codeBlockBgColor →
-// a literal` and `--fmd-blockquoteBorderColor → --themeColor` are not that
-// shape, so those swatches must stay declared in the Markdown file.
+// Each half starts from its own palette: `editorColor` means the chrome in one
+// file and the page in the other, so keeping the maps apart is what stops a
+// Markdown swatch from silently taking the interface colour. The Markdown side
+// then resolves against a merged view: its own declarations win, while a
+// reference that leaves the file (e.g. `--fmd-linkColor: var(--themeColor)`)
+// lands on the interface palette, mirroring how base.css publishes the shared
+// names inside `.editor-wrapper`. The merge only covers shapes both halves can
+// resolve together — a swatch missing from both axes, or one whose chain
+// dangles, still fails the build instead of painting `initial`.
 function swatchesOf (uiLiterals, mdLiterals, id) {
-  const pick = (literals, fallback, names) => {
+  const mdView = new Map([...uiLiterals, ...mdLiterals])
+  const pick = (literals, names) => {
     const picked = {}
     for (const name of names) {
-      const value =
-        resolveValue(literals, name) ?? (fallback === null ? null : resolveValue(fallback, name))
-      if (value === null) throw new Error(`${id}: cannot resolve ${name} for the card swatches`)
+      const value = resolveValue(literals, name)
+      if (value === null || value === 'initial') {
+        throw new Error(`${id}: cannot resolve ${name} for the card swatches`)
+      }
       picked[name] = value.trim()
     }
     return picked
   }
 
   return {
-    ui: pick(uiLiterals, null, SWATCH_NAMES.ui),
-    md: pick(mdLiterals, uiLiterals, SWATCH_NAMES.md)
+    ui: pick(uiLiterals, SWATCH_NAMES.ui),
+    md: pick(mdView, SWATCH_NAMES.md)
   }
 }
 
