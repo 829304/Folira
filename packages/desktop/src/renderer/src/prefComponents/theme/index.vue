@@ -159,17 +159,19 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
   scroll-padding-top: calc(var(--theme-header-height) + 8px);
 
   /* Short windows trade preview height for grid space. The header follows the
-     same value, so the two cannot drift apart. The zoom moves with the height:
-     the sample is scaled as one block, so a shorter frame needs a smaller zoom
-     or the code block's lower half disappears under the frame's fade. */
+     same value, so the two cannot drift apart. The shorter frames crop the
+     sample's tail (the display rules live in preview.css's media queries) and
+     raise the zoom because fewer blocks have to fit. 0.58 is measured against
+     the cropped samples: it keeps body text at 8.1px while the visible blocks
+     still fit the 176px and 140px frames. */
   @media (max-height: 760px) {
     --theme-preview-height: 176px; /* total 260px */
-    --theme-preview-zoom: 0.4;
+    --theme-preview-zoom: 0.58;
   }
 
   @media (max-height: 640px) {
     --theme-preview-height: 140px; /* total 224px */
-    --theme-preview-zoom: 0.31;
+    --theme-preview-zoom: 0.58;
   }
 
   & .pref-theme-header {

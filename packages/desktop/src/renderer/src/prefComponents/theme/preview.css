@@ -38,15 +38,45 @@
 /* Scale the sample as a whole instead of shrinking its font sizes: a theme's
    rem/em spacing — heading margins, table cell padding, code-block padding —
    scales with it, so the preview keeps the theme's proportions. The value is a
-   breakpoint variable in index.vue and must move together with
-   --theme-preview-height: a shorter frame needs a smaller zoom, or the bottom
-   of the code block disappears under the frame's fade. 0.45 was measured on
-   PREVIEW_SAMPLE under the tallest (GitHub Light) rules for the 216px frame. */
+   breakpoint variable in index.vue (0.45 default, 0.58 for both shorter frames)
+   and must move together with --theme-preview-height and with the cropping
+   rules below. Shorter frames show fewer blocks, not smaller text: squashing
+   the whole sample into 174px needed a zoom of 0.40, which turned body text
+   into grey mush. 0.45 was measured on PREVIEW_SAMPLE under the tallest
+   (GitHub Light) rules for the 216px frame; 0.58 is the smallest zoom that
+   keeps the cropped sample's text at 14px × 0.58 ≈ 8.1px while still fitting
+   the 176px and 140px frames. */
 .editor-wrapper {
   padding: 2px 8px;
   font-size: 14px;
   line-height: 1.5;
   zoom: var(--theme-preview-zoom, 0.45);
+}
+
+/* The shorter breakpoints crop the sample's tail instead of shrinking it. These
+   rules are the display twin of index.vue's --theme-preview-zoom values; if a
+   block is hidden here, its frame space (and the zoom) changes in the same
+   breakpoint there.
+
+   At 176px the code block and the bullet list go, which leaves the heading,
+   paragraph, quote and table. That is the smallest crop that can show them at
+   a readable size: with only the code block hidden, the 174px client height
+   caps body text at about 7.1px (174 / (343px / 14px)) no matter how the zoom
+   is chosen, because content height scales with the base font size. Dropping
+   the list lowers that ceiling to about 8.2px, so 0.58 keeps text at 8.1px. */
+@media (max-height: 760px) {
+  .sample-code,
+  .sample-list {
+    display: none;
+  }
+}
+
+@media (max-height: 640px) {
+  .sample-code,
+  .sample-table,
+  .sample-list {
+    display: none;
+  }
 }
 
 :where(.editor-wrapper) h1,
