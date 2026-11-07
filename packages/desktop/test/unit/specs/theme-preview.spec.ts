@@ -184,7 +184,11 @@ describe('github-light markdown rules', () => {
   })
 
   it('keeps the inline pill off a preview code block', () => {
-    expect(css).toContain('.editor-wrapper :not(pre) > code:not(.mu-code)')
+    expect(css).toContain('.editor-wrapper :where(:not(pre)) > code {')
+    expect(css).not.toContain(':not(pre) > code:not(.mu-code)')
+    expect(rule('.editor-wrapper :where(:not(pre)) > code')).toContain(
+      'background: var(--codeBgColor)'
+    )
     expect(css).toContain('.editor-wrapper pre code:not(.mu-code)')
   })
 
@@ -192,7 +196,7 @@ describe('github-light markdown rules', () => {
     // The reset has to stay last: if a later edit lets the inline selector match
     // a preview `<pre>`, the reset still wins the cascade. The `lastIndexOf`
     // checks also catch a second copy appended after it.
-    const inlineSelector = '.editor-wrapper :not(pre) > code:not(.mu-code) {'
+    const inlineSelector = '.editor-wrapper :where(:not(pre)) > code {'
     const resetSelector = '.editor-wrapper pre code:not(.mu-code) {'
     const inline = css.indexOf(inlineSelector)
     const reset = css.indexOf(resetSelector)
@@ -200,6 +204,13 @@ describe('github-light markdown rules', () => {
     expect(reset).toBeGreaterThan(inline)
     expect(css.lastIndexOf(inlineSelector)).toBe(inline)
     expect(css.lastIndexOf(resetSelector)).toBe(reset)
+  })
+
+  it('pins the line-number gutter to the code block padding', () => {
+    expect(rule('.editor-wrapper .mu-code-block:has(.mu-line-numbers-rows)')).toContain(
+      'padding-left: 2.5em'
+    )
+    expect(rule('.editor-wrapper .mu-code-block .mu-line-numbers-rows')).toContain('top: 1rem')
   })
 
   it('paints every second data row instead of every second row', () => {

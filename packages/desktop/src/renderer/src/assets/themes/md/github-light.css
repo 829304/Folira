@@ -24,7 +24,10 @@
   --fmd-editorColor40: #6e7781;
   --fmd-editorColor30: #8c959f;
   --fmd-editorColor10: #d1d9e0;
-  --fmd-editorColor04: #f6f8fa;
+  /* Primer's neutral grey keeps a visible step from both the zebra fill
+   * (#f6f8fa) and white. The engine also reuses this token for the table
+   * selection fill, math/HTML block hover and footnote backgrounds. */
+  --fmd-editorColor04: #eaeef2;
   --fmd-editorBgColor: #ffffff;
   --fmd-deleteColor: #cf222e;
   --fmd-iconColor: #59636e;
@@ -204,15 +207,17 @@
   background: var(--codeBlockBgColor);
 }
 
-/* Inline code: GitHub's translucent grey pill. `.mu-code` is the block code
- * element and must keep the block palette. */
+/* Inline code: GitHub's translucent grey pill. `:where(:not(pre))` zeroes the
+ * exclusion's specificity, so the rule stays at (0,1,1) — equal to a user's
+ * `.editor-wrapper code` and to the engine's `code.mu-inline-rule`, and last in
+ * the cascade because the theme slot precedes `#custom-styles`. */
 
-.editor-wrapper :not(pre) > code:not(.mu-code) {
+.editor-wrapper :where(:not(pre)) > code {
   padding: 0.2em 0.4em;
 
   font-size: 85%;
 
-  background: rgba(129, 139, 152, 0.12);
+  background: var(--codeBgColor);
   border-radius: 6px;
 }
 
@@ -232,6 +237,14 @@
 
 .editor-wrapper .mu-code-block:has(.mu-line-numbers-rows) {
   padding-left: 2.5em;
+}
+
+/* Muya starts the gutter one `em` below the padding box, which only matches
+ * `padding: 1rem` at the default code size. Pin it to the padding the theme
+ * actually reserves so the numbers stay level with the first code line when the
+ * user raises the code font size. */
+.editor-wrapper .mu-code-block .mu-line-numbers-rows {
+  top: 1rem;
 }
 
 /* The horizontal scroller is `code.mu-code`, and Chromium on Windows draws its

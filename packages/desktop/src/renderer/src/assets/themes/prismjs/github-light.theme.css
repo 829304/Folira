@@ -2,10 +2,13 @@
  * Prism.js GitHub Light theme
  * Syntax palette: Primer Prettylights, published by @primer/primitives 11.10.0
  * (MIT, © 2018 GitHub, Inc.; dist/css/functional/themes/light.css).
+ *
+ * Every selector is scoped to `.editor-wrapper`, so the palette only reaches the
+ * editor body and the settings preview.
  */
 
-code[class*='language-'],
-pre.ag-paragraph {
+.editor-wrapper code[class*='language-'],
+.editor-wrapper pre.ag-paragraph {
   color: #1f2328;
   text-align: left;
   white-space: pre;
@@ -23,108 +26,108 @@ pre.ag-paragraph {
   text-shadow: none;
 }
 
-pre.ag-paragraph {
+.editor-wrapper pre.ag-paragraph {
   padding: 1em;
   margin: 1em 0;
   border-radius: 0.3em;
 }
 
-:not(pre) > code[class*='language-'],
-pre.ag-paragraph {
+.editor-wrapper :not(pre) > code[class*='language-'],
+.editor-wrapper pre.ag-paragraph {
   background: #f6f8fa;
 }
 
-:not(pre) > code[class*='language-'] {
+.editor-wrapper :not(pre) > code[class*='language-'] {
   padding: 0.1em;
   border-radius: 0.3em;
   white-space: normal;
 }
 
-.token.comment,
-.token.prolog,
-.token.doctype,
-.token.cdata {
+.editor-wrapper .token.comment,
+.editor-wrapper .token.prolog,
+.editor-wrapper .token.doctype,
+.editor-wrapper .token.cdata {
   color: #59636e;
 }
 
-.token.punctuation {
+.editor-wrapper .token.punctuation {
   color: #1f2328;
 }
 
-.namespace {
+.editor-wrapper .namespace {
   opacity: 0.7;
 }
 
-.token.property,
-.token.tag,
-.token.constant,
-.token.symbol,
-.token.boolean,
-.token.number {
+.editor-wrapper .token.property,
+.editor-wrapper .token.tag,
+.editor-wrapper .token.constant,
+.editor-wrapper .token.symbol,
+.editor-wrapper .token.boolean,
+.editor-wrapper .token.number {
   color: #0550ae;
 }
 
-.token.deleted {
+.editor-wrapper .token.deleted {
   color: #82071e;
 }
 
-.token.selector,
-.token.attr-name,
-.token.string,
-.token.char,
-.token.builtin,
-.token.attr-value {
+.editor-wrapper .token.selector,
+.editor-wrapper .token.attr-name,
+.editor-wrapper .token.string,
+.editor-wrapper .token.char,
+.editor-wrapper .token.builtin,
+.editor-wrapper .token.attr-value {
   color: #0a3069;
 }
 
-.token.inserted {
+.editor-wrapper .token.inserted {
   color: #116329;
 }
 
-.token.operator,
-.token.entity {
+.editor-wrapper .token.operator,
+.editor-wrapper .token.entity {
   color: #1f2328;
 }
 
-.token.url,
-.language-css .token.string,
-.style .token.string {
+.editor-wrapper .token.url,
+.editor-wrapper .language-css .token.string,
+.editor-wrapper .style .token.string {
   color: #0a3069;
 }
 
-.token.atrule,
-.token.keyword {
+.editor-wrapper .token.atrule,
+.editor-wrapper .token.keyword {
   color: #cf222e;
 }
 
-.token.function,
-.token.class-name {
+.editor-wrapper .token.function,
+.editor-wrapper .token.class-name {
   color: #6639ba;
 }
 
-.token.regex {
+.editor-wrapper .token.regex {
   color: #116329;
 }
 
-.token.variable {
+.editor-wrapper .token.variable {
   color: #953800;
 }
 
-.token.important {
+.editor-wrapper .token.important {
   color: #cf222e;
   font-weight: bold;
 }
 
-.token.bold {
+.editor-wrapper .token.bold {
   color: #1f2328;
   font-weight: bold;
 }
 
-.token.italic {
+.editor-wrapper .token.italic {
   color: #1f2328;
   font-style: italic;
 }
 
-.token.entity {
+.editor-wrapper .token.entity {
   cursor: help;
 }

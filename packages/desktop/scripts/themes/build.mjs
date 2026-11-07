@@ -424,19 +424,25 @@ const SWATCH_NAMES = {
 
 // Each half is resolved against its own palette: `editorColor` means the chrome
 // in one file and the page in the other, so a merged map would paint the
-// Markdown card with the interface colours.
+// Markdown card with the interface colours. The Markdown side falls back to the
+// interface palette when its own file omits a swatch, matching the
+// `--fmd-* → --fui-*` fallback base.css publishes inside `.editor-wrapper`.
 function swatchesOf (uiLiterals, mdLiterals, id) {
-  const pick = (literals, names) => {
+  const pick = (literals, fallback, names) => {
     const picked = {}
     for (const name of names) {
-      const value = resolveValue(literals, name)
+      const value =
+        resolveValue(literals, name) ?? (fallback === null ? null : resolveValue(fallback, name))
       if (value === null) throw new Error(`${id}: cannot resolve ${name} for the card swatches`)
       picked[name] = value.trim()
     }
     return picked
   }
 
-  return { ui: pick(uiLiterals, SWATCH_NAMES.ui), md: pick(mdLiterals, SWATCH_NAMES.md) }
+  return {
+    ui: pick(uiLiterals, null, SWATCH_NAMES.ui),
+    md: pick(mdLiterals, uiLiterals, SWATCH_NAMES.md)
+  }
 }
 
 function aggregate () {

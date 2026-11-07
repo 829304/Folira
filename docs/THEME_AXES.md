@@ -148,7 +148,9 @@ from, so a later change can be diffed against the real source instead of guessed
   `3f51f80ee9510974032917c9b8ac9586656c88bc`, npm dist shasum
   `affc83ae02229e05dbc599d9903643f3b08dc3bd`) and maps its semantic colours
   onto `--fui-*`. The syntax palette is Prettylights from the same stylesheet
-  (`--prettylights-syntax-*`), shipped as `prismjs/github-light.theme.css`.
+  (`--prettylights-syntax-*`), shipped as `prismjs/github-light.theme.css` and
+  scoped to `.editor-wrapper`, so it colours the editor body and the settings
+  preview without reaching chrome outside the writing surface.
   The primary button keeps Primer's green action colour (`#1f883d`) instead of
   following `--themeColor`, like GitHub's main action, so the check that a
   `--themeColor` override reaches the primary button does not apply to this
