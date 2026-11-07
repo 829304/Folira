@@ -2,20 +2,26 @@
   <div class="pref-theme">
     <h4>{{ t('preferences.theme.title') }}</h4>
 
-    <section class="preview-section">
-      <h6 class="section-title">
-        {{ t('preferences.theme.preview') }}
-      </h6>
-      <theme-preview :theme="previewTheme" />
-    </section>
+    <!-- The preview used to scroll away with the grid, so hovering or tabbing
+         to a card near the bottom repainted something outside the viewport.
+         Keeping it in a sticky header means the sample is always visible while
+         the cards scroll under it. -->
+    <div class="pref-theme-header">
+      <section class="preview-section">
+        <h6 class="section-title">
+          {{ t('preferences.theme.preview') }}
+        </h6>
+        <theme-preview :theme="previewTheme" />
+      </section>
 
-    <div class="search-row">
-      <input
-        v-model="query"
-        class="search-input"
-        type="search"
-        :placeholder="t('preferences.theme.searchThemes')"
-      >
+      <div class="search-row">
+        <input
+          v-model="query"
+          class="search-input"
+          type="search"
+          :placeholder="t('preferences.theme.searchThemes')"
+        >
+      </div>
     </div>
 
     <div class="theme-grid">
@@ -141,20 +147,25 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
 .pref-theme {
   max-width: 620px;
 
+  & .pref-theme-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding-top: 8px;
+    background: var(--editorBgColor);
+    border-bottom: 1px solid var(--tableBorderColor);
+  }
+
   & .section-title {
-    margin: 22px 0 10px;
+    margin: 4px 0 8px;
     font-size: 14px;
     font-weight: 600;
     color: var(--editorColor);
   }
 
-  & .preview-section {
-    margin-top: 6px;
-  }
-
   & .search-row {
     display: flex;
-    margin: 22px 0 12px;
+    margin: 4px 0 12px;
   }
 
   & .search-input {
@@ -177,6 +188,7 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
     gap: 12px;
+    margin-top: 14px;
   }
 
   & .theme-card {

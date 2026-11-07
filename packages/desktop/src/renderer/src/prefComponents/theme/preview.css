@@ -2,91 +2,101 @@
    root. The generated theme stylesheets only declare custom properties, so the
    element rules a real document gets from Muya have to be restated here; every
    colour still comes from a public variable, so the preview follows whatever
-   theme the card points at. */
+   theme the card points at.
+
+   The selectors carry `.editor-wrapper` so they stay at the theme's own weight
+   and win on source order, and the chrome sheet is injected last. The sample is
+   sized to fit the frame it is pinned in: the settings page keeps the preview
+   on screen while the grid scrolls, so it cannot grow with the typography. */
 
 :host {
   display: block;
+  box-sizing: border-box;
+  max-height: 220px;
+  overflow: hidden;
 
-  /* The frame carries the interface half of the theme file and
-     `.editor-wrapper` inside paints the Markdown half. */
-  padding: 10px;
+  padding: 5px;
   border: 1px solid var(--tableBorderColor, rgba(128, 128, 128, 0.25));
-  border-radius: 10px;
+  border-radius: 9px;
   background: var(--editorBgColor, #fff);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .editor-wrapper {
-  --preview-gap: 10px;
+  --preview-gap: 3px;
 
-  padding: 14px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  line-height: 1.7;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  line-height: 1.4;
 }
 
-h1 {
+.editor-wrapper h1 {
   margin: 0 0 var(--preview-gap);
   color: var(--h1Color, #333);
-  font-size: 22px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
-p {
+.editor-wrapper p {
   margin: 0 0 var(--preview-gap);
 }
 
-a {
+.editor-wrapper a {
   color: var(--linkColor, #218e63);
 }
 
-code {
-  padding: 2px 5px;
-  border-radius: 4px;
+.editor-wrapper code {
+  padding: 1px 4px;
+  border-radius: 3px;
   background: var(--codeBgColor, rgba(0, 0, 0, 0.06));
   font-family: ui-monospace, monospace;
   font-size: 0.9em;
 }
 
-blockquote {
+.editor-wrapper blockquote {
   margin: 0 0 var(--preview-gap);
-  padding: 2px 0 2px 12px;
+  padding: 1px 0 1px 9px;
   border-left: 3px solid var(--blockquoteBorderColor, #ddd);
   color: var(--blockquoteTextColor, #666);
 }
 
-ul {
+.editor-wrapper ul {
   margin: 0 0 var(--preview-gap);
-  padding-left: 20px;
+  padding-left: 16px;
 }
 
-li::marker {
+.editor-wrapper li::marker {
   color: var(--listMarkerColor, #999);
 }
 
-table {
+.editor-wrapper table {
   width: 100%;
   margin: 0 0 var(--preview-gap);
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 9.5px;
 }
 
-th,
-td {
-  padding: 4px 8px;
+.editor-wrapper th,
+.editor-wrapper td {
+  padding: 1px 6px;
   border: 1px solid var(--tableBorderColor, rgba(128, 128, 128, 0.25));
   text-align: left;
 }
 
-pre {
+.editor-wrapper pre {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 6px;
+  padding: 6px 8px;
+  border-radius: 5px;
   background: var(--codeBlockBgColor, rgba(0, 0, 0, 0.05));
   overflow: hidden;
 }
 
-pre code {
+/* Same specificity as a theme's own reset, injected after it, so the preview's
+   code block keeps this size even when the theme styles its editor block. */
+.editor-wrapper pre code:not(.mu-code) {
   padding: 0;
   background: none;
-  font-size: 12.5px;
+  font-size: 10px;
 }
