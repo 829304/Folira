@@ -57,8 +57,8 @@ themes. A theme's rules for the `--fmd-*`-backed colours and for plain element
 styling are scoped to the editor at zero specificity — the GitHub Light Prism
 palette rides on `:where(.editor-wrapper)` in `prismjs/github-light.theme.css`,
 and its inline-code rule on `:where(:not(pre))` — so a user's `.token.keyword`,
-`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. The 28
-themes inherited from upstream are the exception: their Markdown halves still
+`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. The other
+29 themes inherited from upstream are the exception — and all but `light` still
 carry the old selector tails, unscoped and in places `!important`, so overriding
 one of those takes the same selector or a stronger one. Their Prism palettes stay
 global and take the familiar `.token.*` names.
@@ -192,7 +192,7 @@ from, so a later change can be diffed against the real source instead of guessed
 
 `themes:check` runs `build.mjs --check`, `tokens.mjs --check`, and
 `verify.mjs` — cascade resolution for every theme, appearance, axis isolation,
-structural variables, swatches, and a comparison of 3830 values against the
+structural variables, swatches, and a comparison of 3366 values against the
 pre-split files. A theme added after the split has no pre-split file: it skips
 that one comparison (a pre-split id without a baseline still fails) and goes
 through every other check. `verify.mjs` needs `THEME_LEGACY_DIR`; without a
@@ -202,7 +202,8 @@ Custom CSS stays effective across theme switches. `theme-preview.spec.ts` pins
 the two zero-weight shapes GitHub Light promises: every Prism selector in
 `prismjs/github-light.theme.css` starts with `:where(.editor-wrapper)`, and the
 inline-code rule is exactly `.editor-wrapper :where(:not(pre)) > code`. The
-other 28 upstream palettes stay global and take a plain `.token.keyword`, so
+other 28 themes, whose 27 palette files stay global, take a plain
+`.token.keyword`, so
 the guard is scoped to the one theme that carries its own syntax palette.
 
 ## Out of scope
