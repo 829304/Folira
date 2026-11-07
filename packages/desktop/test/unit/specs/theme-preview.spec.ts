@@ -190,11 +190,16 @@ describe('github-light markdown rules', () => {
 
   it('orders the inline rule before the reset that follows it', () => {
     // The reset has to stay last: if a later edit lets the inline selector match
-    // a preview `<pre>`, the reset still wins the cascade.
-    const inline = css.indexOf('.editor-wrapper :not(pre) > code:not(.mu-code) {')
-    const reset = css.indexOf('.editor-wrapper pre code:not(.mu-code) {')
+    // a preview `<pre>`, the reset still wins the cascade. The `lastIndexOf`
+    // checks also catch a second copy appended after it.
+    const inlineSelector = '.editor-wrapper :not(pre) > code:not(.mu-code) {'
+    const resetSelector = '.editor-wrapper pre code:not(.mu-code) {'
+    const inline = css.indexOf(inlineSelector)
+    const reset = css.indexOf(resetSelector)
     expect(inline).toBeGreaterThan(-1)
     expect(reset).toBeGreaterThan(inline)
+    expect(css.lastIndexOf(inlineSelector)).toBe(inline)
+    expect(css.lastIndexOf(resetSelector)).toBe(reset)
   })
 
   it('paints every second data row instead of every second row', () => {

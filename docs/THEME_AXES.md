@@ -13,7 +13,7 @@ packages/desktop/src/renderer/src/assets/themes/
   manifest.json            generated: id, label, appearance, prism, swatches
   ui/<id>.css              one file per theme, declares --fui-* on :root
   md/<id>.css              one file per theme, declares --fmd-* on .editor-wrapper
-  prismjs/<name>.theme.css the syntax palette named by the theme's manifest entry
+  prismjs/<palette>.theme.css the syntax palette named by the theme's manifest entry
 packages/desktop/scripts/themes/
   build.mjs                --migrate (one-off), default (aggregate), --check
   tokens.mjs               classifies every variable by who reads it; tokens.json is shared with CI
@@ -118,11 +118,13 @@ into the page.
 ## Adding a theme
 
 1. Add `ui/<id>.css` and `md/<id>.css`, declaring only that axis's variables.
-2. If the theme needs its own syntax palette, add a `prismjs/<id>.theme.css`
-   and point the manifest entry at that palette name (`default` is the built-in
-   Prism palette, and `light` names it explicitly). A `null` palette is valid
-   and means the theme ships no syntax colouring: `loadPrismCss` returns an
-   empty sheet and the theme applies without one.
+2. If the theme needs a syntax palette, add a `prismjs/<palette>.theme.css` and
+   point the manifest entry at that palette name (`default` is the built-in
+   Prism palette, and `light` names it explicitly, so its file is
+   `prismjs/default.theme.css`). Every theme we ship today names one, and
+   `test/unit/specs/theme-selection.spec.ts` enforces that. `null` means the
+   theme ships no syntax colouring: `loadPrismCss` returns an empty sheet and
+   the kernel applies the theme anyway.
 3. `pnpm --filter folira themes` regenerates `base.css` and `manifest.json`;
    `pnpm --filter folira themes:check` runs the generator check, the token
    check and the cascade verification (`THEME_LEGACY_DIR` must point at a
