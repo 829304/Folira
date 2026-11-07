@@ -255,13 +255,15 @@ const selectorsIn = (css: string): string[] =>
 
 describe('theme rules custom CSS can override', () => {
   // FROZEN CONTRACT, not a convenience list: every selector below is the
-  // zero-weight shape the Prism palette promises, so changing a colour means
-  // editing this array deliberately — and the diff shows that the selector
-  // still starts with `:where(.editor-wrapper)` and has no specificity-raising
-  // suffix (`:not()`, `:is()`, `:has()`, an attribute, `:nth-child()`, a
-  // pseudo-element, an ID). A snapshot catches those because it compares the
-  // whole selector, not just its prefix; compare the old structural check,
-  // which was blind to any tail appended to a valid prefix.
+  // zero-weight shape the Prism palette promises, so changing a selector means
+  // editing this array deliberately. A declaration-only change (a colour, a
+  // font weight) is outside this snapshot; a new selector, or a tail appended
+  // to an existing one, is not. A diff therefore shows that the whole selector
+  // still starts with `:where(.editor-wrapper)` and carries no
+  // specificity-raising suffix (`:not()`, `:is()`, `:has()`, an attribute,
+  // `:nth-child()`, a pseudo-element, an ID). A snapshot catches those because
+  // it compares the whole selector, not just its prefix; compare the old
+  // structural check, which was blind to any tail appended to a valid prefix.
   const GITHUB_LIGHT_PRISM_SELECTORS = [
     ':where(.editor-wrapper) code[class*=\'language-\']',
     ':where(.editor-wrapper) pre.ag-paragraph',
@@ -309,6 +311,10 @@ describe('theme rules custom CSS can override', () => {
   it('pins every GitHub Light Prism selector and its order', () => {
     const prism = readFileSync(resolve(themesDir, 'prismjs', 'github-light.theme.css'), 'utf8')
     expect(selectorsIn(prism)).toEqual(GITHUB_LIGHT_PRISM_SELECTORS)
+    // A zero-weight scope only helps while source order decides: an
+    // `!important` in the palette would beat the user's `.token.keyword` no
+    // matter where their stylesheet lands.
+    expect(prism).not.toContain('!important')
   })
 
   it('keeps the GitHub Light inline-code selector exactly zero-weight', () => {
@@ -339,27 +345,40 @@ describe('preview cropping at the short breakpoints', () => {
     return match[1]
   }
 
+  /** Selector → declaration body for the flat rules in one media block. */
+  const declarationsIn = (block: string): Map<string, string> => {
+    const rules = new Map<string, string>()
+    for (const [, selectors, body] of block.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      for (const selector of selectors.split(',')) rules.set(selector.trim(), body)
+    }
+    return rules
+  }
+
   it('keeps the Prism-visible code block at the default-window frame', () => {
-    const block = mediaBlock(previewCss, '760')
-    expect(block).toContain('.sample-table')
-    expect(block).toContain('.sample-list')
+    const rules = declarationsIn(mediaBlock(previewCss, '760'))
+    for (const selector of ['.sample-table', '.sample-list']) {
+      // A `visibility: hidden` rule still keeps the block's layout space and
+      // would pass a name-only check; the crop needs `display: none`.
+      expect(rules.get(selector), `${selector} must be hidden here`).toContain('display: none')
+    }
     // Hiding the code block here would hide the Prism palette in the window
     // users open first; the review caught exactly that.
-    expect(block).not.toContain('.sample-code')
+    expect(rules.has('.sample-code')).toBe(false)
   })
 
   it('drops all three tail blocks at the smallest frame', () => {
-    const block = mediaBlock(previewCss, '640')
+    const rules = declarationsIn(mediaBlock(previewCss, '640'))
     for (const selector of ['.sample-code', '.sample-table', '.sample-list']) {
-      expect(block).toContain(selector)
+      expect(rules.get(selector), `${selector} must be hidden here`).toContain('display: none')
     }
   })
 
   it('uses the same breakpoints as the header height variables', () => {
     const mediaHeights = [...previewCss.matchAll(/@media \(max-height: (\d+)px\)/g)].map(match => match[1])
     expect(mediaHeights).toEqual(['760', '640'])
-    // index.vue defines the frame height and zoom at those same two heights.
-    expect(pageVue).toContain('@media (max-height: 760px)')
-    expect(pageVue).toContain('@media (max-height: 640px)')
+    // index.vue maps each viewport breakpoint to its frame height; a swapped
+    // pair would make the header reserve space for the wrong frame.
+    expect(pageVue).toMatch(/@media \(max-height: 760px\) \{\s*--theme-preview-height: 176px;/)
+    expect(pageVue).toMatch(/@media \(max-height: 640px\) \{\s*--theme-preview-height: 140px;/)
   })
 })
