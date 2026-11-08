@@ -120,6 +120,19 @@ describe('new light themes — registration', () => {
       expect(body, theme).not.toContain('!important')
     }
   })
+
+  it('puts both custom link spellings before the theme hover colour', () => {
+    const fallbacks = {
+      bear: '#9e252a',
+      'ia-writer-light': '#000000',
+      'paper-sepia': '#7f3409'
+    } as const
+    for (const theme of NEW_THEMES) {
+      expect(md(theme), theme).toContain(
+        `var(--folira-user-link-color, var(--folira-user-linkColor, ${fallbacks[theme]}))`
+      )
+    }
+  })
 })
 
 describe('Bear', () => {
@@ -186,11 +199,12 @@ describe('iA Writer Light', () => {
     expect(contrast('#ffffff', '#1a1a1a')).toBeGreaterThanOrEqual(7)
   })
 
-  it('centers only h1 and keeps h2-h6 left', () => {
+  it('centers only h1 and uses logical start for h2-h6', () => {
     const body = md('ia-writer-light')
     expect(valueIn(body, '.editor-wrapper h1', 'text-align')).toBe('center')
     expect(body.match(/text-align:\s*center/g)).toHaveLength(1)
-    expect(body).toContain('text-align: left;')
+    expect(body).toContain('text-align: start;')
+    expect(body).not.toContain('text-align: left;')
     expect(valueIn(body, '.editor-wrapper h2', 'font-size')).toBe('1.5em')
   })
 

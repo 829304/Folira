@@ -114,9 +114,9 @@
   margin: 0 0 1rem;
 }
 
-/* Links carry the deep brown at rest and deepen one step on hover. The hover
- * fallback keeps the custom-CSS mirror intact, as base.css does for the body
- * link colour. */
+/* Links carry the deep brown at rest and deepen one step on hover. Either
+ * public spelling of a user link colour, --link-color or --linkColor, wins on
+ * hover through its bindCustomProperties() mirror before the theme default. */
 
 .editor-wrapper a,
 .editor-wrapper a.mu-inline-rule,
@@ -133,7 +133,7 @@
 .editor-wrapper a.mu-inline-rule:hover,
 .editor-wrapper .mu-link:hover,
 .editor-wrapper .mu-inline-rule.mu-link:hover {
-  color: var(--folira-user-link-color, #7f3409);
+  color: var(--folira-user-link-color, var(--folira-user-linkColor, #7f3409));
 
   text-decoration: underline;
 }

@@ -81,19 +81,43 @@ test('Bear keeps the graphite sidebar scoped away from the light title bar', asy
     expect(result.renameColor).toBe('rgb(215, 217, 218)');
 });
 
-test('iA Writer Light centers only the first heading', async ({ page, browserName }) => {
+test('iA Writer Light centers only h1 and uses logical start for lower headings', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'Checks the theme cascade in Chromium');
     await page.setContent(`<!doctype html><style>${cssFor('ia-writer-light')}</style>
-        <div class="editor-wrapper"><h1>Chapter</h1><h2>Section</h2><h3>Subsection</h3></div>`);
-    const aligns = await page.evaluate(() => {
+        <div class="editor-wrapper" dir="ltr"><h1>Chapter</h1><h2>Section</h2><h3>Subsection</h3></div>
+        <div class="editor-wrapper" dir="rtl"><h1>الفصل</h1><h2 id="rtl-h2">القسم</h2><h3>القسم الفرعي</h3></div>`);
+    const result = await page.evaluate(() => {
         const style = (selector: string) => getComputedStyle(document.querySelector(selector)!);
+        const ltr = document.querySelector('.editor-wrapper[dir="ltr"]')!;
+        const rtl = document.querySelector('.editor-wrapper[dir="rtl"]')!;
+        const ltrStyle = (selector: string) => getComputedStyle(ltr.querySelector(selector)!);
+        const rtlStyle = (selector: string) => getComputedStyle(rtl.querySelector(selector)!);
+        const rtlH2 = rtl.querySelector('#rtl-h2')!;
+        const range = document.createRange();
+        range.selectNodeContents(rtlH2);
+        const text = range.getBoundingClientRect();
+        const box = rtlH2.getBoundingClientRect();
         return {
-            h1: style('h1').textAlign,
-            h2: style('h2').textAlign,
-            h3: style('h3').textAlign,
+            ltrH1: ltrStyle('h1').textAlign,
+            ltrH2: ltrStyle('h2').textAlign,
+            ltrH3: ltrStyle('h3').textAlign,
+            rtlH1: rtlStyle('h1').textAlign,
+            rtlH2: rtlStyle('h2').textAlign,
+            rtlH3: rtlStyle('h3').textAlign,
+            rtlDirection: style('.editor-wrapper[dir="rtl"] h2').direction,
+            rtlTextStartsOnRight: text.left > box.left + box.width / 2,
         };
     });
-    expect(aligns).toEqual({ h1: 'center', h2: 'left', h3: 'left' });
+    expect(result).toEqual({
+        ltrH1: 'center',
+        ltrH2: 'start',
+        ltrH3: 'start',
+        rtlH1: 'center',
+        rtlH2: 'start',
+        rtlH3: 'start',
+        rtlDirection: 'rtl',
+        rtlTextStartsOnRight: true,
+    });
 });
 
 test('Paper / Sepia keeps the code palette above 4.5:1 on the Flexoki panel', async ({ page, browserName }) => {
@@ -142,5 +166,47 @@ for (const theme of ['bear', 'ia-writer-light', 'paper-sepia']) {
         });
         expect(result.codeBackground).toBe('rgb(18, 52, 86)');
         expect(result.keywordColor).toBe('rgb(124, 58, 237)');
+    });
+}
+
+const LINK_DEFAULTS = {
+    bear: { normal: 'rgb(190, 47, 52)', hover: 'rgb(158, 37, 42)' },
+    'ia-writer-light': { normal: 'rgb(26, 26, 26)', hover: 'rgb(0, 0, 0)' },
+    'paper-sepia': { normal: 'rgb(157, 67, 16)', hover: 'rgb(127, 52, 9)' },
+} as const;
+
+for (const theme of ['bear', 'ia-writer-light', 'paper-sepia']) {
+    test(`${theme} keeps both custom link spellings through a real hover`, async ({ page, browserName }) => {
+        test.skip(browserName !== 'chromium', 'Checks the theme cascade in Chromium');
+        await page.setContent(`<!doctype html><style>${cssFor(theme)}</style>
+            <div class="editor-wrapper"><p><a id="link" href="#">link</a></p></div>`);
+        const color = () => page.locator('#link').evaluate(el => getComputedStyle(el).color);
+        const defaults = LINK_DEFAULTS[theme];
+
+        await page.mouse.move(0, 0);
+        expect(await color()).toBe(defaults.normal);
+        await page.hover('#link');
+        expect(await color()).toBe(defaults.hover);
+
+        // bindCustomProperties() mirrors a user's camel-case --linkColor into
+        // --folira-user-linkColor; the hover rule has to read that mirror.
+        const camel = await page.addStyleTag({
+            content: ':root { --linkColor: #007500; --folira-user-linkColor: var(--linkColor); }'
+        });
+        await page.mouse.move(0, 0);
+        expect(await color()).toBe('rgb(0, 117, 0)');
+        await page.hover('#link');
+        expect(await color(), 'custom --linkColor must survive hover').toBe('rgb(0, 117, 0)');
+        await camel.evaluate(el => el.remove());
+
+        // The kebab alias gets its own mirror; it still has to win over the
+        // theme's default hover colour.
+        await page.addStyleTag({
+            content: ':root { --link-color: #007500; --folira-user-link-color: var(--link-color); }'
+        });
+        await page.mouse.move(0, 0);
+        expect(await color()).toBe('rgb(0, 117, 0)');
+        await page.hover('#link');
+        expect(await color(), 'custom --link-color must survive hover').toBe('rgb(0, 117, 0)');
     });
 }

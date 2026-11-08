@@ -111,9 +111,10 @@
   margin: 0 0 1rem;
 }
 
-/* Links stay berry at rest and deepen on hover; the fallback reads the mirror
- * base.css creates only when custom CSS declares --link-color, so a custom
- * link colour also survives the hover rule. */
+/* Links stay berry at rest and deepen on hover. A user may override either
+ * public spelling: --link-color (the kebab alias) or --linkColor (the camel
+ * token). bindCustomProperties() mirrors both into --folira-user-* names, so
+ * the hover rule reads those mirrors before its own berry default. */
 
 .editor-wrapper a,
 .editor-wrapper a.mu-inline-rule,
@@ -130,7 +131,7 @@
 .editor-wrapper a.mu-inline-rule:hover,
 .editor-wrapper .mu-link:hover,
 .editor-wrapper .mu-inline-rule.mu-link:hover {
-  color: var(--folira-user-link-color, #9e252a);
+  color: var(--folira-user-link-color, var(--folira-user-linkColor, #9e252a));
 
   text-decoration: underline;
 }

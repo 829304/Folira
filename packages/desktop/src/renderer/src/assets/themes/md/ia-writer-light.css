@@ -66,9 +66,10 @@
   --fmd-maskColor: rgba(249, 249, 249, 0.82);
 }
 
-/* Only the first-level heading is centered. The rule reaches the editor's
- * plain heading and the settings preview; H2-H6 state left explicitly so a
- * preview or user sheet cannot inherit the H1 alignment. */
+/* Only the first-level heading is centered. H2-H6 use logical `start`, not
+ * physical `left`: in an LTR document the long-form reading edge stays left,
+ * while an RTL document aligns the same headings to the right. The rule
+ * reaches the editor's plain heading and the settings preview. */
 
 .editor-wrapper h1,
 .editor-wrapper h2,
@@ -82,7 +83,7 @@
   font-weight: 600;
   line-height: 1.3;
 
-  text-align: left;
+  text-align: start;
 }
 
 .editor-wrapper h1 {
@@ -117,7 +118,9 @@
   margin: 0 0 0.9rem;
 }
 
-/* Links are the ink itself: the underline, not a hue, marks them. */
+/* Links are the ink itself: the underline, not a hue, marks them. Either
+ * public spelling of a user link colour, --link-color or --linkColor, wins on
+ * hover through its bindCustomProperties() mirror before the theme default. */
 
 .editor-wrapper a,
 .editor-wrapper a.mu-inline-rule,
@@ -134,7 +137,7 @@
 .editor-wrapper a.mu-inline-rule:hover,
 .editor-wrapper .mu-link:hover,
 .editor-wrapper .mu-inline-rule.mu-link:hover {
-  color: var(--folira-user-link-color, #000000);
+  color: var(--folira-user-link-color, var(--folira-user-linkColor, #000000));
 
   text-decoration: underline;
 }

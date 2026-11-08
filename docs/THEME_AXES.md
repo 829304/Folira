@@ -305,8 +305,10 @@ from, so a later change can be diffed against the real source instead of guessed
   reference selected-text wash `#fbb6b7` is lightened to `#fde4e5` because a
   berry link on `#fbb6b7` is 3.42:1; `#fde4e5` keeps it at 4.77:1. The dark
   sidebar tokens are scoped under `.side-bar`, so the title bar and window
-  controls keep the light chrome's dark `#5c5f62`. Fonts, base size, line
-  height and writing width are untouched.
+  controls keep the light chrome's dark `#5c5f62`. A custom `--linkColor` or
+  `--link-color` is read through both `--folira-user-*` mirrors on hover, so a
+  user link colour survives the theme's berry hover step. Fonts, base size,
+  line height and writing width are untouched.
 - **ia-writer-light** — a Folira original following the community
   [`iA-Writer-theme-for-Typora`](https://github.com/tarikfayad/iA-Writer-theme-for-Typora)
   look (`master` at `fd192febb885934d86a86f8017edc9bdd335aa86`). That commit has
@@ -316,9 +318,9 @@ from, so a later change can be diffed against the real source instead of guessed
   `#f0f0f0` with the reused GitHub Light palette (minimum token 4.70:1),
   selection `#d9d9d9`, chrome `#f7f7f7` / sidebar `#f4f4f4`, flat buttons with
   an ink primary and ink focus ring. The reference centers every heading;
-  Folira centers **only h1** and leaves h2-h6 left, because a long Chinese
-  document with every level centered loses its reading rhythm. No font is
-  forced.
+  Folira centers **only h1** and gives h2-h6 logical `text-align: start`:
+  left in LTR, right in RTL. No font is forced, and both public spellings of
+  a custom link colour survive hover.
 - **paper-sepia** — a Flexoki paper/ink palette. Source:
   [`kepano/flexoki`](https://github.com/kepano/flexoki) (MIT, © 2023 Steph Ango,
   `main` at `8d723bac4a9ac46adfdf99d42155286977aac72a`; colour table at
@@ -329,7 +331,8 @@ from, so a later change can be diffed against the real source instead of guessed
   `#e6e4d9`. GitHub Light's red keyword is only 4.20:1 on that panel, so the
   theme ships a scoped `prismjs/paper-sepia.theme.css` — the same zero-weight
   selector structure with keyword/important moved to Flexoki red-600
-  `#af3029` (5.02:1); comments stay `#59636e` (4.79:1). No font is forced.
+  `#af3029` (5.02:1); comments stay `#59636e` (4.79:1). A custom `--linkColor`
+  or `--link-color` also survives the brown hover step. No font is forced.
 
 ## Checks
 
