@@ -432,6 +432,10 @@ describe('preview cropping at the short breakpoints', () => {
     // pair would make the header reserve space for the wrong frame.
     expect(pageVue).toMatch(/@media \(max-height: 760px\) \{\s*--theme-preview-height: 176px;/)
     expect(pageVue).toMatch(/@media \(max-height: 640px\) \{\s*--theme-preview-height: 140px;/)
+    // The tall frame must stay large enough for the full sample; 216px clipped
+    // the code block immediately after the 760px breakpoint restored the table
+    // and list.
+    expect(pageVue).toMatch(/--theme-preview-height: 240px;/)
   })
 })
 
