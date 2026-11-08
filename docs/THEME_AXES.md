@@ -93,9 +93,13 @@ stronger one. The colour itself is `var(--link-color, var(--linkColor))`, not a
 direct `--linkColor`: `--link-color` is the published alias base.css wires to
 the user's custom property, so an existing `.editor-wrapper { --link-color: … }`
 rule keeps overriding the theme's link colour in both the editor and the
-settings preview. GitBook's copy button is scoped to the navy block for the same
-reason: the engine paints its hover/focus surface from a pale chrome token, so
-the theme supplies a dark-block-safe surface and a visible keyboard ring.
+settings preview. The default hover deepens to Azure `#00307c`; because
+base.css always resolves `--link-color`, that rule keys its fallback off the
+`--folira-user-link-color` mirror that exists only when custom CSS declares the
+alias, so a custom colour also survives hover. GitBook's copy button is scoped
+to the navy block for the same reason: the engine paints its hover/focus surface
+from a pale chrome token, so the theme supplies a dark-block-safe surface and a
+visible keyboard ring.
 
 ## Loading a theme
 
