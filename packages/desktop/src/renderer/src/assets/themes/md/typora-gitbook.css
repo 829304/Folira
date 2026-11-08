@@ -159,7 +159,7 @@
 .editor-wrapper a.mu-inline-rule,
 .editor-wrapper .mu-link,
 .editor-wrapper .mu-inline-rule.mu-link {
-  color: var(--linkColor);
+  color: var(--link-color, var(--linkColor));
 
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -170,7 +170,7 @@
 .editor-wrapper a.mu-inline-rule:hover,
 .editor-wrapper .mu-link:hover,
 .editor-wrapper .mu-inline-rule.mu-link:hover {
-  color: #00307c;
+  color: var(--link-color, #00307c);
 
   text-decoration: underline;
 }
@@ -241,9 +241,16 @@
   background: var(--editorColor04);
 }
 
-.editor-wrapper thead th,
-.editor-wrapper .mu-table-inner tr:first-child td::before {
+.editor-wrapper thead th {
   border-bottom: 2px solid var(--tableBorderColor);
+}
+
+/* Only the width is themed here: the engine owns the border colour so its
+ * `mu-table-cell-border-*` selection classes can repaint both edges. Setting
+ * the colour too would leave a selected header's bottom edge in the normal
+ * table colour. */
+.editor-wrapper .mu-table-inner tr:first-child td::before {
+  border-bottom-width: 2px;
 }
 
 /* Inline code: GitBook's square pale pill, with the body ink inherited. The
@@ -375,8 +382,19 @@
 /* The settings preview renders a plain `<pre>` directly inside
  * `.editor-wrapper`; it takes the same navy surface and light ink. */
 
+/* The settings preview places its blocks directly under `.editor-wrapper`; the
+ * page's 1.5rem quote lead would push the code sample below the fixed frame's
+ * fade. The editor keeps its normal quote rhythm (quotes sit inside
+ * `.mu-container` there, so this direct-child selector does not reach them). */
+.editor-wrapper > blockquote {
+  margin-bottom: 0;
+}
+
+/* The settings preview is a shorter, zoomed frame than the editor column: the
+ * page-size lead would push the last code line under the frame's fade. Keep the
+ * block's padding, drop only the outer lead; the editor block keeps 1.5rem. */
 .editor-wrapper > pre {
-  margin: 1.5rem 0;
+  margin: 0;
   padding: 8px 1.5rem 6px;
 
   overflow: auto;

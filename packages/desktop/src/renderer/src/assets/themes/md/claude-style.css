@@ -116,7 +116,7 @@
 }
 
 .editor-wrapper a {
-  color: var(--linkColor);
+  color: var(--link-color, var(--linkColor));
 
   text-decoration: none;
 }

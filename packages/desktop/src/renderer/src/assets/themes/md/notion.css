@@ -151,7 +151,7 @@
 .editor-wrapper a.mu-inline-rule,
 .editor-wrapper .mu-link,
 .editor-wrapper .mu-inline-rule.mu-link {
-  color: var(--linkColor);
+  color: var(--link-color, var(--linkColor));
 
   text-decoration: underline;
   text-decoration-thickness: 1px;
