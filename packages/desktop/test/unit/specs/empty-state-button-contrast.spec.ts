@@ -238,3 +238,20 @@ describe('empty-state button readability (#4774)', () => {
     })
   }
 })
+
+describe('primary button contrast in Notion and Typora GitBook', () => {
+  const states = ['', 'Hover', 'Active']
+  const cases = ['notion', 'typora-gitbook'].flatMap(theme => states.map(state => ({ theme, state, label: state || 'default' })))
+
+  it.each(cases)('$theme primary button ($label) meets 4.5:1 for normal text', ({ theme, state, label }) => {
+    const vars = { ...baseVars, ...parseVars(readFileSync(resolve(UI_DIR, `${theme}.css`), 'utf8')) }
+    const ratio = pairContrast(
+      `--buttonPrimaryFontColor${state}`,
+      `--buttonPrimaryBgColor${state}`,
+      '--editorBgColor',
+      vars
+    )
+    expect(ratio, `${theme} ${label} primary button has ${ratio.toFixed(2)}:1 contrast`)
+      .toBeGreaterThanOrEqual(4.5)
+  })
+})
