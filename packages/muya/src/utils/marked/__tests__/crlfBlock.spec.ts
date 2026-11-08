@@ -9,7 +9,7 @@ import { lexBlock } from '../lexBlock';
 // GFM table into one paragraph of pipe text.
 const TABLE = '| a | b |\r\n| --- | --- |\r\n| 1 | 2 |\r\n';
 
-describe('CRLF block lexing', () => {
+describe('crlf block lexing', () => {
     it('lexes a GFM table when the source uses CRLF line endings', () => {
         const tokens = lexBlock(TABLE);
 
