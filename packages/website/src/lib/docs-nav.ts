@@ -161,4 +161,3 @@ export function firstPageOfTab(tab: DocTabId): DocPageWithCtx {
   if (!p) throw new Error(`No pages registered for tab "${tab}"`)
   return p
 }
-
