@@ -125,7 +125,8 @@ pnpm lint                           # ESLint
 - [x] 新增浅色主题：Paper / Sepia
 - [ ] 图片上传（PicGo / 自定义脚本）
 - [ ] 自动更新
-- [ ] Windows、macOS、Linux 三平台发布流水线
+- [x] 已有打包工作流：Windows x64、Linux、macOS arm64 / x64
+- [ ] 待完成安装验收：三平台安装、升级与卸载
 
 ## 贡献
 

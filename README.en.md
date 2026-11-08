@@ -125,7 +125,8 @@ Repository layout, module boundaries and the finer development conventions are i
 - [x] New light theme: Paper / Sepia
 - [ ] Image upload (PicGo or a custom script)
 - [ ] Auto-update
-- [ ] Release pipelines for Windows, macOS and Linux
+- [x] Existing packaging workflows: Windows x64, Linux, macOS arm64 and x64
+- [ ] Pending install acceptance: install, upgrade and uninstall on all platforms
 
 ## Contributing
 
