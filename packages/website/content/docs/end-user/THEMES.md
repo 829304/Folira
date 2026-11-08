@@ -1,6 +1,6 @@
 # Themes
 
-Folira ships **31 built-in themes** — 12 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables, links) and the syntax-highlighting palette at once, so the three always agree with each other.
+Folira ships **33 built-in themes** — 14 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables, links) and the syntax-highlighting palette at once, so the three always agree with each other.
 
 ## Choosing a theme
 
@@ -43,9 +43,11 @@ A handful of the inherited themes still mark individual rules (code blocks, them
 | Graphite | `graphite` | Neutral grey light |
 | Gruvbox Light | `gruvbox-light` | Retro, warm light |
 | Light | `light` | Folira's plain light default |
+| Notion | `notion` | Light Classic reference: warm grey ink, ink-underlined links, brick-red inline code, warm panels |
 | Rose Pine Dawn | `rose-pine-dawn` | Soft rose light |
 | Solarized Light | `solarized-light` | The classic cream background |
 | Tokyo Night Light | `tokyo-night-light` | Cool blue-white light |
+| Typora GitBook | `typora-gitbook` | GitBook / Azure reading style: deep-blue links, pale panels, navy code block |
 | Ulysses | `ulysses` | Muted lavender grey, built for long sessions |
 
 ## Dark themes
@@ -88,6 +90,7 @@ Many of these themes follow colour schemes published by the developer community.
 - [Material Theme](https://github.com/material-theme/vsc-material-theme) — MIT
 - [Monokai Pro](https://monokai.pro) — see upstream
 - [Nord](https://github.com/nordtheme/nord) — MIT
+- [Notion](https://www.notion.so) — the theme follows Notion's Light Classic document look as a reference implementation; the colour steps and independent declarations were adapted from [adrian-fuertes/typora-notion-theme](https://github.com/adrian-fuertes/typora-notion-theme) (MIT, © 2022 adrian-fuertes, Light Classic v1.2.1). No upstream CSS or selectors are copied.
 - [One Dark](https://github.com/atom/one-dark-syntax) — MIT
 - [Oxocarbon](https://github.com/nyoom-engineering/oxocarbon.nvim) — MIT
 - [Palenight](https://github.com/drewtempelmeyer/palenight.vim) — MIT
@@ -95,4 +98,5 @@ Many of these themes follow colour schemes published by the developer community.
 - [Solarized](https://github.com/altercation/solarized) — MIT
 - [Synthwave '84](https://github.com/robb0wen/synthwave-vscode) — MIT
 - [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) — MIT
+- [Typora GitBook](https://github.com/h16nning/typora-gitbook-theme) — GPL-3.0, © 16soundsofsilence and contributors (Azure light variant). Only colours and design cues were used as a reference; no upstream CSS is copied.
 - [Gogh Themes](https://github.com/Gogh-Co/Gogh) — MIT (colour palette reference)

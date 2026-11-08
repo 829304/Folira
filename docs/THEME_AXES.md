@@ -26,10 +26,11 @@ theme only ever ships as the pair plus the palette its manifest entry names.
 
 Theme files are mostly variables, and the generator only requires that: a theme
 has to declare the public variables its half owns. Most of the inherited themes
-still carry a tail of their own selector rules (29 of the 30 ids do — only
-`ui/light.css`, `md/light.css` and `ui/github-light.css` are pure variables;
-One Dark alone has 25 rules for scrollbars, dialogs, buttons, the title bar and
-the side bar). The
+still carry a tail of their own selector rules (32 of the 33 ids do — only
+`ui/light.css`, `md/light.css`, `ui/github-light.css`, `ui/claude-style.css`,
+`ui/typora-gitbook.css` and `ui/notion.css` are pure variables; One Dark alone
+has 24 rules for scrollbars, dialogs, buttons, the title bar and the side bar).
+The
 generator keeps those tails as written, so do not delete them while converting
 a theme to variables only. What no theme may do is move the writing column or
 change layout: those stay the app's decisions and the user's preferences.
@@ -57,21 +58,40 @@ themes. A theme's rules for the `--fmd-*`-backed colours and for plain element
 styling are scoped to the editor at zero specificity — the GitHub Light Prism
 palette rides on `:where(.editor-wrapper)` in `prismjs/github-light.theme.css`,
 and its inline-code rule on `:where(:not(pre))` — so a user's `.token.keyword`,
-`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. The other
-29 themes inherited from upstream are the exception — and all but `light` still
-carry the old selector tails, unscoped and in places `!important`, so overriding
-one of those takes the same selector or a stronger one. Their Prism palettes stay
-global and take the familiar `.token.*` names.
+`.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. Claude
+Style and Notion borrow that palette; Typora GitBook ships its own scoped palette
+(`prismjs/typora-gitbook.theme.css`, adapted from the Prism dark one) with the
+same `:where(.editor-wrapper) :where(pre, .mu-code-block)` shape. All four keep
+the zero-weight inline-code rule, so one `:where` scope covers the hand-written
+bodies. All 30 palette files are referenced by the manifest; four theme ids pick
+a palette under another name (`light` → `default`, `material-dark` → `dark`,
+`claude-style` and `notion` → `github-light`), while `typora-gitbook` names its
+own. The other 29 themes inherited from upstream are the exception — and all but
+`light` still carry the old selector tails, unscoped and in places `!important`,
+so overriding one of those takes the same selector or a stronger one. Their 28
+Prism palettes stay global and take the familiar `.token.*` names.
 
 A few structural rules cannot be zero-weight: they have to outrank Muya's own
-stylesheet. In `md/github-light.css` those are the line-number gutter's
-`padding-left` and `top` (the engine reserves its own offset), the zebra rows,
-the task-box radius, and the nested-quote right padding. They sit at engine
+stylesheet. In `md/github-light.css` and `md/claude-style.css` those are the
+line-number gutter's `padding-left` and `top` (the engine reserves its own
+offset), the zebra rows, the task-box radius, and the nested-quote right padding.
+`md/typora-gitbook.css` and `md/notion.css` repeat the gutter, task-box and
+nested-quote rules — their reference designs have no zebra rows — and Notion
+adds the table header band, because Muya paints the header through the engine's
+own cell rule. These rules sit at engine
 weight or above, so overriding one takes the same selector shape or a stronger
 one; the comments next to those rules say why each is special. The guard in
 `theme-preview.spec.ts` therefore pins the zero-weight shapes (the Prism scope
 and the inline-code selector), not a blanket rule that every theme selector is
 weightless.
+
+The link rules are the other engine-weight exception: Muya colours
+`span.mu-inline-rule.mu-link` at (0,2,1), so both bodies keep
+`.editor-wrapper .mu-inline-rule.mu-link` (0,3,0) plus a plain `a` rule for the
+settings preview. A custom link colour therefore needs the same shape or a
+stronger one. GitBook's copy button is scoped to the navy block for the same
+reason: the engine paints its hover/focus surface from a pale chrome token, so
+the theme supplies a dark-block-safe surface and a visible keyboard ring.
 
 ## Loading a theme
 
@@ -187,6 +207,69 @@ from, so a later change can be diffed against the real source instead of guessed
   theme. The line-number gutter rule uses `:has()`, as the engine already does,
   so the theme does not raise the minimum WebView version (Chromium 105+ /
   WebKit 15.4+).
+- **claude-style** — a Folira original, not a port. The palette starts from
+  Anthropic's paper `#faf9f5`, ink `#141413` and clay `#d97757`; its warm neutral
+  and accent steps were checked against two community themes:
+  [`Typora_Claude-Like_Theme`](https://github.com/Muyiiiii/Typora_Claude-Like_Theme)
+  (MIT, © Muyiiiii, `master` at commit
+  `f048db7ad1678afabc10e988620f2d74e8846d05`, light variant `claude-like.css`)
+  and [`claude-paper-obsidian`](https://github.com/Law-Of-Cycles/claude-paper-obsidian)
+  (MIT, © Law-Of-Cycles, version 1.1.0, commit
+  `cb37f4c3f5c850606a771e164cf9b3733dab731d`); no upstream CSS is copied, so a
+  later diff against either source is a prompt, not a patch. The body closes h1
+  with a hairline and gives h2 no border and no border-reserving padding, and its
+  inline pill reads the UI-axis `--codeBgColor`, which is the name a custom
+  stylesheet overrides.
+  The syntax palette is GitHub Light's Prettylights file above, selected through
+  `PRISM_ALIASES` in `build.mjs`, so the zero-weight scope it already carries
+  covers this theme too. The accent is split between text and fill: text, icons
+  and selection use `#a34f38` (4.9:1 on the sidebar, 5.1:1 on the selected fill),
+  while the primary button keeps the original clay `#d97757` with ink on top
+  (5.9:1). Its focus ring is a solid two-layer shadow — paper gap, then the dark
+  accent — because the shared button style drops the native outline and an alpha
+  shadow alone is invisible on warm paper.
+- **typora-gitbook** — GitBook's rendered documentation look. The palette and
+  type scale were read from the Azure light variant of
+  [`typora-gitbook-theme`](https://github.com/h16nning/typora-gitbook-theme)
+  (GPL-3.0, © 16soundsofsilence and contributors, `main` at commit
+  `9e95aebf524491ccc5b74d1b4a1e53f8c6c1ac05`): panel `#f5f7f9`, ink `#3b454e`,
+  heading `#242a31`, border `#e6ecf1`, decoration blue `#3884ff`, and a deeper
+  `#1968e6` for text, links and actions (5.04:1 on white, 4.70:1 on the panel),
+  with `#0f5fd8`/`#00307c` as the primary button's hover/pressed steps. No
+  upstream CSS is copied — the values are Folira's own, re-expressed as
+  `--fui-*`/`--fmd-*` tokens — so a later diff against the source is a prompt,
+  not a patch. The Azure fenced block is the dark navy `#183055`: the theme
+  restores it and ships its own scoped Prism palette
+  (`prismjs/typora-gitbook.theme.css`, token colours adapted from the Prism dark
+  palette, comments `#9daab6`, tag/property `#ff6299`, Azure's mint keyword
+  `#61e3a5` and string blue `#71a7ff`), so the code surface keeps its contrast
+  while the rest of the app stays light. The block's horizontal scroller gets
+  its own navy track and blue-grey thumb rather than the pale global bar;
+  horizontal bars are eight pixels tall so the thumb stays visible on the navy
+  surface. Selection is split by axis on purpose: the chrome wash is 25% so
+  loading dots and input selections read, while the editor body keeps 8% so a
+  selected link still clears 4.5:1. h1 alone closes with a
+  hairline; links carry a 1px underline in both the editor (`span.mu-link`) and
+  the settings preview (`<a>`); quotes sit on the pale panel behind a 4px accent
+  bar; table cells are ruled in the pale border colour; and the copy button gets
+  a dark-block-safe hover/focus surface and a visible keyboard ring.
+- **notion** — Light Classic reference implementation, not a port: the palette
+  and typographic proportions were read from
+  [`typora-notion-theme`](https://github.com/adrian-fuertes/typora-notion-theme)
+  (MIT, © 2022 adrian-fuertes, `themes/classic/notion-light-classic.css`,
+  v1.2.1, commit `e3d9a50524378a401df7bde792773e71f2a90cd6`); the public
+  [`Notion Colors`](https://matthiasfrank.de/en/notion-colors/) reference was
+  used as a secondary check. No upstream CSS or selectors are copied — the theme
+  reuses the colour steps and independent declarations as Folira's own tokens.
+  Ink `#37352f` on white pages, warm panels `#f7f6f3`, grey `#73726e`, hairline
+  borders `#e9e9e7`, action blue `#0b6bcb` (white text 5.28:1), and the brick-red
+  inline pill `#b83d3d` on the UI-axis `--codeBgColor` (5.15:1 on the warm
+  panel). Headings carry no rule; h1/h2 reserve `.3em` under the text. Links
+  keep the ink colour and a underline in both `span.mu-link` and `<a>`. The
+  table header band reads `--editorColor04` rather than the code-block token, so
+  recolouring fenced code cannot repaint it; the nested quote keeps its right
+  inset. The syntax palette is GitHub Light through `PRISM_ALIASES`; the fenced
+  block keeps the warm `#f7f6f3` panel rather than Classic's red code text.
 
 ## Checks
 
@@ -199,12 +282,17 @@ through every other check. `verify.mjs` needs `THEME_LEGACY_DIR`; without a
 baseline it exits non-zero unless `THEMES_VERIFY_ALLOW_NO_BASELINE=1` is set.
 
 Custom CSS stays effective across theme switches. `theme-preview.spec.ts` pins
-the two zero-weight shapes GitHub Light promises: every Prism selector in
-`prismjs/github-light.theme.css` starts with `:where(.editor-wrapper)`, and the
-inline-code rule is exactly `.editor-wrapper :where(:not(pre)) > code`. The
-other 28 themes, whose 27 palette files stay global, take a plain
-`.token.keyword`, so
-the guard is scoped to the one theme that carries its own syntax palette.
+the zero-weight shapes the hand-written themes promise: every Prism selector in
+`prismjs/github-light.theme.css` starts with `:where(.editor-wrapper)` (that file
+is shared by GitHub Light, Claude Style and Notion), every inline-code rule in
+those bodies is exactly `.editor-wrapper :where(:not(pre)) > code`, and
+GitBook's own palette has the same zero-weight guard under its scoped
+`:where(.editor-wrapper) :where(pre, .mu-code-block)` prefix. The other 29
+themes, whose 28 palette files stay global, take a plain `.token.keyword`, so
+the guard is scoped to the files that carry the scoped palette. The suite also
+pins the link rule in both DOM shapes, the table header token split, the navy
+block's plain-text colour, and the palette-reference guard (every palette file
+must be selected by a manifest entry).
 
 ## Out of scope
 

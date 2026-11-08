@@ -1,6 +1,6 @@
 # Folira 开发需求概要
 
-> **状态说明（2026-11-08）**：这是立项时的需求稿，保留作历史记录。其中"界面主题与 Markdown 排版主题双轴解耦"、"首批 10 套排版主题"两项目标已被后续决策取代——现在对外只暴露一个主题 id，界面、正文与语法高亮一起切换；新增主题按需实现（已落地 GitHub Light，占位规划见路线图）。当前实现口径以 `docs/THEME_AXES.md`、`CLAUDE.md` 与 `packages/website/content/docs/end-user/THEMES.md` 为准。
+> **状态说明（2026-11-08）**：这是立项时的需求稿，保留作历史记录。其中"界面主题与 Markdown 排版主题双轴解耦"、"首批 10 套排版主题"两项目标已被后续决策取代——现在对外只暴露一个主题 id，界面、正文与语法高亮一起切换。主题补齐范围随后收敛为**只做浅色**：已落地 GitHub Light、Claude Style、Typora GitBook、Notion；待补 Bear、iA Writer Light、Paper / Sepia。**不再计划新的深色变体**（Claude Dark、Notion Dark、iA Writer Dark、Linear、OLED Black、GitHub Dark 均不做；现有 19 套深色主题保持不变）。当前实现口径以 `docs/THEME_AXES.md`、`CLAUDE.md` 与 `packages/website/content/docs/end-user/THEMES.md` 为准。
 
 ## 一、项目定位
 

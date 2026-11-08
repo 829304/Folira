@@ -33,7 +33,7 @@ export default function Themes() {
               <span className="kicker">Themes</span>
               <h2 className="sec-title">Make it yours.</h2>
               <p className="sec-desc">
-                31 built-in themes, light and dark. One choice sets the window chrome, the page and
+                33 built-in themes, light and dark. One choice sets the window chrome, the page and
                 the syntax colours together — and every theme is plain CSS.
               </p>
             </div>
