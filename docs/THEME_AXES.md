@@ -89,7 +89,11 @@ The link rules are the other engine-weight exception: Muya colours
 `span.mu-inline-rule.mu-link` at (0,2,1), so both bodies keep
 `.editor-wrapper .mu-inline-rule.mu-link` (0,3,0) plus a plain `a` rule for the
 settings preview. A custom link colour therefore needs the same shape or a
-stronger one. GitBook's copy button is scoped to the navy block for the same
+stronger one. The colour itself is `var(--link-color, var(--linkColor))`, not a
+direct `--linkColor`: `--link-color` is the published alias base.css wires to
+the user's custom property, so an existing `.editor-wrapper { --link-color: … }`
+rule keeps overriding the theme's link colour in both the editor and the
+settings preview. GitBook's copy button is scoped to the navy block for the same
 reason: the engine paints its hover/focus surface from a pale chrome token, so
 the theme supplies a dark-block-safe surface and a visible keyboard ring.
 
