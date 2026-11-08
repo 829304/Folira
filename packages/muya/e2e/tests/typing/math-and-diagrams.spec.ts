@@ -71,7 +71,7 @@ test.describe('math and diagrams', () => {
         // preview's data-start/data-end. That re-renders the token with the
         // caret *inside* it, dropping the `mu-hide` class and revealing the
         // editable `.mu-math-text` source span.
-        await page.locator(`${editor.mathRender} ${editor.katex}`).first().click();
+        await mathWrapper.locator(editor.mathRender).click();
         await expect(mathWrapper).not.toHaveClass(/mu-hide/);
         await expect(page.locator(editor.inlineMathText).first()).toBeVisible();
 
