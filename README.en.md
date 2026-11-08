@@ -37,12 +37,12 @@ It is built with **Tauri 2 + Rust + Vue 3**. The editor engine is MarkText's Muy
 - **Export**: HTML and PDF
 - **Images**: paste from the clipboard or drag them in
 - **Files**: tabs, a sidebar file tree, a table-of-contents panel, full-text search
-- **Themes**: 33 built in (14 light, 19 dark); one choice sets the chrome, the page and the syntax colours
+- **Themes**: 36 built in (17 light, 19 dark); one choice sets the chrome, the page and the syntax colours
 - **Ten interface languages**: de, en, es, fr, ja, ko, pt, tr, zh-CN, zh-TW
 
 ## Themes
 
-Folira ships 33 built-in themes — 14 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables) and the syntax-highlighting palette together, so none of them can drift out of step with the others.
+Folira ships 36 built-in themes — 17 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables) and the syntax-highlighting palette together, so none of them can drift out of step with the others.
 
 `Preferences` → `Theme` lists them under **Light** and **Dark** tabs, opens on the tab of the theme in use, and filters with a search box. Hovering a card previews it before you apply; custom CSS is appended after the theme, so it wins at equal specificity (syntax colours need no prefix; typography a theme sets needs a selector of the same shape, such as `.editor-wrapper h2`).
 
@@ -120,9 +120,9 @@ Repository layout, module boundaries and the finer development conventions are i
 - [x] New theme: GitHub Light (Primer chrome, Prettylights syntax)
 - [x] New light theme: Typora GitBook (GitBook / Azure reading style)
 - [x] New light theme: Notion (neutral document look)
-- [ ] New light theme: Bear
-- [ ] New light theme: iA Writer
-- [ ] New light theme: Paper / Sepia
+- [x] New light theme: Bear
+- [x] New light theme: iA Writer
+- [x] New light theme: Paper / Sepia
 - [ ] Image upload (PicGo or a custom script)
 - [ ] Auto-update
 - [ ] Release pipelines for Windows, macOS and Linux

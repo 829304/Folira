@@ -261,12 +261,13 @@ renderer agree on values such as the current theme.
 
 ### Themes
 
-`renderer/src/assets/themes/` ships **33 themes**. Each has two files of its own —
+`renderer/src/assets/themes/` ships **36 themes**. Each has two files of its own —
 `ui/<id>.css` (window chrome) and `md/<id>.css` (document typography) — plus a
-syntax palette in `prismjs/`, which most themes name after themselves but four do
+syntax palette in `prismjs/`, which most themes name after themselves but six do
 not (`light` uses `default.theme.css`; `material-dark` reuses `dark.theme.css`;
-`claude-style` and `notion` reuse `github-light.theme.css` — 30 palette files for
-33 themes, and `typora-gitbook` ships its own dark-on-navy palette).
+`claude-style`, `notion`, `bear` and `ia-writer-light` reuse
+`github-light.theme.css` — 31 palette files for 36 themes, and `typora-gitbook`
+and `paper-sepia` ship their own).
 `manifest.json` describes every
 entry (`id`, `label`, `appearance`, `prism`, `swatches`). `util/themeColor.ts`
 lazy-loads the files through `import.meta.glob`, `util/theme.ts` injects them

@@ -1,6 +1,6 @@
 # Themes
 
-Folira ships **33 built-in themes** — 14 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables, links) and the syntax-highlighting palette at once, so the three always agree with each other.
+Folira ships **36 built-in themes** — 17 light and 19 dark. A theme is a single choice: it sets the window chrome (title bar, sidebar, tabs, menus, settings), the page (type, headings, quotes, code blocks, tables, links) and the syntax-highlighting palette at once, so the three always agree with each other.
 
 ## Choosing a theme
 
@@ -36,14 +36,17 @@ A handful of the inherited themes still mark individual rules (code blocks, them
 | Theme | id | Notes |
 | --- | --- | --- |
 | AYU Light | `ayu-light` | Warm grey paper, gentle contrast |
+| Bear | `bear` | White paper, graphite sidebar, berry accents |
 | Catppuccin Latte | `catppuccin-latte` | Pastel light with warm neutrals |
 | Claude Style | `claude-style` | Warm paper, ink text, terracotta accents; tuned for long Chinese prose |
 | Everforest Light | `everforest-light` | Green-tinted paper |
 | GitHub Light | `github-light` | GitHub's own Markdown look: Primer chrome, Prettylights syntax |
 | Graphite | `graphite` | Neutral grey light |
 | Gruvbox Light | `gruvbox-light` | Retro, warm light |
+| iA Writer Light | `ia-writer-light` | Near-white, neutral grey, centered H1 only |
 | Light | `light` | Folira's plain light default |
 | Notion | `notion` | Light Classic reference: warm grey ink, ink-underlined links, brick-red inline code, warm panels |
+| Paper / Sepia | `paper-sepia` | Flexoki warm paper and ink; old-paper reading |
 | Rose Pine Dawn | `rose-pine-dawn` | Soft rose light |
 | Solarized Light | `solarized-light` | The classic cream background |
 | Tokyo Night Light | `tokyo-night-light` | Cool blue-white light |
@@ -80,11 +83,14 @@ Many of these themes follow colour schemes published by the developer community.
 
 - [Ayu](https://github.com/ayu-theme) — MIT
 - [Anthropic brand palette](https://www.anthropic.com) — paper `#faf9f5`, ink `#141413` and terracotta `#d97757` are the starting point for Claude Style. Its look was checked against [Typora Claude-Like Theme](https://github.com/Muyiiiii/Typora_Claude-Like_Theme) and [Claude Paper for Obsidian](https://github.com/Law-Of-Cycles/claude-paper-obsidian) (both MIT); the Folira theme is written from scratch, no upstream CSS is copied.
+- [Bear / Ursine Polar](https://github.com/noatpad/typora-theme-ursine) — MIT, © 2019 Daniel Hernandez. Colours and the graphite-sidebar idea are adapted; no upstream CSS is copied.
 - [Catppuccin](https://github.com/catppuccin/catppuccin) — MIT
 - [Dracula](https://github.com/dracula/dracula-theme) — MIT
 - [Everforest](https://github.com/sainnhe/everforest) — MIT
+- [Flexoki](https://github.com/kepano/flexoki) — MIT, © 2023 Steph Ango. Paper/ink colours are mapped; the Paper / Sepia theme and its adjusted code palette are written from scratch.
 - [GitHub: Primer](https://github.com/primer/primitives) (interface tokens and the Prettylights syntax palette) and [github-markdown-css](https://github.com/sindresorhus/github-markdown-css) (document styles) — MIT
 - [Gruvbox](https://github.com/morhetz/gruvbox) — MIT
+- [iA Writer community theme](https://github.com/tarikfayad/iA-Writer-theme-for-Typora) — no LICENSE file was present at the reviewed commit; the theme is only a visual reference and no CSS or selector was copied.
 - [Horizon](https://github.com/jolaleye/horizon-theme-vscode) — MIT
 - [Kanagawa](https://github.com/rebelot/kanagawa.nvim) — MIT
 - [Material Theme](https://github.com/material-theme/vsc-material-theme) — MIT

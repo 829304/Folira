@@ -15,7 +15,7 @@ type Swatch = {
 // the app reads for its own theme picker; these do not have to match it exactly.
 // Keep the card grid and the "more" counter derived from the shipped total so
 // a new theme cannot leave the page claiming the wrong remainder.
-const TOTAL_THEMES = 33
+const TOTAL_THEMES = 36
 
 const SWATCHES: Swatch[] = [
   { name: 'Light', bg: '#fff', fg: '#4d4d4d', accent: '#21b56f', bgBorder: '#e2e2e2' },

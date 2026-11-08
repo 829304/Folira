@@ -26,10 +26,15 @@ theme only ever ships as the pair plus the palette its manifest entry names.
 
 Theme files are mostly variables, and the generator only requires that: a theme
 has to declare the public variables its half owns. Most of the inherited themes
-still carry a tail of their own selector rules (32 of the 33 ids do — only
+still carry a tail of their own selector rules (35 of the 36 ids do — only
 `ui/light.css`, `md/light.css`, `ui/github-light.css`, `ui/claude-style.css`,
-`ui/typora-gitbook.css` and `ui/notion.css` are pure variables; One Dark alone
+`ui/typora-gitbook.css`, `ui/notion.css`, `ui/ia-writer-light.css` and
+`ui/paper-sepia.css` are pure variables; One Dark alone
 has 24 rules for scrollbars, dialogs, buttons, the title bar and the side bar).
+A UI tail may also declare public variables for a narrower scope: Bear uses
+`.side-bar { --themeColor: … }` so its dark sidebar gets a light berry while the
+light title bar keeps the darker `#be2f34`. Only a theme's palette block feeds
+the manifest; the generator validates and reads that block alone.
 The
 generator keeps those tails as written, so do not delete them while converting
 a theme to variables only. What no theme may do is move the writing column or
@@ -63,10 +68,11 @@ Style and Notion borrow that palette; Typora GitBook ships its own scoped palett
 (`prismjs/typora-gitbook.theme.css`, adapted from the Prism dark one) with the
 same `:where(.editor-wrapper) :where(.mu-code-block, .editor-wrapper > pre)` shape. All four keep
 the zero-weight inline-code rule, so one `:where` scope covers the hand-written
-bodies. All 30 palette files are referenced by the manifest; four theme ids pick
+bodies. All 31 palette files are referenced by the manifest; six theme ids pick
 a palette under another name (`light` → `default`, `material-dark` → `dark`,
-`claude-style` and `notion` → `github-light`), while `typora-gitbook` names its
-own. The other 29 themes inherited from upstream are the exception — and all but
+`claude-style`, `notion`, `bear` and `ia-writer-light` → `github-light`), while
+`typora-gitbook` and `paper-sepia` name their own. The other 29 themes inherited
+from upstream are the exception — and all but
 `light` still carry the old selector tails, unscoped and in places `!important`,
 so overriding one of those takes the same selector or a stronger one. Their 28
 Prism palettes stay global and take the familiar `.token.*` names.
@@ -286,6 +292,44 @@ from, so a later change can be diffed against the real source instead of guessed
   recolouring fenced code cannot repaint it; the nested quote keeps its right
   inset. The syntax palette is GitHub Light through `PRISM_ALIASES`; the fenced
   block keeps the warm `#f7f6f3` panel rather than Classic's red code text.
+
+- **bear** — Ursine Polar's white paper, graphite sidebar and berry accent,
+  adapted to Folira. Source: [`typora-theme-ursine`](https://github.com/noatpad/typora-theme-ursine)
+  (MIT, © 2019 Daniel Hernandez, `master` at
+  `de3c1d696e4353f6549ab3dfc7718d1cd8c92e0c`, `ursine-polar.scss`). No upstream
+  CSS or selector is copied. Page `#fbfbfb` and ink `#333333`; sidebar
+  `#2e3235` with `#d7d9da` file text, `#f3f4f4` title and `#b9bec1` secondary
+  text; light-chrome accent `#be2f34` (5.57:1 on paper) and sidebar accent
+  `#ff9a9e` (6.38:1 on the graphite); deep berry links `#be2f34`, pale code
+  `#fafafa` with the reused GitHub Light palette (minimum token 5.13:1). The
+  reference selected-text wash `#fbb6b7` is lightened to `#fde4e5` because a
+  berry link on `#fbb6b7` is 3.42:1; `#fde4e5` keeps it at 4.77:1. The dark
+  sidebar tokens are scoped under `.side-bar`, so the title bar and window
+  controls keep the light chrome's dark `#5c5f62`. Fonts, base size, line
+  height and writing width are untouched.
+- **ia-writer-light** — a Folira original following the community
+  [`iA-Writer-theme-for-Typora`](https://github.com/tarikfayad/iA-Writer-theme-for-Typora)
+  look (`master` at `fd192febb885934d86a86f8017edc9bdd335aa86`). That commit has
+  no LICENSE file, so no CSS or selector from it is copied; this is an
+  independent implementation of the observed near-white page, ink-underlined
+  links and one neutral code panel. Page `#f9f9f9`, ink `#1a1a1a`, code
+  `#f0f0f0` with the reused GitHub Light palette (minimum token 4.70:1),
+  selection `#d9d9d9`, chrome `#f7f7f7` / sidebar `#f4f4f4`, flat buttons with
+  an ink primary and ink focus ring. The reference centers every heading;
+  Folira centers **only h1** and leaves h2-h6 left, because a long Chinese
+  document with every level centered loses its reading rhythm. No font is
+  forced.
+- **paper-sepia** — a Flexoki paper/ink palette. Source:
+  [`kepano/flexoki`](https://github.com/kepano/flexoki) (MIT, © 2023 Steph Ango,
+  `main` at `8d723bac4a9ac46adfdf99d42155286977aac72a`; colour table at
+  <https://stephango.com/flexoki>). No upstream CSS or selector is copied.
+  Paper `#f2f0e5`, panel `#e6e4d9`, border `#dad8ce`, ink `#403e3c`, secondary
+  `#575653`, action brown `#9d4310` (5.66:1 on paper, 5.08:1 on the panel).
+  Quotes, table headers and fenced code use the same paper series; code is
+  `#e6e4d9`. GitHub Light's red keyword is only 4.20:1 on that panel, so the
+  theme ships a scoped `prismjs/paper-sepia.theme.css` — the same zero-weight
+  selector structure with keyword/important moved to Flexoki red-600
+  `#af3029` (5.02:1); comments stay `#59636e` (4.79:1). No font is forced.
 
 ## Checks
 
