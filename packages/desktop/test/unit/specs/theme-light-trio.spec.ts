@@ -121,16 +121,28 @@ describe('new light themes — registration', () => {
     }
   })
 
-  it('puts both custom link spellings before the theme hover colour', () => {
+  it('puts both custom link spellings before the theme colour at rest and on hover', () => {
     const fallbacks = {
       bear: '#9e252a',
       'ia-writer-light': '#000000',
       'paper-sepia': '#7f3409'
     } as const
     for (const theme of NEW_THEMES) {
-      expect(md(theme), theme).toContain(
+      const body = md(theme)
+      expect(body, theme).toContain(
+        'var(--folira-user-link-color, var(--folira-user-linkColor, var(--link-color, var(--linkColor))))'
+      )
+      expect(body, theme).toContain(
         `var(--folira-user-link-color, var(--folira-user-linkColor, ${fallbacks[theme]}))`
       )
+    }
+  })
+
+  it('keeps list indentation logical in both directions', () => {
+    for (const theme of NEW_THEMES) {
+      const body = md(theme)
+      expect(body, theme).toContain('padding-inline-start: 2em')
+      expect(body, theme).not.toContain('padding-left: 2em')
     }
   })
 })
@@ -149,11 +161,13 @@ describe('Bear', () => {
     expect(side).toContain('--sideBarTextColor: #b9bec1')
     expect(side).toContain('--sideBarTitleColor: #f3f4f4')
     expect(side).toContain('--sideBarIconColor: #c3c8cb')
+    expect(side).toContain('--iconColor: #c3c8cb')
     expect(side).toContain('--highlightThemeColor: #ff9a9e')
     expect(side).toContain('--focusColor: #ff9a9e')
 
     expect(contrast('#ff9a9e', '#2e3235')).toBeGreaterThanOrEqual(4.5)
     expect(contrast('#b9bec1', '#2e3235')).toBeGreaterThanOrEqual(4.5)
+    expect(contrast('#c3c8cb', '#2e3235')).toBeGreaterThanOrEqual(4.5)
     expect(contrast('#5c5f62', '#fbfbfb')).toBeGreaterThanOrEqual(4.5)
   })
 
@@ -222,6 +236,13 @@ describe('iA Writer Light', () => {
     }
   })
 
+  it('gives the active find match a distinct code-block surface', () => {
+    const body = md('ia-writer-light')
+    const rule = ruleIn(body, '.editor-wrapper .mu-code-block .mu-highlight')
+    expect(rule).toContain('background: #c9c9c9')
+    expect(rule).toContain('color: var(--editorColor)')
+  })
+
   it('does not add shadows to the flat chrome or change writing width', () => {
     const chrome = ui('ia-writer-light')
     expect(chrome).toContain('--fui-buttonShadow: none')
@@ -274,5 +295,12 @@ describe('Paper / Sepia', () => {
     expect(body).toContain('background: var(--codeBgColor)')
     expect(body).toContain('--fmd-tableBorderColor: #dad8ce')
     expect(body).not.toMatch(/font-family\s*:/)
+  })
+
+  it('gives the active find match a distinct warm code-block surface', () => {
+    const body = md('paper-sepia')
+    const rule = ruleIn(body, '.editor-wrapper .mu-code-block .mu-highlight')
+    expect(rule).toContain('background: rgba(157, 67, 16, 0.28)')
+    expect(rule).toContain('color: var(--editorColor)')
   })
 })

@@ -115,14 +115,15 @@
 }
 
 /* Links carry the deep brown at rest and deepen one step on hover. Either
- * public spelling of a user link colour, --link-color or --linkColor, wins on
- * hover through its bindCustomProperties() mirror before the theme default. */
+ * public spelling of a user link colour, --link-color or --linkColor, wins
+ * through its bindCustomProperties() mirror before the theme default, both at
+ * rest and on hover (including a colour set on an inner paragraph). */
 
 .editor-wrapper a,
 .editor-wrapper a.mu-inline-rule,
 .editor-wrapper .mu-link,
 .editor-wrapper .mu-inline-rule.mu-link {
-  color: var(--link-color, var(--linkColor));
+  color: var(--folira-user-link-color, var(--folira-user-linkColor, var(--link-color, var(--linkColor))));
 
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -180,9 +181,12 @@
   background: transparent;
 }
 
+/* Lists use logical inline-start padding: Muya already puts its 30px indent
+ * on the inline-start side under dir="rtl", so a physical padding-left would
+ * add a second left indent and squeeze nested lines. */
 .editor-wrapper ul,
 .editor-wrapper ol {
-  padding-left: 2em;
+  padding-inline-start: 2em;
 }
 
 .editor-wrapper li > ul,
@@ -247,6 +251,16 @@
   padding-bottom: 0.6em;
 }
 
+/* Find-in-document's current match is `.mu-highlight`; the other matches use
+ * `.mu-selection`. Both the shared highlight token and the code panel are
+ * #e6e4d9, so the active match disappears. Give the active match a deeper
+ * warm wash; the remaining matches keep the grey selection step. */
+.editor-wrapper .mu-code-block .mu-highlight {
+  color: var(--editorColor);
+
+  background: rgba(157, 67, 16, 0.28);
+}
+
 .editor-wrapper > pre {
   margin: 1.25rem 0;
   padding: 1rem;
@@ -286,4 +300,5 @@
 .editor-wrapper li.mu-task-list-item > input::before {
   border-radius: 2px;
 }
+
 

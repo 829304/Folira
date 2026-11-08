@@ -114,13 +114,14 @@
 /* Links stay berry at rest and deepen on hover. A user may override either
  * public spelling: --link-color (the kebab alias) or --linkColor (the camel
  * token). bindCustomProperties() mirrors both into --folira-user-* names, so
- * the hover rule reads those mirrors before its own berry default. */
+ * both the at-rest and hover rules read those mirrors first; this also covers
+ * a --linkColor set on an inner paragraph rather than only at :root. */
 
 .editor-wrapper a,
 .editor-wrapper a.mu-inline-rule,
 .editor-wrapper .mu-link,
 .editor-wrapper .mu-inline-rule.mu-link {
-  color: var(--link-color, var(--linkColor));
+  color: var(--folira-user-link-color, var(--folira-user-linkColor, var(--link-color, var(--linkColor))));
 
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -174,9 +175,12 @@
   padding-right: 1em;
 }
 
+/* Lists use logical inline-start padding: Muya already puts its 30px indent
+ * on the inline-start side under dir="rtl", so a physical padding-left would
+ * add a second left indent and squeeze nested lines. */
 .editor-wrapper ul,
 .editor-wrapper ol {
-  padding-left: 2em;
+  padding-inline-start: 2em;
 }
 
 .editor-wrapper li > ul,
@@ -291,4 +295,5 @@
 .editor-wrapper li.mu-task-list-item > input::before {
   border-radius: 3px;
 }
+
 

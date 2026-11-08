@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 
 const renderer = new URL('../../../../desktop/src/renderer/src/', import.meta.url);
 const read = (path: string) => readFileSync(new URL(path, renderer), 'utf8');
+const muya = new URL('../../../src/', import.meta.url);
+const readMuya = (path: string) => readFileSync(new URL(path, muya), 'utf8');
 
 const manifest = JSON.parse(read('assets/themes/manifest.json')) as Array<{ id: string; prism: string }>;
 const prismFor = (id: string): string => {
@@ -46,10 +48,12 @@ test('Bear keeps the graphite sidebar scoped away from the light title bar', asy
     await page.setContent(`<!doctype html><style>${cssFor('bear')}
         .title-bar { background: var(--editorBgColor); }
         .side-bar { background: var(--sideBarBgColor); color: var(--sideBarColor); }
+        .side-bar .left-column svg { color: var(--iconColor); }
         .side-bar input.rename { color: var(--sideBarColor); background: var(--inputBgColor); }
     </style>
     <div class="title-bar" id="titlebar">theme-sample.md</div>
     <div class="side-bar" id="sidebar">
+        <div class="left-column"><svg id="sidebar-icon" width="16" height="16"></svg></div>
         <div class="side-bar-file current"><span>current.md</span></div>
         <input class="rename" value="rename.md">
     </div>`);
@@ -64,6 +68,7 @@ test('Bear keeps the graphite sidebar scoped away from the light title bar', asy
             sideColor: side.color,
             sideTheme: side.getPropertyValue('--themeColor').trim(),
             sideHighlight: side.getPropertyValue('--highlightThemeColor').trim(),
+            iconColor: style('#sidebar-icon').color,
             titleBarColor: title.getPropertyValue('--sideBarColor').trim(),
             titleBarTheme: title.getPropertyValue('--themeColor').trim(),
             renameBackground: rename.backgroundColor,
@@ -75,6 +80,7 @@ test('Bear keeps the graphite sidebar scoped away from the light title bar', asy
     expect(result.sideColor).toBe('rgb(215, 217, 218)');
     expect(result.sideTheme).toBe('#ff9a9e');
     expect(result.sideHighlight).toBe('#ff9a9e');
+    expect(result.iconColor).toBe('rgb(195, 200, 203)');
     expect(result.titleBarColor).toBe('#5c5f62');
     expect(result.titleBarTheme).toBe('#be2f34');
     expect(result.renameBackground).toBe('rgba(255, 255, 255, 0.08)');
@@ -143,6 +149,76 @@ test('Paper / Sepia keeps the code palette above 4.5:1 on the Flexoki panel', as
     expect(contrast(colors.comment, colors.block)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(colors.string, colors.block)).toBeGreaterThanOrEqual(4.5);
 });
+
+const CODE_SEARCH_HIGHLIGHTS = {
+    'ia-writer-light': 'rgb(201, 201, 201)',
+    'paper-sepia': 'rgba(157, 67, 16, 0.28)',
+} as const;
+
+for (const theme of ['ia-writer-light', 'paper-sepia']) {
+    test(`${theme} makes the active find match visible inside a code block`, async ({ page, browserName }) => {
+        test.skip(browserName !== 'chromium', 'Checks the theme cascade in Chromium');
+        await page.setContent(`<!doctype html><style>${cssFor(theme)}
+            .mu-code-block { background: var(--codeBlockBgColor); }
+            .mu-highlight { background: var(--highlightColor); }
+            .mu-selection { background: var(--selectionColor); }
+        </style>
+        <div class="editor-wrapper"><pre class="mu-code-block"><code class="mu-code">
+            <span class="mu-highlight">needle</span><span class="mu-selection">needle</span>
+        </code></pre></div>`);
+        const colors = await page.evaluate(() => {
+            const style = (selector: string) => getComputedStyle(document.querySelector(selector)!);
+            return {
+                block: style('.mu-code-block').backgroundColor,
+                active: style('.mu-highlight').backgroundColor,
+                other: style('.mu-selection').backgroundColor,
+            };
+        });
+        expect(colors.active).toBe(CODE_SEARCH_HIGHLIGHTS[theme]);
+        expect(colors.active).not.toBe(colors.block);
+        expect(colors.active).not.toBe(colors.other);
+    });
+}
+
+for (const theme of ['bear', 'ia-writer-light', 'paper-sepia']) {
+    test(`${theme} keeps list indentation on the inline-start edge in RTL`, async ({ page, browserName }) => {
+        test.skip(browserName !== 'chromium', 'Checks the theme cascade in Chromium');
+        await page.setContent(`<!doctype html><style>${readMuya('assets/styles/blockSyntax.css')}${cssFor(theme)}</style>
+            <div class="editor-wrapper" dir="ltr"><ul class="mu-bullet-list"><li>one</li></ul></div>
+            <div class="editor-wrapper" dir="rtl"><ul class="mu-bullet-list"><li>one</li></ul></div>`);
+        const padding = await page.evaluate(() => {
+            const style = (selector: string) => {
+                const computed = getComputedStyle(document.querySelector(selector)!);
+                return { left: computed.paddingLeft, right: computed.paddingRight };
+            };
+            return {
+                ltr: style('.editor-wrapper[dir="ltr"] .mu-bullet-list'),
+                rtl: style('.editor-wrapper[dir="rtl"] .mu-bullet-list'),
+            };
+        });
+        expect(padding.ltr).toEqual({ left: '32px', right: '0px' });
+        expect(padding.rtl).toEqual({ left: '0px', right: '32px' });
+    });
+}
+
+for (const theme of ['bear', 'ia-writer-light', 'paper-sepia']) {
+    test(`${theme} honors a paragraph-scoped custom --linkColor at rest and on hover`, async ({ page, browserName }) => {
+        test.skip(browserName !== 'chromium', 'Checks the theme cascade in Chromium');
+        await page.setContent(`<!doctype html><style>${cssFor(theme)}</style>
+            <div class="editor-wrapper"><p class="local"><a id="local-link" href="#">local</a></p></div>`);
+        // This is the companion declaration bindCustomProperties() adds when a
+        // user sheet declares --linkColor on the paragraph.
+        await page.addStyleTag({
+            content: '.editor-wrapper .local { --linkColor: #007500; --folira-user-linkColor: var(--linkColor); }'
+        });
+        const color = () => page.locator('#local-link').evaluate(el => getComputedStyle(el).color);
+
+        await page.mouse.move(0, 0);
+        expect(await color(), 'a local --linkColor must apply before hover too').toBe('rgb(0, 117, 0)');
+        await page.hover('#local-link');
+        expect(await color(), 'a local --linkColor must still apply on hover').toBe('rgb(0, 117, 0)');
+    });
+}
 
 for (const theme of ['bear', 'ia-writer-light', 'paper-sepia']) {
     test(`${theme} lets custom CSS recolour the inline pill and keyword`, async ({ page, browserName }) => {
