@@ -1,12 +1,21 @@
 /* Folira Markdown theme: claude-style.
  *
- * Claude's paper/ink/terracotta palette: a warm paper background, near-black
- * ink and one terracotta accent. This file is the document half only; the
- * interface half is still the light placeholder until stage 2.
+ * Claude's paper/ink/terracotta palette for long-form Chinese prose: a warm
+ * paper background, near-black ink and one clay accent. The document half pairs
+ * with the warm chrome in `ui/claude-style.css`; syntax highlighting reuses the
+ * GitHub Light palette (`prismjs/github-light.theme.css`) because its
+ * `:where(.editor-wrapper)` scope is already zero-weight, so user CSS overrides
+ * keep working, and its Prettylights colours sit quietly on the warm paper. The
+ * palette colours tokens only; fenced blocks keep the warm grey fill from
+ * `--fmd-codeBlockBgColor`.
+ *
+ * Headings follow Claude's hierarchy: a hairline closes h1 only. h2 and below
+ * separate by size and weight, so h2 carries neither a border nor the padding
+ * that used to reserve room for one.
  */
 
 .editor-wrapper {
-  --fmd-themeColor: #d97757;
+  --fmd-themeColor: #a34f38;
   --fmd-themeColor80: rgba(217, 119, 87, 0.8);
   --fmd-themeColor70: rgba(217, 119, 87, 0.7);
   --fmd-themeColor60: rgba(217, 119, 87, 0.6);
@@ -24,7 +33,6 @@
   --fmd-editorColor10: #e4dfd4;
   --fmd-editorColor04: #ece7dc;
   --fmd-editorBgColor: #faf9f5;
-  --fmd-sideBarBgColor: #f2efe6;
   --fmd-deleteColor: #b4342a;
   --fmd-iconColor: #6b6862;
   --fmd-codeBlockBgColor: #f3efe6;
@@ -38,7 +46,6 @@
   --fmd-buttonBgColorActive: #efe9dd;
   --fmd-buttonBorderActive: var(--buttonBorder);
   --fmd-tableBorderColor: #e2ddd2;
-  --fmd-borderColor: #e2ddd2;
   --fmd-h1Color: #141413;
   --fmd-h2Color: #141413;
   --fmd-h3Color: #141413;
@@ -48,18 +55,16 @@
   --fmd-blockquoteTextColor: var(--editorColor50);
   --fmd-blockquoteBorderColor: rgba(217, 119, 87, 0.55);
   --fmd-hrColor: #e2ddd2;
-  --fmd-linkColor: #a34f38;
+  --fmd-linkColor: var(--themeColor);
   --fmd-strongColor: var(--editorColor);
   --fmd-emColor: var(--editorColor);
   --fmd-listMarkerColor: var(--editorColor50);
   --fmd-floatBgColor: #ffffff;
-  --fmd-floatShadow: rgba(15, 15, 15, 0.03) 0px 0px 0px 1px,
-    rgba(15, 15, 15, 0.04) 0px 3px 6px, rgba(15, 15, 15, 0.05) 0px 9px 24px;
   --fmd-floatBorderColor: #e2ddd2;
   --fmd-maskColor: rgba(250, 249, 245, 0.82);
 }
 
-/* Headings: 600 weight at a 1.25 line height, with a hairline under h1/h2.
+/* Headings: 600 weight at a 1.25 line height, with a hairline under h1 only.
  * The rules reach the editor (Muya renders plain `<h1>`…`<h6>` inside
  * `.mu-container`) and the settings preview (plain HTML inside
  * `.editor-wrapper`); one class plus one element keeps them equal to a user's
@@ -87,11 +92,7 @@
 }
 
 .editor-wrapper h2 {
-  padding-bottom: 0.3em;
-
   font-size: 1.5em;
-
-  border-bottom: 1px solid rgba(226, 221, 210, 0.9);
 }
 
 .editor-wrapper h3 {
@@ -204,8 +205,11 @@
   background: rgba(20, 20, 19, 0.03);
 }
 
-/* Inline code: a translucent terracotta pill. `:where(:not(pre))` zeroes the
- * exclusion's specificity, so the rule stays at (0,1,1) — equal to a user's
+/* Inline code: a translucent clay pill. The fill comes from `--codeBgColor`,
+ * the UI-axis token base.css publishes inside `.editor-wrapper`, so a custom
+ * stylesheet can recolour the pill by overriding `--codeBgColor` without
+ * unpacking this selector. `:where(:not(pre))` zeroes the exclusion's
+ * specificity, so the rule stays at (0,1,1) — equal to a user's
  * `.editor-wrapper code` and to the engine's `code.mu-inline-rule`. It comes
  * after the engine stylesheet and before `#custom-styles`, so it wins the tie
  * against the engine and yields to user CSS. */
@@ -217,14 +221,16 @@
 
   color: var(--editorColor);
 
-  background: rgba(217, 119, 87, 0.1);
+  background: var(--codeBgColor);
   border-radius: 5px;
 }
 
 /* Code blocks. The editor carries them on `.mu-code-block`; the settings
  * preview renders a plain `<pre>` directly inside `.editor-wrapper`, which the
- * `>` keeps apart from Muya's nested markup. The line-number gutter Muya
- * reserves on `padding-left` is preserved. */
+ * `>` keeps apart from Muya's nested markup. The fill is the theme's warm grey,
+ * not a colour from the Prism palette: the reused GitHub Light sheet only
+ * paints `pre.ag-paragraph`, a legacy class Muya no longer renders. The
+ * line-number gutter Muya reserves on `padding-left` is preserved. */
 
 .editor-wrapper .mu-code-block {
   padding: 1rem;

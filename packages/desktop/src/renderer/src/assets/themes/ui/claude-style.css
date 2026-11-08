@@ -1,52 +1,69 @@
 /* Folira UI theme: claude-style.
  *
- * Placeholder: the interface half lands in stage 2 (Claude paper/ink/terracotta).
- * Until then every --fui-* value is copied from ui/light.css so the pair can be
- * registered and the Markdown half can be previewed in the editor.
+ * Claude's warm chrome: paper `#faf9f5`, ink `#141413` and a single clay accent
+ * `#d97757`. The palette was checked against Claude Paper for Obsidian 1.1.0
+ * (MIT, © Law-Of-Cycles, commit cb37f4c3f5c850606a771e164cf9b3733dab731d) and
+ * the Typora Claude-Like Theme (MIT, © Muyiiiii, commit
+ * f048db7ad1678afabc10e988620f2d74e8846d05); the values here are Folira's own,
+ * no upstream CSS is copied.
+ *
+ * The accent serves two roles and they are split here: text, icons and selection
+ * use the darker `#a34f38` (5.34:1 on paper, 4.89:1 on the warm sidebar, 5.07:1
+ * on the pale clay selected fill), while the primary button keeps the original
+ * clay `#d97757` as a fill with ink on top (5.9:1). Hover and pressed states stay
+ * on that same fill, as the built-in light theme does, so the ink label keeps its
+ * contrast while the button is under a pointer.
+ *
+ * The primary button's focus ring is a solid two-layer shadow — the paper colour
+ * as a gap, then the dark accent — because the shared button style drops the
+ * native outline and an alpha shadow alone is invisible on warm paper.
+ *
+ * This half declares variables only. A pure variable block is what lets the
+ * generator prove the interface palette and the Markdown palette move apart.
  */
 
 :root {
-  --fui-themeColor: rgba(33, 181, 111, 1);
-  --fui-themeColor90: rgba(33, 181, 111, 0.9);
-  --fui-themeColor80: rgba(33, 181, 111, 0.8);
-  --fui-themeColor70: rgba(33, 181, 111, 0.7);
-  --fui-themeColor60: rgba(33, 181, 111, 0.6);
-  --fui-themeColor50: rgba(33, 181, 111, 0.5);
-  --fui-themeColor40: rgba(33, 181, 111, 0.4);
-  --fui-themeColor30: rgba(33, 181, 111, 0.3);
-  --fui-themeColor20: rgba(33, 181, 111, 0.2);
-  --fui-themeColor10: rgba(33, 181, 111, 0.1);
+  --fui-themeColor: #a34f38;
+  --fui-themeColor90: rgba(217, 119, 87, 0.9);
+  --fui-themeColor80: rgba(217, 119, 87, 0.8);
+  --fui-themeColor70: rgba(217, 119, 87, 0.7);
+  --fui-themeColor60: rgba(217, 119, 87, 0.6);
+  --fui-themeColor50: rgba(217, 119, 87, 0.5);
+  --fui-themeColor40: rgba(217, 119, 87, 0.4);
+  --fui-themeColor30: rgba(217, 119, 87, 0.3);
+  --fui-themeColor20: rgba(217, 119, 87, 0.2);
+  --fui-themeColor10: rgba(217, 119, 87, 0.1);
   --fui-highlightThemeColor: var(--themeColor);
-  --fui-highlightColor: rgba(33, 181, 111, 0.4);
-  --fui-selectionColor: rgba(0, 0, 0, 0.1);
-  --fui-editorColor: #4d4d4d;
-  --fui-editorColor80: #333333;
-  --fui-editorColor60: #666666;
-  --fui-editorColor50: #808080;
-  --fui-editorColor40: #999999;
-  --fui-editorColor30: #b3b3b3;
-  --fui-editorColor10: #e6e6e6;
-  --fui-editorColor04: #f7f7f7;
-  --fui-editorBgColor: rgba(255, 255, 255, 1);
-  --fui-deleteColor: #ff6969;
-  --fui-iconColor: #6b737b;
-  --fui-codeBgColor: #d8d8d869;
-  --fui-footnoteBgColor: rgba(0, 0, 0, 0.03);
-  --fui-inputBgColor: rgba(0, 0, 0, 0.06);
+  --fui-highlightColor: rgba(217, 119, 87, 0.35);
+  --fui-selectionColor: rgba(217, 119, 87, 0.22);
+  --fui-editorColor: #141413;
+  --fui-editorColor80: #232220;
+  --fui-editorColor60: #4a4741;
+  --fui-editorColor50: #6b6862;
+  --fui-editorColor40: #85817a;
+  --fui-editorColor30: #a8a39a;
+  --fui-editorColor10: #e4dfd4;
+  --fui-editorColor04: #ece7dc;
+  --fui-editorBgColor: #faf9f5;
+  --fui-deleteColor: #b4342a;
+  --fui-iconColor: #6b6862;
+  --fui-codeBgColor: rgba(217, 119, 87, 0.1);
+  --fui-footnoteBgColor: #f3efe6;
+  --fui-inputBgColor: rgba(20, 20, 19, 0.05);
   --fui-focusColor: var(--themeColor);
   --fui-buttonFontColor: var(--editorColor);
   --fui-buttonBgColor: #ffffff;
-  --fui-buttonBorder: 1px solid #dcdfe6;
+  --fui-buttonBorder: 1px solid #e2ddd2;
   --fui-buttonShadow: none;
   --fui-buttonFontColorHover: var(--buttonFontColor);
-  --fui-buttonBgColorHover: linear-gradient(#f9f9f9, #f2f2f2);
+  --fui-buttonBgColorHover: #f6f2e9;
   --fui-buttonBorderHover: var(--buttonBorder);
   --fui-buttonFontColorActive: var(--buttonFontColor);
-  --fui-buttonBgColorActive: #f0f0f0;
+  --fui-buttonBgColorActive: #efe9dd;
   --fui-buttonBorderActive: var(--buttonBorder);
   --fui-buttonFocusBorder: 1px solid var(--themeColor);
-  --fui-buttonPrimaryFontColor: #ffffff;
-  --fui-buttonPrimaryBgColor: var(--themeColor);
+  --fui-buttonPrimaryFontColor: #141413;
+  --fui-buttonPrimaryBgColor: #d97757;
   --fui-buttonPrimaryBorder: none;
   --fui-buttonPrimaryShadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
   --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
@@ -56,20 +73,20 @@
   --fui-buttonPrimaryBgColorActive: var(--buttonPrimaryBgColor);
   --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
   --fui-buttonPrimaryFocusBorder: none;
-  --fui-buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(13, 91, 55, 0.5), 0 0 0 1px var(--themeColor);
-  --fui-tableBorderColor: #e5e5e5;
+  --fui-buttonPrimaryFocusShadow: 0 0 0 2px var(--editorBgColor), 0 0 0 4px var(--themeColor);
+  --fui-tableBorderColor: #e2ddd2;
   --fui-headingColor: var(--editorColor80);
-  --fui-sideBarColor: rgba(0, 0, 0, 0.6);
+  --fui-sideBarColor: #5e5c57;
   --fui-sideBarIconColor: var(--iconColor);
-  --fui-sideBarTitleColor: rgba(0, 0, 0, 1);
-  --fui-sideBarTextColor: rgba(0, 0, 0, 0.4);
-  --fui-sideBarBgColor: rgba(242, 242, 242, 0.9);
-  --fui-sideBarItemHoverBgColor: rgba(0, 0, 0, 0.03);
+  --fui-sideBarTitleColor: #141413;
+  --fui-sideBarTextColor: #73726c;
+  --fui-sideBarBgColor: #f2efe6;
+  --fui-sideBarItemHoverBgColor: rgba(20, 20, 19, 0.04);
   --fui-itemBgColor: rgba(255, 255, 255, 0.6);
-  --fui-floatFontColor: rgba(0, 0, 0, 0.6);
-  --fui-floatBgColor: #fff;
-  --fui-floatHoverColor: rgba(0, 0, 0, 0.04);
-  --fui-floatBorderColor: rgba(0, 0, 0, 0.1);
-  --fui-floatShadow: rgba(15, 15, 15, 0.03) 0px 0px 0px 1px, rgba(15, 15, 15, 0.04) 0px 3px 6px, rgba(15, 15, 15, 0.05) 0px 9px 24px;
-  --fui-maskColor: rgba(232, 232, 232, 0.8);
+  --fui-floatFontColor: #6b6862;
+  --fui-floatBgColor: #ffffff;
+  --fui-floatHoverColor: rgba(20, 20, 19, 0.04);
+  --fui-floatBorderColor: #e2ddd2;
+  --fui-floatShadow: rgba(20, 20, 19, 0.04) 0 0 0 1px, rgba(20, 20, 19, 0.05) 0 3px 6px, rgba(20, 20, 19, 0.06) 0 9px 24px;
+  --fui-maskColor: rgba(250, 249, 245, 0.8);
 }
