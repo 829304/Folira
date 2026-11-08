@@ -551,7 +551,9 @@ describe('light-theme phase 2 contracts', () => {
     expect(base).toContain('text-underline-offset: 0.15em')
 
     const hover = ruleIn(gitbookMd, '.editor-wrapper .mu-inline-rule.mu-link:hover')
-    expect(hover).toContain('color: var(--link-color, #00307c)')
+    // base.css always resolves --link-color, so the hover fallback has to key
+    // off the custom-CSS mirror that only exists when the user set the alias.
+    expect(hover).toContain('color: var(--folira-user-link-color, #00307c)')
     expect(hover).toContain('text-decoration: underline')
   })
 

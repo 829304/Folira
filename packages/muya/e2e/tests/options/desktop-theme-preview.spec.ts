@@ -44,3 +44,26 @@ for (const theme of ['github-light', 'typora-gitbook']) {
         expect(bounds.textBottom, 'the final code line must fit inside the clipping frame').toBeLessThanOrEqual(bounds.clipBottom);
     });
 }
+
+test('GitBook deepens the default link on hover and keeps a custom --link-color', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'Checks the desktop theme cascade in Chromium');
+    const themeCss = ['base.css', 'ui/typora-gitbook.css', 'md/typora-gitbook.css']
+        .map(path => read(`assets/themes/${path}`))
+        .join('\n');
+    await page.setContent(`<!doctype html><style>${themeCss}</style><div class="editor-wrapper"><p><a id="link" href="#">link</a></p></div>`);
+    const color = () => page.locator('#link').evaluate(el => getComputedStyle(el).color);
+
+    expect(await color()).toBe('rgb(25, 104, 230)');
+    await page.hover('#link');
+    expect(await color(), 'the default hover must deepen to the Azure shade').toBe('rgb(0, 48, 124)');
+
+    // The desktop mirrors a user-declared --link-color into the companion name
+    // bindCustomProperties() uses; the theme must keep that colour on hover.
+    await page.addStyleTag({
+        content: '.editor-wrapper { --link-color: #123456; --folira-user-link-color: var(--link-color); }'
+    });
+    await page.mouse.move(0, 0);
+    expect(await color()).toBe('rgb(18, 52, 86)');
+    await page.hover('#link');
+    expect(await color(), 'a custom --link-color must survive hover').toBe('rgb(18, 52, 86)');
+});
