@@ -23,4 +23,7 @@ playwright-report/
 .agent/
 .tools/
 .tmp/
+# Local DSH skills/config: the differential-review skill is CC BY-SA 4.0
+# (Trail of Bits) and stays a machine-local install, not vendored here.
+.dsh/
 

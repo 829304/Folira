@@ -343,6 +343,19 @@
                 broken primary flow), P2 (real defect, limited blast radius), P3 (polish and
                 maintenance). If you find nothing at a level, say so; finish with the areas you
                 did not review.
+
+                Skill preference
+                - If the `differential-review` skill is installed (project
+                  `.dsh/skills/differential-review/SKILL.md`, or the skill catalog), load it
+                  first and follow its workflow — risk triage, git blame on removed code,
+                  blast-radius count, test coverage of the touched lines, and a written report.
+                  If it is not installed, run the same checks directly and say so in one line.
+                - The skill describes analysis, not edits. Your read-only rule still applies.
+                  This preset has no subagent tool, so run its Phase 5 inline with the
+                  `adversarial.md` reference, and return the full report in your final reply:
+                  the caller decides where the report is saved.
+                - Skip it when the skill itself says it does not apply (greenfield, docs-only,
+                  formatting) and say why in one line.
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
             config:

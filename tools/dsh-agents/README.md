@@ -37,6 +37,20 @@ subagent({ agent_preset: 'theme-agent', description: 'Add the GitHub themes', pr
 that field to the model; the default stays `standard`, so a session that never
 names a preset behaves exactly as before.
 
+## Optional review skill
+
+`review-agent` prefers the `differential-review` skill when it is installed; the
+preset text says so conditionally, and the agent falls back to running the same
+checks directly (and says one line about it) when the skill is absent.
+
+The skill is not vendored here. It is a Trail of Bits project (CC BY-SA 4.0,
+© Trail of Bits), while this repository is MIT, so a copy under `.dsh/` is a
+machine-local install and `.gitignore` excludes `/.dsh/`. Install it at
+`.dsh/skills/differential-review/` in this repository, or into the user's DSH
+skills directory; either location satisfies the preset. `review-agent` has no
+write tools, so it returns the full report in its final reply and the caller
+decides where the report is saved.
+
 ## The one override
 
 `cordis.patch.yml` restates `preset-standard` in full. A patch row replaces the
