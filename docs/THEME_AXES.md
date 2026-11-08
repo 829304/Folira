@@ -61,7 +61,7 @@ and its inline-code rule on `:where(:not(pre))` — so a user's `.token.keyword`
 `.editor-wrapper code` or `.editor-wrapper h1` rule wins on source order. Claude
 Style and Notion borrow that palette; Typora GitBook ships its own scoped palette
 (`prismjs/typora-gitbook.theme.css`, adapted from the Prism dark one) with the
-same `:where(.editor-wrapper) :where(pre, .mu-code-block)` shape. All four keep
+same `:where(.editor-wrapper) :where(.mu-code-block, .editor-wrapper > pre)` shape. All four keep
 the zero-weight inline-code rule, so one `:where` scope covers the hand-written
 bodies. All 30 palette files are referenced by the manifest; four theme ids pick
 a palette under another name (`light` → `default`, `material-dark` → `dark`,
@@ -251,7 +251,12 @@ from, so a later change can be diffed against the real source instead of guessed
   (`prismjs/typora-gitbook.theme.css`, token colours adapted from the Prism dark
   palette, comments `#9daab6`, tag/property `#ff6299`, Azure's mint keyword
   `#61e3a5` and string blue `#71a7ff`), so the code surface keeps its contrast
-  while the rest of the app stays light. The block's horizontal scroller gets
+  while the rest of the app stays light. The palette's zero-weight scope targets
+  the fenced block and the settings preview's direct `<pre>` only, so a light
+  source pane such as the HTML block's `<pre>` keeps the panel ink instead of
+  receiving the navy token colours. Find-in-document matches
+  (`.mu-highlight`/`.mu-selection`) switch to the light code ink on a stronger
+  blue/slate wash. The block's horizontal scroller gets
   its own navy track and blue-grey thumb rather than the pale global bar;
   horizontal bars are eight pixels tall so the thumb stays visible on the navy
   surface. The shared `--codeBlockBgColor` also feeds front matter,
@@ -298,7 +303,7 @@ the zero-weight shapes the hand-written themes promise: every Prism selector in
 is shared by GitHub Light, Claude Style and Notion), every inline-code rule in
 those bodies is exactly `.editor-wrapper :where(:not(pre)) > code`, and
 GitBook's own palette has the same zero-weight guard under its scoped
-`:where(.editor-wrapper) :where(pre, .mu-code-block)` prefix. The other 29
+`:where(.editor-wrapper) :where(.mu-code-block, .editor-wrapper > pre)` prefix. The other 29
 themes, whose 28 palette files stay global, take a plain `.token.keyword`, so
 the guard is scoped to the files that carry the scoped palette. The suite also
 pins the link rule in both DOM shapes, the table header token split, the navy
