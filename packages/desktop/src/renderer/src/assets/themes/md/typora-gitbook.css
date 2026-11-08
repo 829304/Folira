@@ -170,7 +170,11 @@
 .editor-wrapper a.mu-inline-rule:hover,
 .editor-wrapper .mu-link:hover,
 .editor-wrapper .mu-inline-rule.mu-link:hover {
-  color: var(--link-color, #00307c);
+  /* base.css always resolves --link-color (to the theme token when the user
+   * has not set it), so a `var(--link-color, #00307c)` fallback can never win.
+   * --folira-user-link-color exists only when the user's custom CSS sets
+   * --link-color; keep their colour on hover, otherwise deepen to Azure. */
+  color: var(--folira-user-link-color, #00307c);
 
   text-decoration: underline;
 }
