@@ -1,0 +1,290 @@
+/* Folira Markdown theme: ia-writer-light.
+ *
+ * A near-white writing page with one neutral ink and no decorative accent.
+ * The visual reference is the community iA-Writer theme for Typora
+ * (tarikfayad/iA-Writer-theme-for-Typora, master at
+ * fd192febb885934d86a86f8017edc9bdd335aa86); that repository has no LICENSE
+ * file at the pinned commit, so no upstream CSS or selector is copied.
+ *
+ * The reference centers every heading. Folira keeps the centered H1 but puts
+ * H2-H6 back on the left: a long Chinese document with every level centered
+ * loses its reading rhythm. Fonts, base size, line height and writing width
+ * stay under the editor preference; this theme contributes only hierarchy,
+ * colour and surface. Syntax highlighting is GitHub Light via PRISM_ALIASES
+ * on #f0f0f0, where its darkest token is still 4.70:1.
+ */
+
+.editor-wrapper {
+  --fmd-themeColor: #1a1a1a;
+  --fmd-themeColor90: rgba(26, 26, 26, 0.9);
+  --fmd-themeColor80: rgba(26, 26, 26, 0.8);
+  --fmd-themeColor70: rgba(26, 26, 26, 0.7);
+  --fmd-themeColor60: rgba(26, 26, 26, 0.6);
+  --fmd-themeColor50: rgba(26, 26, 26, 0.5);
+  --fmd-themeColor40: rgba(26, 26, 26, 0.4);
+  --fmd-themeColor30: rgba(26, 26, 26, 0.3);
+  --fmd-themeColor20: rgba(26, 26, 26, 0.2);
+  --fmd-themeColor10: rgba(26, 26, 26, 0.1);
+  --fmd-highlightColor: #efefef;
+  --fmd-selectionColor: #d9d9d9;
+  --fmd-editorColor: #1a1a1a;
+  --fmd-editorColor80: #333333;
+  --fmd-editorColor50: #5f5f5f;
+  --fmd-editorColor40: #8a8a8a;
+  --fmd-editorColor30: #b8b8b8;
+  --fmd-editorColor10: #e6e6e6;
+  --fmd-editorColor04: #f0f0f0;
+  --fmd-editorBgColor: #f9f9f9;
+  --fmd-deleteColor: #8a1f1f;
+  --fmd-iconColor: #5f5f5f;
+  --fmd-codeBlockBgColor: #f0f0f0;
+  --fmd-footnoteBgColor: #f0f0f0;
+  --fmd-inputBgColor: rgba(0, 0, 0, 0.05);
+  --fmd-buttonFontColor: var(--editorColor);
+  --fmd-buttonBgColor: #ffffff;
+  --fmd-buttonBorder: 1px solid #dedede;
+  --fmd-buttonBgColorHover: #f2f2f2;
+  --fmd-buttonBorderHover: var(--buttonBorder);
+  --fmd-buttonBgColorActive: #e9e9e9;
+  --fmd-buttonBorderActive: var(--buttonBorder);
+  --fmd-tableBorderColor: #e3e3e3;
+  --fmd-h1Color: #1a1a1a;
+  --fmd-h2Color: #1a1a1a;
+  --fmd-h3Color: #1a1a1a;
+  --fmd-h4Color: #1a1a1a;
+  --fmd-h5Color: #1a1a1a;
+  --fmd-h6Color: #5f5f5f;
+  --fmd-blockquoteTextColor: var(--editorColor50);
+  --fmd-blockquoteBorderColor: #c9c9c9;
+  --fmd-hrColor: #e3e3e3;
+  --fmd-linkColor: var(--themeColor);
+  --fmd-strongColor: var(--editorColor);
+  --fmd-emColor: var(--editorColor);
+  --fmd-listMarkerColor: var(--editorColor50);
+  --fmd-floatBgColor: #ffffff;
+  --fmd-floatBorderColor: #e2e2e2;
+  --fmd-maskColor: rgba(249, 249, 249, 0.82);
+}
+
+/* Only the first-level heading is centered. The rule reaches the editor's
+ * plain heading and the settings preview; H2-H6 state left explicitly so a
+ * preview or user sheet cannot inherit the H1 alignment. */
+
+.editor-wrapper h1,
+.editor-wrapper h2,
+.editor-wrapper h3,
+.editor-wrapper h4,
+.editor-wrapper h5,
+.editor-wrapper h6 {
+  margin: 1.5rem 0 0.75rem;
+  padding: 0;
+
+  font-weight: 600;
+  line-height: 1.3;
+
+  text-align: left;
+}
+
+.editor-wrapper h1 {
+  margin-top: 2rem;
+
+  font-size: 2em;
+
+  text-align: center;
+}
+
+.editor-wrapper h2 {
+  font-size: 1.5em;
+}
+
+.editor-wrapper h3 {
+  font-size: 1.25em;
+}
+
+.editor-wrapper h4 {
+  font-size: 1.1em;
+}
+
+.editor-wrapper h5 {
+  font-size: 1em;
+}
+
+.editor-wrapper h6 {
+  font-size: 0.9em;
+}
+
+.editor-wrapper p {
+  margin: 0 0 0.9rem;
+}
+
+/* Links are the ink itself: the underline, not a hue, marks them. */
+
+.editor-wrapper a,
+.editor-wrapper a.mu-inline-rule,
+.editor-wrapper .mu-link,
+.editor-wrapper .mu-inline-rule.mu-link {
+  color: var(--link-color, var(--linkColor));
+
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2rem;
+}
+
+.editor-wrapper a:hover,
+.editor-wrapper a.mu-inline-rule:hover,
+.editor-wrapper .mu-link:hover,
+.editor-wrapper .mu-inline-rule.mu-link:hover {
+  color: var(--folira-user-link-color, #000000);
+
+  text-decoration: underline;
+}
+
+.editor-wrapper strong {
+  font-weight: 600;
+}
+
+.editor-wrapper em {
+  font-style: italic;
+}
+
+/* Quotes: a neutral panel and one grey rule; no accent. */
+
+.editor-wrapper blockquote {
+  position: relative;
+  margin: 0 0 1rem;
+  padding: 10px 1em;
+
+  color: var(--blockquoteTextColor);
+
+  background: var(--editorColor04);
+  border: 0;
+  border-radius: 2px;
+}
+
+.editor-wrapper blockquote::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  display: block;
+  width: 3px;
+  height: 100%;
+
+  background: var(--blockquoteBorderColor);
+
+  content: '';
+}
+
+.editor-wrapper blockquote blockquote {
+  padding-right: 1em;
+
+  background: transparent;
+}
+
+.editor-wrapper ul,
+.editor-wrapper ol {
+  padding-left: 2em;
+}
+
+.editor-wrapper li > ul,
+.editor-wrapper li > ol {
+  margin: 0;
+}
+
+.editor-wrapper table {
+  width: auto;
+
+  border-collapse: collapse;
+}
+
+.editor-wrapper table th,
+.editor-wrapper table td {
+  padding: 6px 13px;
+}
+
+.editor-wrapper .mu-table-inner tr:first-child td,
+.editor-wrapper thead th {
+  font-weight: 600;
+
+  background: var(--editorColor04);
+}
+
+.editor-wrapper .mu-table-inner tr:nth-child(odd):not(:first-child) td,
+.editor-wrapper tbody tr:nth-child(2n) td {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.editor-wrapper :where(:not(pre)) > code {
+  padding: 0.2em 0.4em;
+
+  font-size: 85%;
+
+  color: var(--editorColor);
+
+  background: var(--codeBgColor);
+  border-radius: 3px;
+}
+
+.editor-wrapper .mu-code-block {
+  margin: 1.25rem 0;
+  padding: 1rem;
+
+  color: var(--editorColor);
+
+  background: var(--codeBlockBgColor);
+  border: 1px solid #e2e2e2;
+  border-radius: 3px;
+}
+
+.editor-wrapper .mu-code-block:has(.mu-line-numbers-rows) {
+  padding-left: 2.5em;
+}
+
+.editor-wrapper .mu-code-block .mu-line-numbers-rows {
+  top: 1rem;
+}
+
+.editor-wrapper .mu-code-block .mu-code {
+  padding-bottom: 0.6em;
+}
+
+.editor-wrapper > pre {
+  margin: 1.25rem 0;
+  padding: 1rem;
+
+  overflow: auto;
+
+  color: var(--editorColor);
+
+  background: var(--codeBlockBgColor);
+  border: 1px solid #e2e2e2;
+  border-radius: 3px;
+}
+
+.editor-wrapper pre code:not(.mu-code) {
+  padding: 0;
+
+  background: none;
+  border-radius: 0;
+}
+
+.editor-wrapper p.mu-thematic-break::before {
+  height: 0;
+
+  background: none;
+  border-top: 1px solid var(--hrColor);
+}
+
+.editor-wrapper hr {
+  height: 0;
+  margin: 1.5rem 0;
+
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--hrColor);
+}
+
+.editor-wrapper li.mu-task-list-item > input::before {
+  border-radius: 2px;
+}
+

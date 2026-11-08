@@ -1,0 +1,83 @@
+/* Folira UI theme: ia-writer-light.
+ *
+ * Near-white chrome with a single neutral ink. The visual reference is the
+ * community iA-Writer theme for Typora (tarikfayad/iA-Writer-theme-for-Typora,
+ * master at fd192febb885934d86a86f8017edc9bdd335aa86). That repository ships
+ * no LICENSE file at the pinned commit, so no CSS or selector from it is
+ * copied; this is an independent implementation of the observed near-white /
+ * neutral-grey look.
+ *
+ * The accent is the ink itself rather than a hue: current-file markers,
+ * focus rings and the primary button all read #1a1a1a. Buttons are flat, the
+ * sidebar and tabs use near-white steps, and no shadow is added. The contrast
+ * floor is met by the ink/white pair (17:1) and by the secondary #5f5f5f.
+ */
+
+:root {
+  --fui-themeColor: #1a1a1a;
+  --fui-themeColor90: rgba(26, 26, 26, 0.9);
+  --fui-themeColor80: rgba(26, 26, 26, 0.8);
+  --fui-themeColor70: rgba(26, 26, 26, 0.7);
+  --fui-themeColor60: rgba(26, 26, 26, 0.6);
+  --fui-themeColor50: rgba(26, 26, 26, 0.5);
+  --fui-themeColor40: rgba(26, 26, 26, 0.4);
+  --fui-themeColor30: rgba(26, 26, 26, 0.3);
+  --fui-themeColor20: rgba(26, 26, 26, 0.2);
+  --fui-themeColor10: rgba(26, 26, 26, 0.1);
+  --fui-highlightThemeColor: var(--themeColor);
+  --fui-highlightColor: #efefef;
+  --fui-selectionColor: #d9d9d9;
+  --fui-editorColor: #1a1a1a;
+  --fui-editorColor80: #333333;
+  --fui-editorColor60: #555555;
+  --fui-editorColor50: #5f5f5f;
+  --fui-editorColor40: #8a8a8a;
+  --fui-editorColor30: #b8b8b8;
+  --fui-editorColor10: #e6e6e6;
+  --fui-editorColor04: #f0f0f0;
+  --fui-editorBgColor: #f7f7f7;
+  --fui-deleteColor: #8a1f1f;
+  --fui-iconColor: #5f5f5f;
+  --fui-codeBgColor: #ececec;
+  --fui-footnoteBgColor: #f0f0f0;
+  --fui-inputBgColor: rgba(0, 0, 0, 0.05);
+  --fui-focusColor: var(--themeColor);
+  --fui-buttonFontColor: var(--editorColor);
+  --fui-buttonBgColor: #ffffff;
+  --fui-buttonBorder: 1px solid #dedede;
+  --fui-buttonShadow: none;
+  --fui-buttonFontColorHover: var(--buttonFontColor);
+  --fui-buttonBgColorHover: #f2f2f2;
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
+  --fui-buttonBgColorActive: #e9e9e9;
+  --fui-buttonBorderActive: var(--buttonBorder);
+  --fui-buttonFocusBorder: 1px solid var(--themeColor);
+  --fui-buttonPrimaryFontColor: #ffffff;
+  --fui-buttonPrimaryBgColor: var(--themeColor);
+  --fui-buttonPrimaryBorder: none;
+  --fui-buttonPrimaryShadow: none;
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: #000000;
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: #333333;
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFocusBorder: none;
+  --fui-buttonPrimaryFocusShadow: 0 0 0 2px var(--editorBgColor), 0 0 0 4px var(--themeColor);
+  --fui-tableBorderColor: #e2e2e2;
+  --fui-headingColor: var(--editorColor);
+  --fui-sideBarColor: #4a4a4a;
+  --fui-sideBarIconColor: var(--iconColor);
+  --fui-sideBarTitleColor: #1a1a1a;
+  --fui-sideBarTextColor: #666666;
+  --fui-sideBarBgColor: #f4f4f4;
+  --fui-sideBarItemHoverBgColor: rgba(0, 0, 0, 0.04);
+  --fui-itemBgColor: rgba(0, 0, 0, 0.06);
+  --fui-floatFontColor: #666666;
+  --fui-floatBgColor: #ffffff;
+  --fui-floatHoverColor: rgba(0, 0, 0, 0.04);
+  --fui-floatBorderColor: #e2e2e2;
+  --fui-floatShadow: rgba(0, 0, 0, 0.04) 0 0 0 1px, rgba(0, 0, 0, 0.05) 0 3px 6px;
+  --fui-maskColor: rgba(247, 247, 247, 0.82);
+}
