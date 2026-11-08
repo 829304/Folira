@@ -13,6 +13,10 @@ type Swatch = {
 // Decorative approximations picked to look right at card size. The real values
 // live in packages/desktop/src/renderer/src/assets/themes/manifest.json, which
 // the app reads for its own theme picker; these do not have to match it exactly.
+// Keep the card grid and the "more" counter derived from the shipped total so
+// a new theme cannot leave the page claiming the wrong remainder.
+const TOTAL_THEMES = 33
+
 const SWATCHES: Swatch[] = [
   { name: 'Light', bg: '#fff', fg: '#4d4d4d', accent: '#21b56f', bgBorder: '#e2e2e2' },
   { name: 'Dark', bg: '#282828', fg: '#cfcfcf', accent: '#409eff' },
@@ -33,7 +37,7 @@ export default function Themes() {
               <span className="kicker">Themes</span>
               <h2 className="sec-title">Make it yours.</h2>
               <p className="sec-desc">
-                33 built-in themes, light and dark. One choice sets the window chrome, the page and
+                {TOTAL_THEMES} built-in themes, light and dark. One choice sets the window chrome, the page and
                 the syntax colours together — and every theme is plain CSS.
               </p>
             </div>
@@ -82,7 +86,7 @@ export default function Themes() {
               ))}
             </div>
             <div className="theme-more reveal d1">
-              <span>+24 more built-in themes</span>
+              <span>+{TOTAL_THEMES - SWATCHES.length} more built-in themes</span>
             </div>
           </div>
         </div>
