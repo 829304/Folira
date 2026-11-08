@@ -19,6 +19,12 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'packages/muya/**'
+      # The desktop-theme Playwright specs read the real theme assets and the
+      # settings preview CSS, so a change there can break the Muya e2e job
+      # without touching packages/muya.
+      - 'packages/desktop/src/renderer/src/assets/themes/**'
+      - 'packages/desktop/src/renderer/src/prefComponents/theme/**'
+      - 'packages/desktop/src/renderer/src/util/themePreview.ts'
       - 'pnpm-lock.yaml'
       - '.github/workflows/muya.yml'
 
