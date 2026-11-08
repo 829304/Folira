@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { expect, test } from '../fixtures/muya';
 import { getMarkdown } from '../helpers/api';
 import { metaKey } from '../helpers/keyboard';
@@ -67,6 +68,41 @@ test.describe('cross-cell table selection', () => {
             timeout: 5_000,
             intervals: [50, 100, 250, 500],
         }).toBe(4);
+    });
+
+    test('GitBook preserves the bottom edge of a header-only selection', async ({ page, browserName }) => {
+        test.skip(browserName !== 'chromium', 'Checks the desktop theme cascade in Chromium');
+        const themes = new URL('../../../../desktop/src/renderer/src/assets/themes/', import.meta.url);
+        await page.addStyleTag({ content: ['base.css', 'ui/typora-gitbook.css', 'md/typora-gitbook.css']
+            .map(path => readFileSync(new URL(path, themes), 'utf8')).join('\n') });
+        await page.evaluate((markdown) => {
+            const muya = window.muya!;
+            muya.domNode.parentElement!.classList.add('editor-wrapper');
+            muya.setContent(`${markdown}\nAfter the table\n`);
+        }, TABLE_MD);
+        const header = page.locator(editor.table).first().locator('tr').first().locator('td').first();
+        const separator = await header.evaluate((cell) => {
+            const border = getComputedStyle(cell, '::before');
+            return { color: border.borderBottomColor, width: border.borderBottomWidth };
+        });
+        expect(separator.width).toBe('2px');
+
+        await dragSelect(page, { row: 0, column: 0 }, { row: 0, column: 1 });
+        await expect.poll(() => selectedCount(page)).toBe(2);
+        const edges = await header.evaluate((cell) => {
+            const border = getComputedStyle(cell, '::before');
+            return { top: border.borderTopColor, bottom: border.borderBottomColor };
+        });
+        expect(edges.top).not.toBe(separator.color);
+        expect.soft(edges.bottom, 'the bottom edge must use the same selection colour as the top edge').toBe(edges.top);
+
+        await page.getByText('After the table', { exact: true }).click();
+        await expect.poll(() => selectedCount(page)).toBe(0);
+        const restored = await header.evaluate((cell) => {
+            const border = getComputedStyle(cell, '::before');
+            return { color: border.borderBottomColor, width: border.borderBottomWidth };
+        });
+        expect(restored).toEqual(separator);
     });
 
     test('copy yields only the selected sub-rectangle as a GFM table', async ({ browserName, context, page }) => {
