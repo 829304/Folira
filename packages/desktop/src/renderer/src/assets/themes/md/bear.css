@@ -1,0 +1,293 @@
+/* Folira Markdown theme: bear.
+ *
+ * Ursine Polar's white paper and graphite/berry identity, adapted to Folira's
+ * body tokens. Source: noatpad/typora-theme-ursine (MIT, © 2019 Daniel
+ * Hernandez), master at de3c1d696e4353f6549ab3dfc7718d1cd8c92e0c,
+ * `ursine-polar.scss`: #fbfbfb page, #333 ink, #db4d52 berry, #be2f34 deep
+ * berry, #fafafa code surface, #fbb6b7 selected text. No upstream CSS or
+ * selector is copied; the palette is re-expressed as --fmd-* tokens.
+ *
+ * The selected-text wash is lightened to #fde4e5 because the reference
+ * #fbb6b7 puts a #be2f34 link at 3.42:1; #fde4e5 measures 4.77:1. Fonts,
+ * base size, line height and writing width are deliberately absent: those
+ * stay under the editor preference. Syntax highlighting is GitHub Light via
+ * PRISM_ALIASES; its darkest token clears 5.13:1 on #fafafa.
+ */
+
+.editor-wrapper {
+  --fmd-themeColor: #be2f34;
+  --fmd-themeColor90: rgba(190, 47, 52, 0.9);
+  --fmd-themeColor80: rgba(190, 47, 52, 0.8);
+  --fmd-themeColor70: rgba(190, 47, 52, 0.7);
+  --fmd-themeColor60: rgba(190, 47, 52, 0.6);
+  --fmd-themeColor50: rgba(190, 47, 52, 0.5);
+  --fmd-themeColor40: rgba(190, 47, 52, 0.4);
+  --fmd-themeColor30: rgba(190, 47, 52, 0.3);
+  --fmd-themeColor20: rgba(190, 47, 52, 0.2);
+  --fmd-themeColor10: rgba(190, 47, 52, 0.1);
+  --fmd-highlightColor: #fde4e5;
+  --fmd-selectionColor: #fde4e5;
+  --fmd-editorColor: #333333;
+  --fmd-editorColor80: #262626;
+  --fmd-editorColor50: #6b6b6b;
+  --fmd-editorColor40: #858585;
+  --fmd-editorColor30: #b3b3b3;
+  --fmd-editorColor10: #e5e5e5;
+  --fmd-editorColor04: #f3f3f3;
+  --fmd-editorBgColor: #fbfbfb;
+  --fmd-deleteColor: #be2f34;
+  --fmd-iconColor: #666666;
+  --fmd-codeBlockBgColor: #fafafa;
+  --fmd-footnoteBgColor: #f0f0f0;
+  --fmd-inputBgColor: rgba(51, 51, 51, 0.05);
+  --fmd-buttonFontColor: var(--editorColor);
+  --fmd-buttonBgColor: #ffffff;
+  --fmd-buttonBorder: 1px solid #e5e5e5;
+  --fmd-buttonBgColorHover: #f5f5f5;
+  --fmd-buttonBorderHover: var(--buttonBorder);
+  --fmd-buttonBgColorActive: #ececec;
+  --fmd-buttonBorderActive: var(--buttonBorder);
+  --fmd-tableBorderColor: #e3e3e3;
+  --fmd-h1Color: #262626;
+  --fmd-h2Color: #262626;
+  --fmd-h3Color: #262626;
+  --fmd-h4Color: #262626;
+  --fmd-h5Color: #262626;
+  --fmd-h6Color: #6b6b6b;
+  --fmd-blockquoteTextColor: var(--editorColor50);
+  --fmd-blockquoteBorderColor: #c9c9c9;
+  --fmd-hrColor: #e3e3e3;
+  --fmd-linkColor: var(--themeColor);
+  --fmd-strongColor: var(--editorColor);
+  --fmd-emColor: var(--editorColor);
+  --fmd-listMarkerColor: var(--editorColor50);
+  --fmd-floatBgColor: #ffffff;
+  --fmd-floatBorderColor: #e5e5e5;
+  --fmd-maskColor: rgba(251, 251, 251, 0.82);
+}
+
+/* Bear headings are compact and heavy: no rule under h1, the hierarchy comes
+ * from weight and size. The settings preview renders plain headings, while
+ * Muya wraps them in `.mu-container`; `.editor-wrapper` covers both. */
+
+.editor-wrapper h1,
+.editor-wrapper h2,
+.editor-wrapper h3,
+.editor-wrapper h4,
+.editor-wrapper h5,
+.editor-wrapper h6 {
+  margin: 1.6rem 0 0.8rem;
+  padding: 0;
+
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.editor-wrapper h1 {
+  font-size: 2em;
+}
+
+.editor-wrapper h2 {
+  font-size: 1.5em;
+}
+
+.editor-wrapper h3 {
+  font-size: 1.25em;
+}
+
+.editor-wrapper h4 {
+  font-size: 1.1em;
+}
+
+.editor-wrapper h5 {
+  font-size: 1em;
+}
+
+.editor-wrapper h6 {
+  font-size: 0.9em;
+}
+
+.editor-wrapper p {
+  margin: 0 0 1rem;
+}
+
+/* Links stay berry at rest and deepen on hover; the fallback reads the mirror
+ * base.css creates only when custom CSS declares --link-color, so a custom
+ * link colour also survives the hover rule. */
+
+.editor-wrapper a,
+.editor-wrapper a.mu-inline-rule,
+.editor-wrapper .mu-link,
+.editor-wrapper .mu-inline-rule.mu-link {
+  color: var(--link-color, var(--linkColor));
+
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2rem;
+}
+
+.editor-wrapper a:hover,
+.editor-wrapper a.mu-inline-rule:hover,
+.editor-wrapper .mu-link:hover,
+.editor-wrapper .mu-inline-rule.mu-link:hover {
+  color: var(--folira-user-link-color, #9e252a);
+
+  text-decoration: underline;
+}
+
+.editor-wrapper strong {
+  font-weight: 600;
+}
+
+.editor-wrapper em {
+  font-style: italic;
+}
+
+/* Quotes: one graphite bar, no panel behind it, so the page stays paper. */
+
+.editor-wrapper blockquote {
+  position: relative;
+  margin: 0 0 1rem;
+  padding: 0 1em;
+
+  color: var(--blockquoteTextColor);
+
+  border: 0;
+}
+
+.editor-wrapper blockquote::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  display: block;
+  width: 0.25em;
+  height: 100%;
+
+  background: var(--blockquoteBorderColor);
+
+  content: '';
+}
+
+.editor-wrapper blockquote blockquote {
+  padding-right: 1em;
+}
+
+.editor-wrapper ul,
+.editor-wrapper ol {
+  padding-left: 2em;
+}
+
+.editor-wrapper li > ul,
+.editor-wrapper li > ol {
+  margin: 0;
+}
+
+/* Tables: Muya draws the cell lines as ::before boxes, so only padding and the
+ * header/zebra fills are added here. */
+
+.editor-wrapper table {
+  width: auto;
+
+  border-collapse: collapse;
+}
+
+.editor-wrapper table th,
+.editor-wrapper table td {
+  padding: 6px 13px;
+}
+
+.editor-wrapper .mu-table-inner tr:first-child td,
+.editor-wrapper thead th {
+  font-weight: 600;
+
+  background: var(--editorColor04);
+}
+
+.editor-wrapper .mu-table-inner tr:nth-child(odd):not(:first-child) td,
+.editor-wrapper tbody tr:nth-child(2n) td {
+  background: rgba(51, 51, 51, 0.03);
+}
+
+/* Inline code: the UI-axis --codeBgColor is intentionally read directly, so a
+ * custom stylesheet can recolour the pill without unpacking this selector.
+ * :where(:not(pre)) keeps the rule at (0,1,1) and user CSS wins on order. */
+
+.editor-wrapper :where(:not(pre)) > code {
+  padding: 0.2em 0.4em;
+
+  font-size: 85%;
+
+  color: var(--editorColor);
+
+  background: var(--codeBgColor);
+  border-radius: 3px;
+}
+
+/* Fenced code: the reference's pale sheet, with the gutter Muya reserves kept
+ * intact. The fill is a token, not a Prism rule, so --codeBlockBgColor remains
+ * the public override point. */
+
+.editor-wrapper .mu-code-block {
+  margin: 1.25rem 0;
+  padding: 1rem;
+
+  color: var(--editorColor);
+
+  background: var(--codeBlockBgColor);
+  border: 1px solid #ececec;
+  border-radius: 4px;
+}
+
+.editor-wrapper .mu-code-block:has(.mu-line-numbers-rows) {
+  padding-left: 2.5em;
+}
+
+.editor-wrapper .mu-code-block .mu-line-numbers-rows {
+  top: 1rem;
+}
+
+.editor-wrapper .mu-code-block .mu-code {
+  padding-bottom: 0.6em;
+}
+
+.editor-wrapper > pre {
+  margin: 1.25rem 0;
+  padding: 1rem;
+
+  overflow: auto;
+
+  color: var(--editorColor);
+
+  background: var(--codeBlockBgColor);
+  border: 1px solid #ececec;
+  border-radius: 4px;
+}
+
+.editor-wrapper pre code:not(.mu-code) {
+  padding: 0;
+
+  background: none;
+  border-radius: 0;
+}
+
+.editor-wrapper p.mu-thematic-break::before {
+  height: 0;
+
+  background: none;
+  border-top: 1px solid var(--hrColor);
+}
+
+.editor-wrapper hr {
+  height: 0;
+  margin: 1.5rem 0;
+
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--hrColor);
+}
+
+.editor-wrapper li.mu-task-list-item > input::before {
+  border-radius: 3px;
+}
+

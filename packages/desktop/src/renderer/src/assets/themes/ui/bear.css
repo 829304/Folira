@@ -1,0 +1,121 @@
+/* Folira UI theme: bear.
+ *
+ * White paper, graphite chrome and one berry accent. The palette is adapted
+ * from Ursine Polar (noatpad/typora-theme-ursine, MIT, © 2019 Daniel
+ * Hernandez, master at de3c1d696e4353f6549ab3dfc7718d1cd8c92e0c): page
+ * #fbfbfb, ink #333, graphite sidebar #2e3235 with #f0f0f0 text, berry
+ * #db4d52, deep berry #be2f34, pale code #fafafa and the reference selected
+ * text #fbb6b7. No upstream selector or CSS block is copied; the values are
+ * re-expressed as Folira tokens.
+ *
+ * Two adaptations matter. The dark sidebar is scoped to `.side-bar` because
+ * Folira's title bar and window controls read the same sideBarColor tokens as
+ * the tree; a global light-on-dark value would disappear on the light title
+ * bar. And the selected-text wash is lightened from #fbb6b7 to #fde4e5: a
+ * berry link on #fbb6b7 measures 3.42:1, while #fde4e5 keeps it at 4.77:1.
+ *
+ * This half declares variables at :root and one chrome tail for the sidebar.
+ * The tail is deliberately scoped to `.side-bar`: the generator's
+ * CHROME_SELECTOR already classifies it as chrome, so the body never inherits
+ * the sidebar accent. No !important.
+ */
+
+:root {
+  --fui-themeColor: #be2f34;
+  --fui-themeColor90: rgba(190, 47, 52, 0.9);
+  --fui-themeColor80: rgba(190, 47, 52, 0.8);
+  --fui-themeColor70: rgba(190, 47, 52, 0.7);
+  --fui-themeColor60: rgba(190, 47, 52, 0.6);
+  --fui-themeColor50: rgba(190, 47, 52, 0.5);
+  --fui-themeColor40: rgba(190, 47, 52, 0.4);
+  --fui-themeColor30: rgba(190, 47, 52, 0.3);
+  --fui-themeColor20: rgba(190, 47, 52, 0.2);
+  --fui-themeColor10: rgba(190, 47, 52, 0.1);
+  --fui-highlightThemeColor: var(--themeColor);
+  --fui-highlightColor: #fde4e5;
+  --fui-selectionColor: #fde4e5;
+  --fui-editorColor: #333333;
+  --fui-editorColor80: #262626;
+  --fui-editorColor60: #555555;
+  --fui-editorColor50: #6b6b6b;
+  --fui-editorColor40: #8c8c8c;
+  --fui-editorColor30: #b3b3b3;
+  --fui-editorColor10: #e8e8e8;
+  --fui-editorColor04: #f3f3f3;
+  --fui-editorBgColor: #fbfbfb;
+  --fui-deleteColor: #be2f34;
+  --fui-iconColor: #666666;
+  --fui-codeBgColor: #f0f0f0;
+  --fui-footnoteBgColor: #f0f0f0;
+  --fui-inputBgColor: rgba(51, 51, 51, 0.06);
+  --fui-focusColor: var(--themeColor);
+  --fui-buttonFontColor: var(--editorColor);
+  --fui-buttonBgColor: #ffffff;
+  --fui-buttonBorder: 1px solid #e5e5e5;
+  --fui-buttonShadow: none;
+  --fui-buttonFontColorHover: var(--buttonFontColor);
+  --fui-buttonBgColorHover: #f5f5f5;
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
+  --fui-buttonBgColorActive: #ececec;
+  --fui-buttonBorderActive: var(--buttonBorder);
+  --fui-buttonFocusBorder: 1px solid var(--themeColor);
+  --fui-buttonPrimaryFontColor: #ffffff;
+  --fui-buttonPrimaryBgColor: var(--themeColor);
+  --fui-buttonPrimaryBorder: none;
+  --fui-buttonPrimaryShadow: none;
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: #a9282d;
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: #8f2227;
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFocusBorder: none;
+  --fui-buttonPrimaryFocusShadow: 0 0 0 2px var(--editorBgColor), 0 0 0 4px var(--themeColor);
+  --fui-tableBorderColor: #e5e5e5;
+  --fui-headingColor: var(--editorColor80);
+  --fui-sideBarColor: #5c5f62;
+  --fui-sideBarIconColor: var(--iconColor);
+  --fui-sideBarTitleColor: #262626;
+  --fui-sideBarTextColor: #6b6b6b;
+  --fui-sideBarBgColor: #f2f2f2;
+  --fui-sideBarItemHoverBgColor: rgba(0, 0, 0, 0.04);
+  --fui-itemBgColor: rgba(255, 255, 255, 0.6);
+  --fui-floatFontColor: #6b6b6b;
+  --fui-floatBgColor: #ffffff;
+  --fui-floatHoverColor: rgba(0, 0, 0, 0.04);
+  --fui-floatBorderColor: #e5e5e5;
+  --fui-floatShadow: rgba(51, 51, 51, 0.04) 0 0 0 1px, rgba(51, 51, 51, 0.05) 0 3px 6px,
+    rgba(51, 51, 51, 0.06) 0 9px 24px;
+  --fui-maskColor: rgba(251, 251, 251, 0.82);
+}
+
+/* The graphite sidebar. Its light berry is 6.38:1 on #2e3235 and its file text
+ * 6.90:1; the light chrome above keeps the dark title-bar controls. Inputs and
+ * the search wash inherit the same dark surface, so rename/new-file and
+ * sidebar-search states do not fall back to pale chrome tokens. */
+.side-bar {
+  --themeColor: #ff9a9e;
+  --themeColor90: rgba(255, 154, 158, 0.9);
+  --themeColor80: rgba(255, 154, 158, 0.8);
+  --themeColor70: rgba(255, 154, 158, 0.7);
+  --themeColor60: rgba(255, 154, 158, 0.6);
+  --themeColor50: rgba(255, 154, 158, 0.5);
+  --themeColor40: rgba(255, 154, 158, 0.4);
+  --themeColor30: rgba(255, 154, 158, 0.3);
+  --themeColor20: rgba(255, 154, 158, 0.2);
+  --themeColor10: rgba(255, 154, 158, 0.1);
+  --highlightThemeColor: #ff9a9e;
+  --focusColor: #ff9a9e;
+  --highlightColor: rgba(219, 77, 82, 0.35);
+  --selectionColor: rgba(219, 77, 82, 0.3);
+  --sideBarBgColor: #2e3235;
+  --sideBarColor: #d7d9da;
+  --sideBarTitleColor: #f3f4f4;
+  --sideBarTextColor: #b9bec1;
+  --sideBarIconColor: #c3c8cb;
+  --sideBarItemHoverBgColor: #202020;
+  --itemBgColor: rgba(255, 255, 255, 0.1);
+  --inputBgColor: rgba(255, 255, 255, 0.08);
+  --floatBorderColor: rgba(255, 255, 255, 0.18);
+}
