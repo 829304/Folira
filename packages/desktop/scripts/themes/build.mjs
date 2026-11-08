@@ -32,7 +32,13 @@ import { MD_SCOPE, parseBlocks, parseDeclarations, resolveValue, stripComments, 
 // `packages/desktop` as the working directory, one level below the repo root.
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 const RENDERER = path.join(ROOT, 'packages/desktop/src/renderer/src')
-const THEMES = path.join(RENDERER, 'assets/themes')
+// The theme directory is overridable so the generator can be exercised on a
+// temporary fixture without touching the checked-in assets — see
+// test/unit/specs/theme-generator-isolation.spec.ts. Only this directory moves;
+// tokens.json, light-defaults.json and index.css are still read from the repo.
+const THEMES = process.env.FOLIRA_THEMES_DIR
+  ? path.resolve(process.env.FOLIRA_THEMES_DIR)
+  : path.join(RENDERER, 'assets/themes')
 const INDEX_CSS = path.join(RENDERER, 'assets/styles/index.css')
 const TOKENS_FILE = path.join(ROOT, 'packages/desktop/scripts/themes/tokens.json')
 const DEFAULTS_FILE = path.join(ROOT, 'packages/desktop/scripts/themes/light-defaults.json')
@@ -53,9 +59,10 @@ const CHROME_SELECTOR =
 
 /** Prism themes that ship under a different name than the editor theme. */
 const PRISM_ALIASES = {
-  'claude-style': 'solarized-light',
+  'claude-style': 'github-light',
   'material-dark': 'dark',
-  light: 'default'
+  light: 'default',
+  notion: 'github-light'
 }
 
 /**
@@ -224,8 +231,10 @@ const titleCase = id =>
 
 // Ids whose product name is not a title-cased slug. `titleCase` shortens a word
 // of three letters or less to upper case (`one-dark` → "One Dark"), which is
-// right for "One" and wrong for "GitHub".
-const LABELS = { 'github-light': 'GitHub Light' }
+// right for "One" and wrong for "GitHub". A word it only capitalises stays
+// wrong wherever the product spells it with an inner capital: "gitbook" would
+// become "Gitbook".
+const LABELS = { 'github-light': 'GitHub Light', 'typora-gitbook': 'Typora GitBook' }
 
 const labelOf = id => LABELS[id] ?? titleCase(id)
 
@@ -383,14 +392,28 @@ function resolveText (text, literals) {
   }
   return out.includes('var(') ? null : out
 }
-function themeLiterals (id) {
+/**
+ * The literals one axis resolves its references against, with the axis prefix
+ * stripped.
+ *
+ * restoreReferences runs per file because a theme's halves are two scopes: the
+ * chrome's `--themeColor` is not the Markdown `--themeColor`, and GitBook keeps
+ * a different one in each. Merging the files with the Markdown half last let a
+ * body colour decide whether a chrome literal "was" the default, so the
+ * explicit `#0f5fd8` button hover compared against the body accent and was
+ * rewritten to `var(--buttonPrimaryBgColor)` — a reference that then resolved
+ * to the wrong blue. The own axis is read last so it wins every name both
+ * halves declare; the other half only fills names this axis leaves undefined,
+ * which is what a cross-axis `var()` needs to resolve at all.
+ */
+function themeLiterals (id, kind) {
   const literals = new Map()
-  for (const kind of ['ui', 'md']) {
-    const file = path.join(THEMES, `${kind}/${id}.css`)
+  for (const which of [kind === 'ui' ? 'md' : 'ui', kind]) {
+    const file = path.join(THEMES, `${which}/${id}.css`)
     if (!fs.existsSync(file)) continue
     for (const [name, value] of variablesOf(fs.readFileSync(file, 'utf8'))) {
-      if (!name.startsWith(PREFIX[kind])) continue
-      literals.set(name.slice(PREFIX[kind].length), value)
+      if (!name.startsWith(PREFIX[which])) continue
+      literals.set(name.slice(PREFIX[which].length), value)
     }
   }
   return literals
@@ -444,8 +467,8 @@ function aggregate () {
   const lightDefaults = new Map(
     Object.entries(JSON.parse(fs.readFileSync(DEFAULTS_FILE, 'utf8')))
   )
-  for (const id of uiIds) restoreReferences('ui', path.join(THEMES, `ui/${id}.css`), lightDefaults, themeLiterals(id))
-  for (const id of mdIds) restoreReferences('md', path.join(THEMES, `md/${id}.css`), lightDefaults, themeLiterals(id))
+  for (const id of uiIds) restoreReferences('ui', path.join(THEMES, `ui/${id}.css`), lightDefaults, themeLiterals(id, 'ui'))
+  for (const id of mdIds) restoreReferences('md', path.join(THEMES, `md/${id}.css`), lightDefaults, themeLiterals(id, 'md'))
   const lightLiterals = new Map()
   for (const file of ['ui/light.css', 'md/light.css']) {
     for (const [name, value] of variablesOf(fs.readFileSync(path.join(THEMES, file), 'utf8'))) {
