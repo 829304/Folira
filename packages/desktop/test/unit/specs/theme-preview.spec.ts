@@ -542,14 +542,42 @@ describe('light-theme phase 2 contracts', () => {
     expect(selectors).toContain('.editor-wrapper a')
 
     const base = ruleIn(gitbookMd, '.editor-wrapper .mu-inline-rule.mu-link')
-    expect(base).toContain('color: var(--linkColor)')
+    // `--link-color` is the published alias the user's custom CSS overrides
+    // (base.css binds it to `--folira-user-link-color`); fall back to the
+    // theme's own token only when the user has not set it.
+    expect(base).toContain('color: var(--link-color, var(--linkColor))')
     expect(base).toContain('text-decoration: underline')
     expect(base).toContain('text-decoration-thickness: 1px')
     expect(base).toContain('text-underline-offset: 0.15em')
 
     const hover = ruleIn(gitbookMd, '.editor-wrapper .mu-inline-rule.mu-link:hover')
-    expect(hover).toContain('color: #00307c')
+    expect(hover).toContain('color: var(--link-color, #00307c)')
     expect(hover).toContain('text-decoration: underline')
+  })
+
+  it('lets a custom --link-color override every hand-written link colour', () => {
+    // The desktop publishes --link-color from the user's custom property; a
+    // theme that reads only --linkColor silently drops that override.
+    for (const id of ['claude-style', 'typora-gitbook', 'notion']) {
+      expect(readTheme('md', id)).toContain('color: var(--link-color, var(--linkColor))')
+    }
+  })
+
+  it('keeps the table header rule width-only so selection can repaint both edges', () => {
+    const rule = ruleIn(gitbookMd, '.editor-wrapper .mu-table-inner tr:first-child td::before')
+    expect(rule).toContain('border-bottom-width: 2px')
+    // Setting the colour here would win over Muya's mu-table-cell-border-* classes.
+    expect(rule).not.toContain('border-bottom-color')
+    expect(rule).not.toContain('var(--tableBorderColor)')
+  })
+
+  it('keeps the preview code block inside its clipped frame', () => {
+    // The settings preview is a fixed, zoomed frame; page-size spacing would
+    // push the last code line under its fade. The editor keeps its rhythm.
+    const preview = ruleIn(gitbookMd, '.editor-wrapper > pre')
+    expect(preview).toContain('margin: 0')
+    expect(preview).toContain('padding: 8px 1.5rem 6px')
+    expect(ruleIn(gitbookMd, '.editor-wrapper > blockquote')).toContain('margin-bottom: 0')
   })
 
   it('keeps the GitBook code surface light-on-navy in both code paths', () => {
@@ -669,7 +697,7 @@ describe('light-theme phase 2 contracts (Notion)', () => {
     expect(selectors).toContain('.editor-wrapper a')
 
     const base = ruleIn(notionMd, '.editor-wrapper .mu-inline-rule.mu-link')
-    expect(base).toContain('color: var(--linkColor)')
+    expect(base).toContain('color: var(--link-color, var(--linkColor))')
     expect(base).toContain('text-decoration: underline')
     expect(base).toContain('text-decoration-thickness: 1px')
     expect(base).toContain('text-underline-offset: 0.2rem')
