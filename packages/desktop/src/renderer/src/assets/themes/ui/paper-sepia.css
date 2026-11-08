@@ -1,0 +1,83 @@
+/* Folira UI theme: paper-sepia.
+ *
+ * A warm-paper chrome built from Flexoki (kepano/flexoki, MIT, © 2023 Steph
+ * Ango, main at 8d723bac4a9ac46adfdf99d42155286977aac72a; palette at
+ * https://stephango.com/flexoki). The base steps are paper #f2f0e5, base-100
+ * #e6e4d9, base-150 #dad8ce, base-700 #575653 and base-800 #403e3c. The
+ * action colour is the requested deep brown #9d4310, 5.66:1 on paper and
+ * 5.08:1 on the panel. No upstream CSS or selector is copied.
+ *
+ * The palette stays quieter than Gruvbox Light and darker/warmer than Claude
+ * Style: paper is a real warm neutral rather than cream, and the accent is
+ * used only for links and interactive states.
+ */
+
+:root {
+  --fui-themeColor: #9d4310;
+  --fui-themeColor90: rgba(157, 67, 16, 0.9);
+  --fui-themeColor80: rgba(157, 67, 16, 0.8);
+  --fui-themeColor70: rgba(157, 67, 16, 0.7);
+  --fui-themeColor60: rgba(157, 67, 16, 0.6);
+  --fui-themeColor50: rgba(157, 67, 16, 0.5);
+  --fui-themeColor40: rgba(157, 67, 16, 0.4);
+  --fui-themeColor30: rgba(157, 67, 16, 0.3);
+  --fui-themeColor20: rgba(157, 67, 16, 0.2);
+  --fui-themeColor10: rgba(157, 67, 16, 0.1);
+  --fui-highlightThemeColor: var(--themeColor);
+  --fui-highlightColor: #e6e4d9;
+  --fui-selectionColor: #dad8ce;
+  --fui-editorColor: #403e3c;
+  --fui-editorColor80: #343331;
+  --fui-editorColor60: #575653;
+  --fui-editorColor50: #575653;
+  --fui-editorColor40: #878580;
+  --fui-editorColor30: #b7b5ac;
+  --fui-editorColor10: #dad8ce;
+  --fui-editorColor04: #e6e4d9;
+  --fui-editorBgColor: #f2f0e5;
+  --fui-deleteColor: #af3029;
+  --fui-iconColor: #6f6e69;
+  --fui-codeBgColor: #e6e4d9;
+  --fui-footnoteBgColor: #e6e4d9;
+  --fui-inputBgColor: rgba(64, 62, 60, 0.07);
+  --fui-focusColor: var(--themeColor);
+  --fui-buttonFontColor: var(--editorColor);
+  --fui-buttonBgColor: #faf8f0;
+  --fui-buttonBorder: 1px solid #dad8ce;
+  --fui-buttonShadow: none;
+  --fui-buttonFontColorHover: var(--buttonFontColor);
+  --fui-buttonBgColorHover: #ece9df;
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
+  --fui-buttonBgColorActive: #e6e4d9;
+  --fui-buttonBorderActive: var(--buttonBorder);
+  --fui-buttonFocusBorder: 1px solid var(--themeColor);
+  --fui-buttonPrimaryFontColor: #ffffff;
+  --fui-buttonPrimaryBgColor: var(--themeColor);
+  --fui-buttonPrimaryBorder: none;
+  --fui-buttonPrimaryShadow: none;
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: #82360a;
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: #6f2f0a;
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFocusBorder: none;
+  --fui-buttonPrimaryFocusShadow: 0 0 0 2px var(--editorBgColor), 0 0 0 4px var(--themeColor);
+  --fui-tableBorderColor: #dad8ce;
+  --fui-headingColor: var(--editorColor);
+  --fui-sideBarColor: #575653;
+  --fui-sideBarIconColor: var(--iconColor);
+  --fui-sideBarTitleColor: #403e3c;
+  --fui-sideBarTextColor: #575653;
+  --fui-sideBarBgColor: #e6e4d9;
+  --fui-sideBarItemHoverBgColor: rgba(64, 62, 60, 0.06);
+  --fui-itemBgColor: rgba(255, 252, 240, 0.6);
+  --fui-floatFontColor: #575653;
+  --fui-floatBgColor: #faf8f0;
+  --fui-floatHoverColor: #ece9df;
+  --fui-floatBorderColor: #dad8ce;
+  --fui-floatShadow: rgba(64, 62, 60, 0.04) 0 0 0 1px, rgba(64, 62, 60, 0.05) 0 3px 6px,
+    rgba(64, 62, 60, 0.06) 0 9px 24px;
+  --fui-maskColor: rgba(242, 240, 229, 0.82);
+}

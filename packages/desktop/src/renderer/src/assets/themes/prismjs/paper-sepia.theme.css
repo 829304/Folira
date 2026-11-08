@@ -1,0 +1,143 @@
+/*
+ * Prism.js Paper / Sepia theme
+ * Derived from the repository's github-light.theme.css: same Prism selectors
+ * and literal ordering, so the zero-specificity scope and custom-CSS contract
+ * are unchanged. Only atrule/keyword/important move to Flexoki red-600
+ * #af3029 so they clear 4.5:1 on the Flexoki panel #e6e4d9; GitHub Light's
+ * #cf222e measures 4.20:1 there.
+ *
+ * GitHub Light attribution: Primer Prettylights, published by @primer/primitives
+ * 11.10.0 (MIT, © 2018 GitHub, Inc.; dist/css/functional/themes/light.css).
+ * Flexoki attribution: Flexoki by Steph Ango (MIT, © 2023 Steph Ango),
+ * https://stephango.com/flexoki.
+ *
+ * The scope rides on `:where(.editor-wrapper)`, which adds no specificity, so
+ * each rule below keeps only the weight of its own token classes. The palette
+ * therefore reaches the editor body and the settings preview without outranking
+ * a user's `.token.keyword` in the later custom-CSS slot.
+ */
+
+:where(.editor-wrapper) code[class*='language-'],
+:where(.editor-wrapper) pre.ag-paragraph {
+  color: #1f2328;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+  overflow: visible;
+  text-shadow: none;
+}
+
+:where(.editor-wrapper) pre.ag-paragraph {
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 0.3em;
+}
+
+:where(.editor-wrapper) :where(:not(pre)) > code[class*='language-'],
+:where(.editor-wrapper) pre.ag-paragraph {
+  background: #f6f8fa;
+}
+
+:where(.editor-wrapper) :where(:not(pre)) > code[class*='language-'] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+:where(.editor-wrapper) .token.comment,
+:where(.editor-wrapper) .token.prolog,
+:where(.editor-wrapper) .token.doctype,
+:where(.editor-wrapper) .token.cdata {
+  color: #59636e;
+}
+
+:where(.editor-wrapper) .token.punctuation {
+  color: #1f2328;
+}
+
+:where(.editor-wrapper) .namespace {
+  opacity: 0.7;
+}
+
+:where(.editor-wrapper) .token.property,
+:where(.editor-wrapper) .token.tag,
+:where(.editor-wrapper) .token.constant,
+:where(.editor-wrapper) .token.symbol,
+:where(.editor-wrapper) .token.boolean,
+:where(.editor-wrapper) .token.number {
+  color: #0550ae;
+}
+
+:where(.editor-wrapper) .token.deleted {
+  color: #82071e;
+}
+
+:where(.editor-wrapper) .token.selector,
+:where(.editor-wrapper) .token.attr-name,
+:where(.editor-wrapper) .token.string,
+:where(.editor-wrapper) .token.char,
+:where(.editor-wrapper) .token.builtin,
+:where(.editor-wrapper) .token.attr-value {
+  color: #0a3069;
+}
+
+:where(.editor-wrapper) .token.inserted {
+  color: #116329;
+}
+
+:where(.editor-wrapper) .token.operator,
+:where(.editor-wrapper) .token.entity {
+  color: #1f2328;
+}
+
+:where(.editor-wrapper) .token.url,
+:where(.editor-wrapper) .language-css .token.string,
+:where(.editor-wrapper) .style .token.string {
+  color: #0a3069;
+}
+
+:where(.editor-wrapper) .token.atrule,
+:where(.editor-wrapper) .token.keyword {
+  color: #af3029;
+}
+
+:where(.editor-wrapper) .token.function,
+:where(.editor-wrapper) .token.class-name {
+  color: #6639ba;
+}
+
+:where(.editor-wrapper) .token.regex {
+  color: #116329;
+}
+
+:where(.editor-wrapper) .token.variable {
+  color: #953800;
+}
+
+:where(.editor-wrapper) .token.important {
+  color: #af3029;
+  font-weight: bold;
+}
+
+:where(.editor-wrapper) .token.bold {
+  color: #1f2328;
+  font-weight: bold;
+}
+
+:where(.editor-wrapper) .token.italic {
+  color: #1f2328;
+  font-style: italic;
+}
+
+:where(.editor-wrapper) .token.entity {
+  cursor: help;
+}
