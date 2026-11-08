@@ -4,6 +4,7 @@
 .hf-container,
 .markdown-body {
   font-family:
+    'Noto Music', 'Noto Sans Math',
     Georgia, Palatino, 'Palatino Linotype', 'Times New Roman', 'DejaVu Serif', serif,
     'Apple Color Emoji', 'Segoe UI Emoji';
   font-size: 12pt;

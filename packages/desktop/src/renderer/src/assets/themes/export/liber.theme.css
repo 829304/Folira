@@ -3,6 +3,7 @@
 .hf-container,
 .markdown-body {
   font-family:
+    'Noto Music', 'Noto Sans Math',
     'Source Sans Pro', 'Segoe UI', 'Helvetica Neue', 'Open Sans', sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji';
   font-size: 16px;
