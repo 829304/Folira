@@ -455,6 +455,23 @@
   background: rgba(157, 170, 182, 0.35);
 }
 
+/* Find-in-document paints matches as `.mu-highlight` (active) and
+ * `.mu-selection` (the rest), not as ::selection; their engine colours are the
+ * dark editor ink and read 1.26:1 / 1.43:1 on the navy block. Keep the light
+ * code ink and use a stronger blue for the active match so it stays distinct
+ * from the slate wash of the others. */
+.editor-wrapper .mu-code-block .mu-highlight {
+  color: #f8f8f2;
+
+  background: rgba(56, 132, 255, 0.55);
+}
+
+.editor-wrapper .mu-code-block .mu-selection {
+  color: #f8f8f2;
+
+  background: rgba(157, 170, 182, 0.35);
+}
+
 /* Rules. The editor draws a thematic break on `p.mu-thematic-break::before`
  * (Muya uses a dashed top border); the preview uses `<hr>`. GitBook's rule is a
  * 1px hairline in the border colour. */
