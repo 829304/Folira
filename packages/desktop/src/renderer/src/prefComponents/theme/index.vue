@@ -281,8 +281,10 @@ const setPreference = (type: keyof PreferencesState) => (value: unknown): void =
      chrome, and scroll-padding keeps a focused card below it. To change the
      height, edit --theme-preview-height only; the totals follow from it.
      The 84px chrome is the title row, the search box, the 8px top padding and
-     the bottom border, measured in the settings window — not estimated. */
-  --theme-preview-height: 216px; /* total 300px */
+     the bottom border, measured in the settings window — not estimated.
+     240px is the smallest frame that keeps the full sample's second code line
+     above the fade once the 760px breakpoint restores the table and list. */
+  --theme-preview-height: 240px; /* total 324px */
   --theme-preview-zoom: 0.45;
   --theme-header-height: calc(var(--theme-preview-height) + 84px);
   scroll-padding-top: calc(var(--theme-header-height) + 8px);

@@ -18,7 +18,7 @@
      shrink when the hovered theme has taller typography. The height comes from
      index.vue's --theme-preview-height, so this frame, the sticky header and
      its scroll padding all hang on the same number. */
-  height: var(--theme-preview-height, 216px);
+  height: var(--theme-preview-height, 240px);
   overflow: hidden;
 
   padding: 2px;
@@ -44,7 +44,7 @@
    rules below. Shorter frames show fewer blocks, not smaller text: squashing
    the whole sample into 174px needed a zoom of 0.40, which turned body text
    into grey mush. 0.45 was measured on PREVIEW_SAMPLE under the tallest
-   (GitHub Light) rules for the 216px frame; 0.58 is the smallest zoom that
+   (GitHub Light) rules for the 240px frame; 0.58 is the smallest zoom that
    keeps the cropped sample's text at 14px × 0.58 ≈ 8.1px while still fitting
    the 176px and 140px frames. */
 .editor-wrapper {
