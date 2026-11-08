@@ -254,7 +254,10 @@ from, so a later change can be diffed against the real source instead of guessed
   while the rest of the app stays light. The block's horizontal scroller gets
   its own navy track and blue-grey thumb rather than the pale global bar;
   horizontal bars are eight pixels tall so the thumb stays visible on the navy
-  surface. Selection is split by axis on purpose: the chrome wash is 25% so
+  surface. The shared `--codeBlockBgColor` also feeds front matter,
+  HTML/math/diagram source panes and the inline footnote pill; those keep the
+  panel/ink pair, so only the fenced block carries the navy surface. Selection
+  is split by axis on purpose: the chrome wash is 25% so
   loading dots and input selections read, while the editor body keeps 8% so a
   selected link still clears 4.5:1. h1 alone closes with a
   hairline; links carry a 1px underline in both the editor (`span.mu-link`) and

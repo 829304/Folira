@@ -151,8 +151,9 @@ CI is `.github/workflows/tauri-build.yml`; artifacts are named
 ## Testing
 
 ```bash
-pnpm test                     # all desktop unit tests (vitest run)
-pnpm test:unit                # same set, test/unit only
+pnpm test                     # desktop unit tests + the website node:test suite
+pnpm test:unit                # desktop unit tests only
+pnpm test:website             # website docs-search tests only
 pnpm lint                     # ESLint (run before committing)
 pnpm typecheck                # vue-tsc --noEmit
 
