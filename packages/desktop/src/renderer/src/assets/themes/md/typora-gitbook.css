@@ -1,0 +1,435 @@
+/* Folira Markdown theme: typora-gitbook.
+ *
+ * GitBook Azure's documentation page: slate ink on white, one blue accent for
+ * links, a single hairline under h1, quotes on a pale panel behind the Azure
+ * blue bar, and fenced code on the theme's navy box. The type scale (2.2 / 1.7
+ * / 1.375 / 1.15 / .95em, 700 weight, 1.5 line height) and the palette were
+ * read from the Azure variant of h16nning/typora-gitbook-theme (GPL-3.0,
+ * © 16soundsofsilence and contributors), `main` at commit
+ * 9e95aebf524491ccc5b74d1b4a1e53f8c6c1ac05: ink #3b454e, heading #242a31,
+ * border #e6ecf1, panel #f5f7f9, decoration blue #3884ff, link blue #1968e6
+ * and code surface #183055. No upstream CSS is copied — the values are
+ * re-expressed as --fmd-* tokens and element rules.
+ *
+ * Syntax highlighting is this theme's own scoped palette
+ * (`prismjs/typora-gitbook.theme.css`), adapted from the Prism dark palette so
+ * the token colours read on the navy surface.
+ */
+
+.editor-wrapper {
+  --fmd-themeColor: #1968e6;
+  --fmd-themeColor90: rgba(25, 104, 230, 0.9);
+  --fmd-themeColor80: rgba(25, 104, 230, 0.8);
+  --fmd-themeColor70: rgba(25, 104, 230, 0.7);
+  --fmd-themeColor60: rgba(25, 104, 230, 0.6);
+  --fmd-themeColor50: rgba(25, 104, 230, 0.5);
+  --fmd-themeColor40: rgba(25, 104, 230, 0.4);
+  --fmd-themeColor30: rgba(25, 104, 230, 0.3);
+  --fmd-themeColor20: rgba(25, 104, 230, 0.2);
+  /* Selection and highlight keep the theme's light blue tint, so a selected
+   * range reads as a wash rather than as link text. */
+  /* The wash is held at 8%: with the #1968e6 link on top it measures 4.52:1,
+   * the strongest selection that still keeps linked text at 4.5:1. */
+  --fmd-highlightColor: rgba(56, 132, 255, 0.2);
+  --fmd-selectionColor: rgba(25, 104, 230, 0.08);
+  --fmd-editorColor: #3b454e;
+  --fmd-editorColor80: #242a31;
+  --fmd-editorColor50: #74818d;
+  --fmd-editorColor40: #9daab6;
+  --fmd-editorColor30: rgba(157, 170, 182, 0.7);
+  --fmd-editorColor10: #e6ecf1;
+  --fmd-editorColor04: #f5f7f9;
+  --fmd-editorBgColor: #ffffff;
+  --fmd-deleteColor: #ff4642;
+  --fmd-iconColor: #74818d;
+  --fmd-codeBlockBgColor: #183055;
+  --fmd-footnoteBgColor: #f5f7f9;
+  --fmd-inputBgColor: rgba(59, 69, 78, 0.06);
+  --fmd-buttonFontColor: var(--editorColor);
+  --fmd-buttonBgColor: #f5f7f9;
+  --fmd-buttonBorder: 1px solid #e6ecf1;
+  --fmd-buttonBgColorHover: #e6ecf1;
+  --fmd-buttonBorderHover: var(--buttonBorder);
+  --fmd-buttonBgColorActive: #d8e0e7;
+  --fmd-buttonBorderActive: var(--buttonBorder);
+  --fmd-tableBorderColor: #e6ecf1;
+  --fmd-h1Color: #242a31;
+  --fmd-h2Color: #242a31;
+  --fmd-h3Color: #242a31;
+  --fmd-h4Color: #242a31;
+  --fmd-h5Color: #242a31;
+  --fmd-h6Color: #242a31;
+  --fmd-blockquoteTextColor: var(--editorColor);
+  --fmd-blockquoteBorderColor: #3884ff;
+  --fmd-hrColor: var(--editorColor10);
+  --fmd-linkColor: var(--themeColor);
+  --fmd-strongColor: var(--editorColor);
+  --fmd-emColor: var(--editorColor);
+  --fmd-listMarkerColor: var(--editorColor50);
+  --fmd-floatBgColor: #ffffff;
+  --fmd-floatHoverColor: #f5f7f9;
+  --fmd-floatBorderColor: #e6ecf1;
+  --fmd-maskColor: rgba(255, 255, 255, 0.8);
+}
+
+/* Headings: GitBook Azure's 700 weight at a 1.5 line height, with a 3rem lead
+ * for h1 and 2rem for h2. Only h1 closes with the 1px hairline; h6 drops back
+ * to body weight. The rules reach the editor and the settings preview at one
+ * class plus one element, so a custom stylesheet can beat them with the same
+ * selector shape. */
+
+.editor-wrapper h1,
+.editor-wrapper h2,
+.editor-wrapper h3,
+.editor-wrapper h4,
+.editor-wrapper h5,
+.editor-wrapper h6 {
+  padding: 0;
+
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.editor-wrapper h1 {
+  margin: 3rem 0 0.5rem;
+  padding-bottom: 0.2rem;
+
+  font-size: 2.2em;
+
+  border-bottom: 1px solid var(--hrColor);
+}
+
+.editor-wrapper h2 {
+  margin: 2rem 0 0.5rem;
+
+  font-size: 1.7em;
+}
+
+.editor-wrapper h3 {
+  margin: 1.5rem 0 0.5rem;
+
+  font-size: 1.375em;
+}
+
+.editor-wrapper h4 {
+  margin: 1.5rem 0 0.5rem;
+
+  font-size: 1.15em;
+}
+
+.editor-wrapper h5 {
+  margin: 1.5rem 0 0.5rem;
+
+  font-size: 0.95em;
+}
+
+.editor-wrapper h6 {
+  margin: 1.5rem 0 0.5rem;
+
+  font-size: 0.95em;
+  font-weight: 400;
+}
+
+.editor-wrapper p,
+.editor-wrapper blockquote,
+.editor-wrapper ul,
+.editor-wrapper ol,
+.editor-wrapper dl {
+  margin: 0.5rem 0 1.5rem;
+}
+
+.editor-wrapper ul,
+.editor-wrapper ol {
+  padding-left: 30px;
+}
+
+.editor-wrapper li > ul,
+.editor-wrapper li > ol {
+  margin: 0;
+}
+
+/* Links: GitBook underlines a link with a 1px rule and deepens the colour on
+ * hover. Muya renders the editor link as `span.mu-inline-rule.mu-link` and the
+ * engine colours it through that same two-class selector, (0,2,1); a
+ * `.mu-link`-only rule would lose the colour comparison, so the theme keeps
+ * both classes (0,3,0). The settings preview uses `<a>` and a no-text link is
+ * `a.mu-no-text-link.mu-inline-rule`, which the `a` selectors cover. */
+
+.editor-wrapper a,
+.editor-wrapper a.mu-inline-rule,
+.editor-wrapper .mu-link,
+.editor-wrapper .mu-inline-rule.mu-link {
+  color: var(--linkColor);
+
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+.editor-wrapper a:hover,
+.editor-wrapper a.mu-inline-rule:hover,
+.editor-wrapper .mu-link:hover,
+.editor-wrapper .mu-inline-rule.mu-link:hover {
+  color: #00307c;
+
+  text-decoration: underline;
+}
+
+.editor-wrapper strong {
+  font-weight: 600;
+}
+
+/* Quotes: Muya paints the bar with `blockquote::before`; restyling the same
+ * pseudo element keeps one bar. GitBook Azure puts the quote on its pale panel
+ * with a soft corner, and the nested quote keeps no right padding. */
+
+.editor-wrapper blockquote {
+  position: relative;
+  padding: 1rem;
+
+  color: var(--blockquoteTextColor);
+
+  background: var(--editorColor04);
+  border: 0;
+  border-radius: 0.3rem;
+}
+
+.editor-wrapper blockquote::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  display: block;
+  width: 4px;
+  height: 100%;
+
+  background: var(--blockquoteBorderColor);
+
+  content: '';
+}
+
+.editor-wrapper blockquote blockquote {
+  padding-right: 0;
+}
+
+/* Tables: GitBook's .875rem table type and 10px/16px cells. Muya draws the 1px
+ * row and column rules as cell `::before` boxes, so the header band and its 2px
+ * bottom rule are added without a second set of borders. The engine renders the
+ * header as the first `tr` of `td`s while the settings preview has a real
+ * `<thead>`, so both DOM shapes are covered. */
+
+.editor-wrapper table {
+  width: auto;
+
+  font-size: 0.875rem;
+
+  border-collapse: collapse;
+}
+
+/* Muya's own cell rule is `.mu-table-inner tr td` (0,1,2), so the padding has
+ * to carry the same element weight to win on source order. */
+
+.editor-wrapper table th,
+.editor-wrapper table td {
+  padding: 10px 16px;
+}
+
+.editor-wrapper thead th,
+.editor-wrapper .mu-table-inner tr:first-child td {
+  font-weight: 700;
+
+  background: var(--editorColor04);
+}
+
+.editor-wrapper thead th,
+.editor-wrapper .mu-table-inner tr:first-child td::before {
+  border-bottom: 2px solid var(--tableBorderColor);
+}
+
+/* Inline code: GitBook's square pale pill, with the body ink inherited. The
+ * fill comes from `--codeBgColor`, the UI-axis token base.css publishes inside
+ * `.editor-wrapper`, so a custom stylesheet can recolour the pill without
+ * unpacking this selector. `:where(:not(pre))` zeroes the exclusion's
+ * specificity, so the rule stays at (0,1,1) and sits after the engine sheet and
+ * before `#custom-styles`. */
+
+.editor-wrapper :where(:not(pre)) > code {
+  padding: 0.2rem 0.4rem;
+
+  font-size: 0.9em;
+
+  color: inherit;
+
+  background: var(--codeBgColor);
+  border-radius: 0.2rem;
+}
+
+/* Code blocks: the Azure navy surface. Muya paints `--code-block-bg-color`
+ * (bound to `--fmd-codeBlockBgColor`), and the block's text has to be the light
+ * code ink because the shared Prism palette is no longer GitHub Light's. The
+ * line-number gutter Muya reserves on `padding-left` is preserved, and its
+ * offset is pinned to the block's 8px top padding. */
+
+.editor-wrapper .mu-code-block {
+  margin: 1.5rem 0;
+  padding: 8px 1.5rem 6px;
+
+  color: #f8f8f2;
+  line-height: 1.45;
+
+  border: 0;
+  border-radius: 0.3rem;
+}
+
+.editor-wrapper .mu-code-block:has(.mu-line-numbers-rows) {
+  padding-left: 2.5em;
+}
+
+.editor-wrapper .mu-code-block .mu-line-numbers-rows {
+  top: 8px;
+}
+
+/* Muya colours the gutter numbers, the copy glyph and the fence badge from the
+ * editor palette (`--editor-color-30`, `--icon-color`). Theme files may only
+ * declare `--fmd-*` customs, so the block-local rebinding happens on the
+ * elements themselves; each rule outranks the engine declaration it replaces. */
+
+.editor-wrapper .mu-code-block .mu-line-numbers-rows > span::before {
+  color: #9daab6;
+}
+
+.editor-wrapper .mu-code-block .mu-code::after {
+  color: #9daab6;
+}
+
+.editor-wrapper .mu-code-block .mu-code-copy i.icon > i[class^='icon-'] {
+  filter: drop-shadow(16px 0 #9daab6);
+}
+
+/* The copy button is created inside `code.mu-code`, but `CodeBlock.create`
+ * moves it out and appends it to the `<pre>` (the line-number gutter moves the
+ * same way), so it is the block's direct child, not a descendant of the code
+ * element — the engine's `.mu-code.mu-active .mu-code-copy` shape never
+ * matches and an active block leaves the button at opacity 0. The engine also
+ * paints the hover/focus surface with `--float-hover-color`, a pale chrome
+ * value; on the navy block that put the #9daab6 glyph at 2.21:1. Lift the
+ * active block's opacity, give hover/focus a translucent white surface (glyph
+ * 3.62:1) and draw a focus ring (5.56:1 against the block). */
+
+.editor-wrapper .mu-code-block.mu-active > .mu-code-copy {
+  opacity: 1;
+}
+
+.editor-wrapper .mu-code-block .mu-code-copy:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.editor-wrapper .mu-code-block .mu-code-copy:focus-visible {
+  background-color: rgba(255, 255, 255, 0.14);
+  outline: 2px solid #9daab6;
+  outline-offset: 1px;
+
+  opacity: 1;
+}
+
+/* The language input is positioned above the block, on the white page, so it
+ * cannot inherit the block's light code ink. */
+
+.editor-wrapper .mu-code-block .mu-language-input {
+  color: var(--editorColor);
+}
+
+/* The horizontal scroller is `code.mu-code`, and Chromium on Windows draws its
+ * bar as an overlay: a bottom padding keeps the last line of code clear of it. */
+.editor-wrapper .mu-code-block .mu-code {
+  padding-bottom: 0.6em;
+}
+
+/* The global scrollbar is painted from `--float-hover-color`, a pale chrome
+ * value that disappears on the navy block. Restyle only this scroller's own
+ * bar: the #5d748e thumb clears 3.28:1 against the #10233c track and its hover
+ * step (#7f97b3) reaches 5.26:1; the global bar is left alone. */
+
+.editor-wrapper .mu-code-block .mu-code::-webkit-scrollbar {
+  height: 8px;
+}
+
+.editor-wrapper .mu-code-block .mu-code::-webkit-scrollbar-track {
+  background: #10233c;
+}
+
+.editor-wrapper .mu-code-block .mu-code::-webkit-scrollbar-thumb {
+  background: #5d748e;
+  border-radius: 4px;
+}
+
+.editor-wrapper .mu-code-block .mu-code::-webkit-scrollbar-thumb:hover {
+  background: #7f97b3;
+}
+
+/* Only the horizontal bar gets a visible corner; the vertical bar stays thin. */
+.editor-wrapper .mu-code-block .mu-code::-webkit-scrollbar-corner {
+  background: #10233c;
+}
+
+/* The settings preview renders a plain `<pre>` directly inside
+ * `.editor-wrapper`; it takes the same navy surface and light ink. */
+
+.editor-wrapper > pre {
+  margin: 1.5rem 0;
+  padding: 8px 1.5rem 6px;
+
+  overflow: auto;
+
+  color: #f8f8f2;
+
+  background: var(--codeBlockBgColor);
+  border-radius: 0.3rem;
+}
+
+/* The preview renders a plain `<pre>`; its own code block keeps the theme's
+ * padding but must not inherit the inline pill. */
+
+.editor-wrapper pre code:not(.mu-code) {
+  padding: 0;
+
+  background: none;
+  border-radius: 0;
+}
+
+/* Selection inside the navy block. Muya paints every selection with
+ * `*:not(.mu-hide)::selection`, which forces `--editor-color` (#3b454e) — that
+ * is 1.35:1 on the navy surface, so a selected code line turns unreadable.
+ * This scoped rule (0,2,1 against the engine's (0,1,1)) keeps the light code
+ * ink on a 35% slate wash (6.50:1); the white page's 8% selection stays as it
+ * is because the selector only matches inside the block. */
+
+.editor-wrapper .mu-code-block ::selection {
+  color: #f8f8f2;
+  background: rgba(157, 170, 182, 0.35);
+}
+
+/* Rules. The editor draws a thematic break on `p.mu-thematic-break::before`
+ * (Muya uses a dashed top border); the preview uses `<hr>`. GitBook's rule is a
+ * 1px hairline in the border colour. */
+
+.editor-wrapper p.mu-thematic-break::before {
+  height: 0;
+
+  background: none;
+  border-top: 1px solid var(--hrColor);
+}
+
+.editor-wrapper hr {
+  height: 1px;
+  margin: 16px 0;
+
+  background: var(--hrColor);
+  border: 0;
+}
+
+/* Task lists: Muya paints the box on `input::before` and starts round; GitBook
+ * uses the same 0.2rem corner as its inline pill. */
+.editor-wrapper li.mu-task-list-item > input::before {
+  border-radius: 0.2rem;
+}

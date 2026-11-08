@@ -1,0 +1,96 @@
+/* Folira UI theme: typora-gitbook.
+ *
+ * GitBook's documentation chrome: a white page, slate ink, one blue accent and
+ * pale blue-grey panels. The palette was read from the Azure light variant of
+ * h16nning/typora-gitbook-theme (GPL-3.0, © 16soundsofsilence and
+ * contributors), `main` at commit 9e95aebf524491ccc5b74d1b4a1e53f8c6c1ac05
+ * (2025-12-06): chrome panel #f5f7f9, control text #3b454e, heading #242a31,
+ * borders #e6ecf1, accent #3884ff with its #1968e6 / #0f5fd8 / #00307c darker
+ * steps. No upstream CSS is copied; the values are re-expressed as --fui-*
+ * tokens.
+ *
+ * The accent is the deep #1968e6 step: #3884ff only reaches 3.55:1 against the
+ * white page, while #1968e6 is 5.04:1, so the light blue is kept for decoration
+ * (highlight tint, blockquote bar) and the deep step carries links and actions.
+ * The primary button is white on #1968e6 (5.04:1); its hover and pressed steps
+ * (#0f5fd8, #00307c) measure 5.76:1 and 12.25:1, and the focus ring is the
+ * white-then-accent double ring rather than a tinted shadow.
+ *
+ * Accessibility: the secondary text steps use #55616c (5.90:1 on #f5f7f9,
+ * 6.34:1 on white), including `--editorColor50`, which the 12px title-bar tab
+ * labels paint. #74818d stays for icons only (`--editorColor40`,
+ * `--iconColor`), where it clears the 3:1 graphical threshold at 3.71:1 on the
+ * Text selection: the chrome uses a 25% #1968e6 wash (#c6d9f9 over white) so
+ * loading dots and input selections read clearly; ink on it measures 6.84:1.
+ * The editor body keeps the 8% wash declared on the Markdown axis, where the
+ * #1968e6 link on top has to stay at 4.52:1.
+ */
+
+:root {
+  --fui-themeColor: #1968e6;
+  --fui-themeColor90: rgba(25, 104, 230, 0.9);
+  --fui-themeColor80: rgba(25, 104, 230, 0.8);
+  --fui-themeColor70: rgba(25, 104, 230, 0.7);
+  --fui-themeColor60: rgba(25, 104, 230, 0.6);
+  --fui-themeColor50: rgba(25, 104, 230, 0.5);
+  --fui-themeColor40: rgba(25, 104, 230, 0.4);
+  --fui-themeColor30: rgba(25, 104, 230, 0.3);
+  --fui-themeColor20: rgba(25, 104, 230, 0.2);
+  --fui-themeColor10: rgba(25, 104, 230, 0.1);
+  --fui-highlightThemeColor: var(--themeColor);
+  --fui-highlightColor: rgba(56, 132, 255, 0.35);
+  --fui-selectionColor: rgba(25, 104, 230, 0.25);
+  --fui-editorColor: #3b454e;
+  --fui-editorColor80: #242a31;
+  --fui-editorColor60: #55616c;
+  --fui-editorColor50: #55616c;
+  --fui-editorColor40: #74818d;
+  --fui-editorColor30: rgba(157, 170, 182, 0.7);
+  --fui-editorColor10: #e6ecf1;
+  --fui-editorColor04: #f5f7f9;
+  --fui-editorBgColor: #ffffff;
+  --fui-deleteColor: #ff4642;
+  --fui-iconColor: #74818d;
+  --fui-codeBgColor: #e6ecf1;
+  --fui-footnoteBgColor: #f5f7f9;
+  --fui-inputBgColor: rgba(59, 69, 78, 0.06);
+  --fui-focusColor: var(--themeColor);
+  --fui-buttonFontColor: var(--editorColor);
+  --fui-buttonBgColor: #ffffff;
+  --fui-buttonBorder: 1px solid #e6ecf1;
+  --fui-buttonShadow: none;
+  --fui-buttonFontColorHover: var(--buttonFontColor);
+  --fui-buttonBgColorHover: #f5f7f9;
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
+  --fui-buttonBgColorActive: #e6ecf1;
+  --fui-buttonBorderActive: var(--buttonBorder);
+  --fui-buttonFocusBorder: 1px solid var(--themeColor);
+  --fui-buttonPrimaryFontColor: #ffffff;
+  --fui-buttonPrimaryBgColor: var(--themeColor);
+  --fui-buttonPrimaryBorder: none;
+  --fui-buttonPrimaryShadow: 0 1px 2px rgba(24, 48, 85, 0.12);
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: #0f5fd8;
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: #00307c;
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFocusBorder: none;
+  --fui-buttonPrimaryFocusShadow: 0 0 0 2px #ffffff, 0 0 0 4px #1968e6;
+  --fui-tableBorderColor: #e6ecf1;
+  --fui-headingColor: var(--editorColor80);
+  --fui-sideBarColor: #3b454e;
+  --fui-sideBarIconColor: var(--iconColor);
+  --fui-sideBarTitleColor: #242a31;
+  --fui-sideBarTextColor: #55616c;
+  --fui-sideBarBgColor: #f5f7f9;
+  --fui-sideBarItemHoverBgColor: #e6ecf1;
+  --fui-itemBgColor: rgba(255, 255, 255, 0.6);
+  --fui-floatFontColor: #55616c;
+  --fui-floatBgColor: #ffffff;
+  --fui-floatHoverColor: #f5f7f9;
+  --fui-floatBorderColor: #e6ecf1;
+  --fui-floatShadow: 0 0 0 1px rgba(230, 236, 241, 0.8), 0 3px 6px rgba(59, 69, 78, 0.06), 0 9px 24px rgba(59, 69, 78, 0.08);
+  --fui-maskColor: rgba(255, 255, 255, 0.8);
+}

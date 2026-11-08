@@ -1,0 +1,92 @@
+/* Folira UI theme: notion.
+ *
+ * Notion's Light Classic chrome: white pages, warm grey panels (#f7f6f3), ink
+ * (#37352f) rather than pure black, hairline borders (#e9e9e7) and the warm
+ * neutral text steps. Source: adrian-fuertes/typora-notion-theme,
+ * `themes/classic/notion-light-classic.css`, v1.2.1, commit
+ * e3d9a50524378a401df7bde792773e71f2a90cd6 (MIT, © 2022 adrian-fuertes). The
+ * palette is reused as an independent declaration; no upstream CSS or selector
+ * is copied. Neutral text steps were checked against the public colour
+ * reference at https://matthiasfrank.de/en/notion-colors/ as a secondary source.
+ *
+ * The action colour is Light Classic's blue #0b6bcb (white on it measures
+ * 5.28:1); hover #0a5db8 and pressed #084f9e are 6.42:1 and 8.01:1, and the
+ * focus ring is the white-then-blue double ring. The warm neutral stays for
+ * chrome so the blue reads as an action, not as decoration.
+ *
+ * Accessibility: `--editorColor50` is the 12px title-bar/tab label ink (#73726e,
+ * 4.82:1 on the white chrome); it must not move onto the #f7f6f3 panel, where
+ * it measures 4.46:1. Panel and overlay secondary text therefore uses #6b6a66
+ * (5.01:1 on #f7f6f3, 5.41:1 on white), and #73726e also serves icons, where it
+ * clears the 3:1 graphical threshold. The selection wash is #c0e5f4 and keeps
+ * ink link text above 9:1.
+ */
+
+:root {
+  --fui-themeColor: #0b6bcb;
+  --fui-themeColor90: rgba(11, 107, 203, 0.9);
+  --fui-themeColor80: rgba(11, 107, 203, 0.8);
+  --fui-themeColor70: rgba(11, 107, 203, 0.7);
+  --fui-themeColor60: rgba(11, 107, 203, 0.6);
+  --fui-themeColor50: rgba(11, 107, 203, 0.5);
+  --fui-themeColor40: rgba(11, 107, 203, 0.4);
+  --fui-themeColor30: rgba(11, 107, 203, 0.3);
+  --fui-themeColor20: rgba(11, 107, 203, 0.2);
+  --fui-themeColor10: rgba(11, 107, 203, 0.1);
+  --fui-highlightThemeColor: var(--editorColor);
+  --fui-highlightColor: #fbf3db;
+  --fui-selectionColor: #c0e5f4;
+  --fui-editorColor: #37352f;
+  --fui-editorColor80: #37352f;
+  --fui-editorColor60: #5f5e5b;
+  --fui-editorColor50: #73726e;
+  --fui-editorColor40: #9b9a97;
+  --fui-editorColor30: rgba(55, 53, 47, 0.3);
+  --fui-editorColor10: #e9e9e7;
+  --fui-editorColor04: #f7f6f3;
+  --fui-editorBgColor: #ffffff;
+  --fui-deleteColor: #d44c47;
+  --fui-iconColor: #73726e;
+  --fui-codeBgColor: #f7f6f3;
+  --fui-footnoteBgColor: #f7f6f3;
+  --fui-inputBgColor: rgba(55, 53, 47, 0.06);
+  --fui-focusColor: var(--themeColor);
+  --fui-buttonFontColor: var(--editorColor);
+  --fui-buttonBgColor: #ffffff;
+  --fui-buttonBorder: 1px solid #e9e9e7;
+  --fui-buttonShadow: rgba(15, 15, 15, 0.1) 0 1px 2px;
+  --fui-buttonFontColorHover: var(--buttonFontColor);
+  --fui-buttonBgColorHover: #f7f6f3;
+  --fui-buttonBorderHover: var(--buttonBorder);
+  --fui-buttonFontColorActive: var(--buttonFontColor);
+  --fui-buttonBgColorActive: #e9e7e4;
+  --fui-buttonBorderActive: var(--buttonBorder);
+  --fui-buttonFocusBorder: 1px solid var(--themeColor);
+  --fui-buttonPrimaryFontColor: #ffffff;
+  --fui-buttonPrimaryBgColor: var(--themeColor);
+  --fui-buttonPrimaryBorder: none;
+  --fui-buttonPrimaryShadow: rgba(15, 15, 15, 0.1) 0 1px 2px;
+  --fui-buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorHover: #0a5db8;
+  --fui-buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --fui-buttonPrimaryBgColorActive: #084f9e;
+  --fui-buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --fui-buttonPrimaryFocusBorder: none;
+  --fui-buttonPrimaryFocusShadow: 0 0 0 2px #ffffff, 0 0 0 4px #0b6bcb;
+  --fui-tableBorderColor: #e9e9e7;
+  --fui-headingColor: var(--editorColor80);
+  --fui-sideBarColor: #5f5e5b;
+  --fui-sideBarIconColor: var(--iconColor);
+  --fui-sideBarTitleColor: #37352f;
+  --fui-sideBarTextColor: #6b6a66;
+  --fui-sideBarBgColor: #f7f6f3;
+  --fui-sideBarItemHoverBgColor: rgba(55, 53, 47, 0.06);
+  --fui-itemBgColor: rgba(255, 255, 255, 0.6);
+  --fui-floatFontColor: #6b6a66;
+  --fui-floatBgColor: #ffffff;
+  --fui-floatHoverColor: rgba(55, 53, 47, 0.06);
+  --fui-floatBorderColor: #e9e9e7;
+  --fui-floatShadow: rgba(15, 15, 15, 0.05) 0 0 0 1px, rgba(15, 15, 15, 0.1) 0 3px 6px, rgba(15, 15, 15, 0.2) 0 9px 24px;
+  --fui-maskColor: rgba(255, 255, 255, 0.8);
+}

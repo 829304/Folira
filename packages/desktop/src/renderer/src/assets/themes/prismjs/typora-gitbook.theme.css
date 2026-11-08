@@ -1,0 +1,134 @@
+/**
+ * prism.js Dark theme for JavaScript, CSS and HTML
+ * Based on the slides of the talk "JavaScript: The Good Parts"
+ * @author Lea Verou
+ *
+ * Adapted for Folira's typora-gitbook theme from the repository's
+ * `prismjs/dark.theme.css` (the same Prism dark palette), then calibrated to
+ * GitBook Azure's syntax on the theme's #183055 code surface: keywords are the
+ * mint #61e3a5 (8.19:1), strings/characters the light blue #71a7ff (5.45:1),
+ * comments the muted slate #9daab6, and the pink property pair is #ff6299
+ * (4.68:1) rather than Prism dark's #f92672 (3.48:1).
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2012 Lea Verou
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * Every selector below is scoped through
+ * `:where(.editor-wrapper) :where(pre, .mu-code-block)`, which adds no
+ * specificity: the palette reaches the editor body and the settings preview
+ * without outranking a user's `.token.keyword` in the later custom-CSS slot, and
+ * it never paints outside the writing surface. No `!important`.
+ */
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.comment,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.prolog,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.doctype,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.cdata {
+  color: #9daab6;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.punctuation {
+  color: #f8f8f2;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.namespace {
+  opacity: 0.7;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.property,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.tag,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.constant,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.symbol {
+  /* 4.68:1 on the #183055 surface; Prism dark's #f92672 is only 3.48:1. */
+  color: #ff6299;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.boolean,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.number {
+  color: #ae81ff;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.selector,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.attr-name,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.builtin {
+  /* Azure keeps attribute names and builtins green (8.50:1 on #183055). */
+  color: #a6e22e;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.string,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.char {
+  /* Azure's string blue is 5.45:1 on the navy surface. */
+  color: #71a7ff;
+}
+
+/* Inserted and deleted are made for the navy surface: #7ee787 / #ffa198 measure
+ * 8.58:1 / 6.78:1 on #183055, while Prism's light chip backgrounds (#f0fff4 /
+ * #ffeef0) and their dark-on-light colours would break it. */
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.inserted {
+  color: #7ee787;
+  background: transparent;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.deleted {
+  color: #ffa198;
+  background: transparent;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.operator,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.entity,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.url,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .language-css .token.string,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .style .token.string {
+  color: #e67e65;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.atrule,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.attr-value,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.function,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.class-name {
+  color: #e6db74;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.keyword {
+  /* Azure's mint keyword, 8.19:1 on #183055. */
+  color: #61e3a5;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.regex,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.important,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.variable {
+  color: #fd971f;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.important,
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.bold {
+  font-weight: bold;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.italic {
+  font-style: italic;
+}
+
+:where(.editor-wrapper) :where(pre, .mu-code-block) .token.entity {
+  cursor: help;
+}

@@ -118,14 +118,14 @@
     "id": "claude-style",
     "label": "Claude Style",
     "appearance": "light",
-    "prism": "solarized-light",
+    "prism": "github-light",
     "swatches": {
       "ui": {
-        "editorBgColor": "rgba(255, 255, 255, 1)",
-        "editorColor": "#4d4d4d",
-        "sideBarBgColor": "rgba(242, 242, 242, 0.9)",
-        "themeColor": "rgba(33, 181, 111, 1)",
-        "buttonPrimaryBgColor": "rgba(33, 181, 111, 1)"
+        "editorBgColor": "#faf9f5",
+        "editorColor": "#141413",
+        "sideBarBgColor": "#f2efe6",
+        "themeColor": "#a34f38",
+        "buttonPrimaryBgColor": "#d97757"
       },
       "md": {
         "editorBgColor": "#faf9f5",
@@ -460,6 +460,29 @@
     }
   },
   {
+    "id": "notion",
+    "label": "Notion",
+    "appearance": "light",
+    "prism": "github-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#ffffff",
+        "editorColor": "#37352f",
+        "sideBarBgColor": "#f7f6f3",
+        "themeColor": "#0b6bcb",
+        "buttonPrimaryBgColor": "#0b6bcb"
+      },
+      "md": {
+        "editorBgColor": "#ffffff",
+        "editorColor": "#37352f",
+        "h1Color": "#37352f",
+        "linkColor": "#37352f",
+        "codeBlockBgColor": "#f7f6f3",
+        "blockquoteBorderColor": "#37352f"
+      }
+    }
+  },
+  {
     "id": "one-dark",
     "label": "ONE Dark",
     "appearance": "dark",
@@ -686,6 +709,29 @@
         "linkColor": "#34548a",
         "codeBlockBgColor": "#c8c9ce",
         "blockquoteBorderColor": "#9699a3"
+      }
+    }
+  },
+  {
+    "id": "typora-gitbook",
+    "label": "Typora GitBook",
+    "appearance": "light",
+    "prism": "typora-gitbook",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#ffffff",
+        "editorColor": "#3b454e",
+        "sideBarBgColor": "#f5f7f9",
+        "themeColor": "#1968e6",
+        "buttonPrimaryBgColor": "#1968e6"
+      },
+      "md": {
+        "editorBgColor": "#ffffff",
+        "editorColor": "#3b454e",
+        "h1Color": "#242a31",
+        "linkColor": "#1968e6",
+        "codeBlockBgColor": "#183055",
+        "blockquoteBorderColor": "#3884ff"
       }
     }
   },

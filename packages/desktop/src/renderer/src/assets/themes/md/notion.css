@@ -1,0 +1,326 @@
+/* Folira Markdown theme: notion.
+ *
+ * Notion's Light Classic page body: ink (#37352f) on white, secondary grey
+ * (#73726e), the warm panel grey (#f7f6f3) for fenced code and table header
+ * bands, and hairline borders (#e9e9e7). Headings are 700 weight at Notion's
+ * 2.2 / 1.75 / 1.4 / 1.2 / 1em scale with no rules under them; links keep the
+ * ink colour under an underline; a quote is a 4px ink bar; the inline pill is
+ * the theme's red (#b83d3d) on the UI-axis `--codeBgColor`.
+ *
+ * Source: adrian-fuertes/typora-notion-theme,
+ * `themes/classic/notion-light-classic.css`, v1.2.1, commit
+ * e3d9a50524378a401df7bde792773e71f2a90cd6 (MIT, © 2022 adrian-fuertes). The
+ * palette and proportions are reused as an independent declaration; no upstream
+ * CSS or selector is copied. The neutral text steps were checked against the
+ * public colour reference at https://matthiasfrank.de/en/notion-colors/ as a
+ * secondary source.
+ *
+ * Syntax highlighting reuses the GitHub Light palette
+ * (`prismjs/github-light.theme.css`) through PRISM_ALIASES; the fenced block
+ * keeps Notion's warm panel fill instead of taking a background from Prism.
+ */
+
+.editor-wrapper {
+  --fmd-themeColor: #2383e2;
+  --fmd-themeColor90: rgba(35, 131, 226, 0.9);
+  --fmd-themeColor80: rgba(35, 131, 226, 0.8);
+  --fmd-themeColor70: rgba(35, 131, 226, 0.7);
+  --fmd-themeColor60: rgba(35, 131, 226, 0.6);
+  --fmd-themeColor50: rgba(35, 131, 226, 0.5);
+  --fmd-themeColor40: rgba(35, 131, 226, 0.4);
+  --fmd-themeColor30: rgba(35, 131, 226, 0.3);
+  --fmd-themeColor20: rgba(35, 131, 226, 0.2);
+  --fmd-highlightColor: #fbf3db;
+  --fmd-selectionColor: #c0e5f4;
+  --fmd-editorColor: #37352f;
+  --fmd-editorColor80: #37352f;
+  --fmd-editorColor50: #73726e;
+  --fmd-editorColor40: #9b9a97;
+  --fmd-editorColor30: rgba(55, 53, 47, 0.3);
+  --fmd-editorColor10: #e9e9e7;
+  --fmd-editorColor04: #f7f6f3;
+  --fmd-editorBgColor: #ffffff;
+  --fmd-deleteColor: #d44c47;
+  --fmd-iconColor: #73726e;
+  --fmd-codeBlockBgColor: #f7f6f3;
+  --fmd-footnoteBgColor: #f7f6f3;
+  --fmd-inputBgColor: rgba(55, 53, 47, 0.06);
+  --fmd-buttonFontColor: var(--editorColor);
+  --fmd-buttonBgColor: #ffffff;
+  --fmd-buttonBorder: 1px solid rgba(55, 53, 47, 0.16);
+  --fmd-buttonBgColorHover: #f7f6f3;
+  --fmd-buttonBorderHover: var(--buttonBorder);
+  --fmd-buttonBgColorActive: #efeeec;
+  --fmd-buttonBorderActive: var(--buttonBorder);
+  --fmd-tableBorderColor: #e9e9e7;
+  --fmd-h1Color: #37352f;
+  --fmd-h2Color: #37352f;
+  --fmd-h3Color: #37352f;
+  --fmd-h4Color: #37352f;
+  --fmd-h5Color: #37352f;
+  --fmd-h6Color: #37352f;
+  --fmd-blockquoteTextColor: var(--editorColor);
+  --fmd-blockquoteBorderColor: var(--editorColor);
+  --fmd-hrColor: var(--editorColor);
+  --fmd-linkColor: var(--editorColor);
+  --fmd-strongColor: var(--editorColor);
+  --fmd-emColor: var(--editorColor);
+  --fmd-listMarkerColor: var(--editorColor50);
+  --fmd-floatBgColor: #ffffff;
+  --fmd-floatHoverColor: #f7f6f3;
+  --fmd-floatBorderColor: rgba(55, 53, 47, 0.16);
+  --fmd-maskColor: rgba(255, 255, 255, 0.8);
+}
+
+/* Headings: Notion's Light Classic scale — 700 weight, 2rem above and 1rem
+ * below, and no rule under any level; h1/h2 reserve 0.3em below the text. The
+ * rules reach the editor and the settings preview at one class plus one
+ * element, so a custom stylesheet can beat them with the same selector shape. */
+
+.editor-wrapper h1,
+.editor-wrapper h2,
+.editor-wrapper h3,
+.editor-wrapper h4,
+.editor-wrapper h5,
+.editor-wrapper h6 {
+  margin: 2rem 0 1rem;
+  padding: 0;
+
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.editor-wrapper h1 {
+  padding-bottom: 0.3em;
+
+  font-size: 2.2em;
+  line-height: 1.3;
+}
+
+.editor-wrapper h2 {
+  padding-bottom: 0.3em;
+
+  font-size: 1.75em;
+  line-height: 1.225;
+}
+
+.editor-wrapper h3 {
+  font-size: 1.4em;
+  line-height: 1.43;
+}
+
+.editor-wrapper h4 {
+  font-size: 1.2em;
+}
+
+.editor-wrapper h5 {
+  font-size: 1em;
+}
+
+.editor-wrapper h6 {
+  font-size: 1em;
+}
+
+.editor-wrapper p,
+.editor-wrapper blockquote,
+.editor-wrapper ul,
+.editor-wrapper ol,
+.editor-wrapper table {
+  margin: 0.8em 0;
+}
+
+.editor-wrapper ul,
+.editor-wrapper ol {
+  padding-left: 2em;
+}
+
+.editor-wrapper li > ul,
+.editor-wrapper li > ol {
+  margin: 0;
+}
+
+/* Links: Notion keeps the ink colour and marks a link by its underline alone,
+ * at both rest and hover, so a page reads as one ink. Muya renders the editor
+ * link as `span.mu-inline-rule.mu-link` and colours it through that same
+ * two-class selector, (0,2,1); a `.mu-link`-only rule would lose the colour
+ * comparison, so the theme keeps both classes (0,3,0). The settings preview
+ * uses `<a>` and a no-text link is `a.mu-no-text-link.mu-inline-rule`, which
+ * the `a` selectors cover. */
+
+.editor-wrapper a,
+.editor-wrapper a.mu-inline-rule,
+.editor-wrapper .mu-link,
+.editor-wrapper .mu-inline-rule.mu-link {
+  color: var(--linkColor);
+
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2rem;
+}
+
+.editor-wrapper a:hover,
+.editor-wrapper a.mu-inline-rule:hover,
+.editor-wrapper .mu-link:hover,
+.editor-wrapper .mu-inline-rule.mu-link:hover {
+  text-decoration: underline;
+}
+
+.editor-wrapper strong {
+  font-weight: 600;
+}
+
+/* Quotes: Muya paints the bar with `blockquote::before`; restyling the same
+ * pseudo element keeps one bar. Notion's quote is a 4px ink bar on the page
+ * background, and the nested quote keeps its existing right inset. */
+
+.editor-wrapper blockquote {
+  position: relative;
+  padding: 10px 14px 7px 22px;
+
+  color: var(--blockquoteTextColor);
+
+  background: var(--editorBgColor);
+  border: 0;
+}
+
+.editor-wrapper blockquote::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  display: block;
+  width: 4px;
+  height: 100%;
+
+  background: var(--blockquoteBorderColor);
+
+  content: '';
+}
+
+.editor-wrapper blockquote blockquote {
+  padding-right: 1em;
+}
+
+/* Tables: hairline cells on `--fmd-tableBorderColor`, with Notion's neutral
+ * header band. The band reads `--editorColor04`, the page's panel token, not
+ * `--codeBlockBgColor`: recolouring fenced code must not repaint the table
+ * header. Muya draws the 1px rules as cell `::before` boxes and renders the
+ * header as the first `tr` of `td`s, while the settings preview has a real
+ * `<thead>`, so both DOM shapes are covered. No zebra rows. */
+
+.editor-wrapper table {
+  width: auto;
+
+  border-collapse: collapse;
+}
+
+/* Muya's own cell rule is `.mu-table-inner tr td` (0,1,2), so the padding has
+ * to carry the same element weight to win on source order. */
+
+.editor-wrapper table th,
+.editor-wrapper table td {
+  padding: 6px 13px;
+}
+
+.editor-wrapper .mu-table-inner tr:first-child td,
+.editor-wrapper thead th {
+  font-weight: 700;
+
+  background: var(--editorColor04);
+}
+
+/* Inline code: the warm pill with Notion's red text. The fill comes from
+ * `--codeBgColor`, the UI-axis token base.css publishes inside `.editor-wrapper`,
+ * so a custom stylesheet can recolour the pill without unpacking this selector.
+ * `:where(:not(pre))` zeroes the exclusion's specificity, so the rule stays at
+ * (0,1,1) and sits after the engine sheet and before `#custom-styles`. */
+
+.editor-wrapper :where(:not(pre)) > code {
+  padding: 2px 4px;
+
+  font-size: 0.95em;
+
+  color: #b83d3d;
+
+  background: var(--codeBgColor);
+  border-radius: 4px;
+}
+
+/* Code blocks: Notion's warm panel. The line-number gutter Muya reserves on
+ * `padding-left` is preserved and pinned to the block's 8px top padding. */
+
+.editor-wrapper .mu-code-block {
+  margin: 15px 0;
+  padding: 8px 1rem 6px;
+
+  color: var(--editorColor);
+  line-height: 1.45;
+
+  border: 0;
+  border-radius: 4px;
+}
+
+.editor-wrapper .mu-code-block:has(.mu-line-numbers-rows) {
+  padding-left: 2.5em;
+}
+
+.editor-wrapper .mu-code-block .mu-line-numbers-rows {
+  top: 8px;
+}
+
+/* The horizontal scroller is `code.mu-code`, and Chromium on Windows draws its
+ * bar as an overlay: a bottom padding keeps the last line of code clear of it. */
+.editor-wrapper .mu-code-block .mu-code {
+  padding-bottom: 0.6em;
+}
+
+/* The settings preview renders a plain `<pre>` directly inside
+ * `.editor-wrapper`; it takes the same warm panel and ink. */
+
+.editor-wrapper > pre {
+  margin: 15px 0;
+  padding: 8px 1rem 6px;
+
+  overflow: auto;
+
+  color: var(--editorColor);
+
+  background: var(--codeBlockBgColor);
+  border-radius: 4px;
+}
+
+/* The preview renders a plain `<pre>`; its own code block keeps the theme's
+ * padding but must not inherit the inline pill. */
+
+.editor-wrapper pre code:not(.mu-code) {
+  padding: 0;
+
+  background: none;
+  border-radius: 0;
+}
+
+/* Rules. The editor draws a thematic break on `p.mu-thematic-break::before`
+ * (Muya uses a dashed top border); the preview uses `<hr>`. Notion's rule is a
+ * 1.5px ink line in both paths. */
+
+.editor-wrapper p.mu-thematic-break::before {
+  height: 0;
+
+  background: none;
+  border-top: 1.5px solid var(--hrColor);
+}
+
+.editor-wrapper hr {
+  height: 0;
+  margin: 1.5rem 0;
+
+  background: none;
+  border: 0;
+  border-top: 1.5px solid var(--hrColor);
+}
+
+/* Task lists: Muya paints the box on `input::before` and starts round; Notion's
+ * checkboxes have a small square corner. */
+.editor-wrapper li.mu-task-list-item input[type='checkbox']::before {
+  border-radius: 3px;
+}
