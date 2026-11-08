@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { describe, it, expect, vi } from 'vitest'
 
 // `@/util/pdf` (imported transitively for `getHtmlToc`) and the export wrapper
@@ -70,6 +73,30 @@ describe('exportStyledHTML — wrapper parity', () => {
     const body = /<body>([\s\S]*)<\/body>/.exec(out)![1]
     expect(body).toContain('<article class="markdown-body">')
     expect(body).not.toContain('<body>')
+  })
+
+  it('keeps the Noto symbol fallbacks when an export theme overrides the body font', async() => {
+    for (const theme of ['academic', 'liber']) {
+      const css = readFileSync(
+        resolve(
+          __dirname,
+          `../../../src/renderer/src/assets/themes/export/${theme}.theme.css`
+        ),
+        'utf8'
+      )
+      expect(css, `${theme} font stack`).toMatch(
+        /font-family:[\s\S]*'Noto Music'[\s\S]*'Noto Sans Math'/
+      )
+
+      const out = await exportStyledHTML(NO_MUYA, 'music ♩ and math ⏴', { extraCss: css })
+      expect(out, `${theme} exported font stack`).toContain(
+        "'Noto Music', 'Noto Sans Math'"
+      )
+      // The font *files* are embedded by @muyajs/core's embedExportFonts; its
+      // own spec covers the data-URI rewrite, which CSS `?inline` stubs cannot
+      // reproduce in this Vitest environment. Keeping the faces first in the
+      // theme stack is what makes the browser use them.
+    }
   })
 })
 
