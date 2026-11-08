@@ -60,6 +60,8 @@ const CHROME_SELECTOR =
 /** Prism themes that ship under a different name than the editor theme. */
 const PRISM_ALIASES = {
   'claude-style': 'github-light',
+  bear: 'github-light',
+  'ia-writer-light': 'github-light',
   'material-dark': 'dark',
   light: 'default',
   notion: 'github-light'
@@ -234,7 +236,12 @@ const titleCase = id =>
 // right for "One" and wrong for "GitHub". A word it only capitalises stays
 // wrong wherever the product spells it with an inner capital: "gitbook" would
 // become "Gitbook".
-const LABELS = { 'github-light': 'GitHub Light', 'typora-gitbook': 'Typora GitBook' }
+const LABELS = {
+  'github-light': 'GitHub Light',
+  'ia-writer-light': 'iA Writer Light',
+  'paper-sepia': 'Paper / Sepia',
+  'typora-gitbook': 'Typora GitBook'
+}
 
 const labelOf = id => LABELS[id] ?? titleCase(id)
 
@@ -411,7 +418,7 @@ function themeLiterals (id, kind) {
   for (const which of [kind === 'ui' ? 'md' : 'ui', kind]) {
     const file = path.join(THEMES, `${which}/${id}.css`)
     if (!fs.existsSync(file)) continue
-    for (const [name, value] of variablesOf(fs.readFileSync(file, 'utf8'))) {
+    for (const [name, value] of scopeVariables(fs.readFileSync(file, 'utf8'), which)) {
       if (!name.startsWith(PREFIX[which])) continue
       literals.set(name.slice(PREFIX[which].length), value)
     }
@@ -440,6 +447,16 @@ function restoreReferences (kind, file, defaults, literals) {
     })
   }
   writeFile(file, css)
+}
+
+/**
+ * Variables declared in a theme's palette block. Tail rules may also declare
+ * public variables in a narrower scope (Bear's `.side-bar` is the first user),
+ * and those must not leak into the manifest literals or the axis validation.
+ */
+function scopeVariables (css, kind) {
+  const block = parseBlocks(stripComments(css)).find(candidate => candidate.selector === BLOCK_OF[kind])
+  return block ? variablesOf(block.body) : new Map()
 }
 
 function aggregate () {
@@ -480,22 +497,23 @@ function aggregate () {
   const manifest = uiIds.map(id => {
     const uiCss = fs.readFileSync(path.join(THEMES, `ui/${id}.css`), 'utf8')
     const mdCss = fs.readFileSync(path.join(THEMES, `md/${id}.css`), 'utf8')
-    for (const name of variablesOf(uiCss).keys()) {
+    const uiVariables = scopeVariables(uiCss, 'ui')
+    const mdVariables = scopeVariables(mdCss, 'md')
+    for (const name of uiVariables.keys()) {
       if (!name.startsWith(PREFIX.ui)) throw new Error(`ui/${id}.css declares non-ui variable --${name}`)
     }
-    for (const name of variablesOf(mdCss).keys()) {
+    for (const name of mdVariables.keys()) {
       if (!name.startsWith(PREFIX.md)) throw new Error(`md/${id}.css declares non-md variable --${name}`)
     }
-    // Resolve the background through the theme's own references instead of
-    // reading a literal: `light` spells it as rgba(), and several themes point
-    // at a palette entry. A value we cannot resolve is a generator bug, not a
-    // reason to guess "dark".
+    // Only the palette block contributes to the card/manifest. A chrome tail
+    // scope such as `.side-bar` may override public names for its subtree, but
+    // it must not decide the fallback palette or the light/dark flag.
     const uiLiterals = new Map()
-    for (const [name, value] of variablesOf(uiCss)) {
+    for (const [name, value] of uiVariables) {
       uiLiterals.set(name.slice(PREFIX.ui.length), value)
     }
     const mdLiterals = new Map()
-    for (const [name, value] of variablesOf(mdCss)) {
+    for (const [name, value] of mdVariables) {
       mdLiterals.set(name.slice(PREFIX.md.length), value)
     }
     // The chrome decides the light/dark flag, so it wins a name both halves
@@ -573,7 +591,7 @@ function promoteCrossAxis (id) {
   for (const kind of ['ui', 'md']) {
     known[kind] = new Map()
     const css = fs.readFileSync(path.join(THEMES, files[kind]), 'utf8')
-    for (const [name, value] of variablesOf(css)) known[kind].set(name.slice(PREFIX[kind].length), value)
+    for (const [name, value] of scopeVariables(css, kind)) known[kind].set(name.slice(PREFIX[kind].length), value)
     refs[kind] = referencedNames(css)
   }
 

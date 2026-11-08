@@ -69,6 +69,29 @@
     }
   },
   {
+    "id": "bear",
+    "label": "Bear",
+    "appearance": "light",
+    "prism": "github-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#fbfbfb",
+        "editorColor": "#333333",
+        "sideBarBgColor": "#f2f2f2",
+        "themeColor": "#be2f34",
+        "buttonPrimaryBgColor": "#be2f34"
+      },
+      "md": {
+        "editorBgColor": "#fbfbfb",
+        "editorColor": "#333333",
+        "h1Color": "#262626",
+        "linkColor": "#be2f34",
+        "codeBlockBgColor": "#fafafa",
+        "blockquoteBorderColor": "#c9c9c9"
+      }
+    }
+  },
+  {
     "id": "catppuccin-latte",
     "label": "Catppuccin Latte",
     "appearance": "light",
@@ -345,6 +368,29 @@
     }
   },
   {
+    "id": "ia-writer-light",
+    "label": "iA Writer Light",
+    "appearance": "light",
+    "prism": "github-light",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#f7f7f7",
+        "editorColor": "#1a1a1a",
+        "sideBarBgColor": "#f4f4f4",
+        "themeColor": "#1a1a1a",
+        "buttonPrimaryBgColor": "#1a1a1a"
+      },
+      "md": {
+        "editorBgColor": "#f9f9f9",
+        "editorColor": "#1a1a1a",
+        "h1Color": "#1a1a1a",
+        "linkColor": "#1a1a1a",
+        "codeBlockBgColor": "#f0f0f0",
+        "blockquoteBorderColor": "#c9c9c9"
+      }
+    }
+  },
+  {
     "id": "kanagawa",
     "label": "Kanagawa",
     "appearance": "dark",
@@ -548,6 +594,29 @@
         "linkColor": "#82aaff",
         "codeBlockBgColor": "#32374d",
         "blockquoteBorderColor": "#4e5579"
+      }
+    }
+  },
+  {
+    "id": "paper-sepia",
+    "label": "Paper / Sepia",
+    "appearance": "light",
+    "prism": "paper-sepia",
+    "swatches": {
+      "ui": {
+        "editorBgColor": "#f2f0e5",
+        "editorColor": "#403e3c",
+        "sideBarBgColor": "#e6e4d9",
+        "themeColor": "#9d4310",
+        "buttonPrimaryBgColor": "#9d4310"
+      },
+      "md": {
+        "editorBgColor": "#f2f0e5",
+        "editorColor": "#403e3c",
+        "h1Color": "#403e3c",
+        "linkColor": "#9d4310",
+        "codeBlockBgColor": "#e6e4d9",
+        "blockquoteBorderColor": "#b7b5ac"
       }
     }
   },
