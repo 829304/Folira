@@ -45,6 +45,43 @@ for (const theme of ['github-light', 'typora-gitbook']) {
     });
 }
 
+test('GitBook keeps shared code surfaces on the readable panel', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'Checks the desktop theme cascade in Chromium');
+    const themeCss = ['base.css', 'ui/typora-gitbook.css', 'md/typora-gitbook.css']
+        .map(path => read(`assets/themes/${path}`))
+        .join('\n');
+    await page.setContent(`<!doctype html><style>${themeCss}</style><div class="editor-wrapper">
+<pre class="mu-code-block"><code class="mu-code">const a = 1</code></pre>
+<pre class="mu-frontmatter">title: x</pre>
+<div class="mu-html-container"><pre>&lt;b&gt;x&lt;/b&gt;</pre></div>
+<div class="mu-math-container">a^2</div>
+<div class="mu-diagram-container">A -&gt; B</div>
+<span class="mu-inline-footnote-identifier"><a href="#">1</a></span>
+</div>`);
+    const style = (selector: string) => page.locator(selector).first().evaluate(el => {
+        const computed = getComputedStyle(el);
+        return { color: computed.color, background: computed.backgroundColor };
+    });
+
+    // Only the fenced block keeps the navy surface; the other consumers of
+    // --codeBlockBgColor would otherwise keep the dark editor ink on it.
+    expect(await style('.mu-code-block')).toEqual({ color: 'rgb(248, 248, 242)', background: 'rgb(24, 48, 85)' });
+    for (const selector of ['.mu-frontmatter', '.mu-html-container', '.mu-math-container', '.mu-diagram-container']) {
+        expect(await style(selector), selector).toEqual({
+            color: 'rgb(59, 69, 78)',
+            background: 'rgb(245, 247, 249)'
+        });
+    }
+    expect(await style('.mu-inline-footnote-identifier')).toEqual({
+        color: 'rgb(36, 42, 49)',
+        background: 'rgb(245, 247, 249)'
+    });
+    expect(await style('.mu-inline-footnote-identifier a')).toEqual({
+        color: 'rgb(59, 69, 78)',
+        background: 'rgba(0, 0, 0, 0)'
+    });
+});
+
 test('GitBook deepens the default link on hover and keeps a custom --link-color', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'Checks the desktop theme cascade in Chromium');
     const themeCss = ['base.css', 'ui/typora-gitbook.css', 'md/typora-gitbook.css']

@@ -587,6 +587,32 @@ describe('light-theme phase 2 contracts', () => {
     expect(ruleIn(gitbookMd, '.editor-wrapper > pre')).toContain('color: #f8f8f2')
   })
 
+  it('keeps shared code surfaces on the readable panel instead of the navy block', () => {
+    // --codeBlockBgColor also paints front matter, HTML/math/diagram source
+    // panes and the footnote pill; their engine ink is the dark editor colour,
+    // so only the fenced block may keep the navy background.
+    const sharedStart = gitbookMd.indexOf('.editor-wrapper .mu-frontmatter,')
+    expect(sharedStart).toBeGreaterThan(-1)
+    const shared = gitbookMd.slice(sharedStart, gitbookMd.indexOf('}', sharedStart) + 1)
+    for (const selector of [
+      '.editor-wrapper .mu-frontmatter',
+      '.editor-wrapper .mu-html-container',
+      '.editor-wrapper .mu-math-container',
+      '.editor-wrapper .mu-diagram-container'
+    ]) {
+      expect(shared, selector).toContain(selector)
+    }
+    expect(shared).toContain('color: var(--editorColor)')
+    expect(shared).toContain('background: var(--editorColor04)')
+
+    const footnote = ruleIn(gitbookMd, '.editor-wrapper .mu-inline-footnote-identifier')
+    expect(footnote).toContain('color: var(--editorColor80)')
+    expect(footnote).toContain('background: var(--editorColor04)')
+    expect(ruleIn(gitbookMd, '.editor-wrapper .mu-inline-footnote-identifier a')).toContain(
+      'color: var(--editorColor)'
+    )
+  })
+
   it('leaves the shared heading group without a border', () => {
     for (const id of ['typora-gitbook', 'notion']) {
       const css = readTheme('md', id)
