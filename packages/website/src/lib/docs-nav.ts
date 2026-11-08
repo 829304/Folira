@@ -56,7 +56,7 @@ export const DOC_TABS: DocTab[] = [
         label: 'Export & themes',
         pages: [
           { slug: ['export'], title: 'Export a document', file: 'end-user/EXPORT.md', hint: 'PDF, HTML, image export' },
-          { slug: ['themes'], title: 'Themes', file: 'end-user/THEMES.md', hint: 'The 33 built-in themes and custom CSS' },
+          { slug: ['themes'], title: 'Themes', file: 'end-user/THEMES.md', hint: 'The 36 built-in themes and custom CSS' },
           { slug: ['export-themes'], title: 'Themes for exporting', file: 'end-user/EXPORT_THEMES.md', hint: 'Style your exported HTML' },
           { slug: ['images'], title: 'Image support', file: 'end-user/IMAGES.md', hint: 'Copy images to a local folder' },
           { slug: ['image-uploader'], title: 'Image uploader configuration', file: 'end-user/IMAGE_UPLOADER_CONFIGRATION.md', hint: 'Cloud image hosts' }
@@ -161,3 +161,4 @@ export function firstPageOfTab(tab: DocTabId): DocPageWithCtx {
   if (!p) throw new Error(`No pages registered for tab "${tab}"`)
   return p
 }
+

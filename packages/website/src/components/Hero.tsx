@@ -61,7 +61,7 @@ export default function Hero() {
             <h2>What changed</h2>
             <ul>
               <li>Seamless real-time rendering with no preview pane</li>
-              <li>33 built-in themes plus full custom CSS</li>
+              <li>36 built-in themes plus full custom CSS</li>
               <li>Tables, math, footnotes &amp; diagrams out of the box</li>
             </ul>
             <blockquote>“The best Markdown editors disappear. MarkText disappears beautifully.”</blockquote>
@@ -77,3 +77,4 @@ export default function Hero() {
     </header>
   )
 }
+
