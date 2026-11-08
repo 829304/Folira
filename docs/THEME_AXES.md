@@ -294,6 +294,25 @@ pins the link rule in both DOM shapes, the table header token split, the navy
 block's plain-text colour, and the palette-reference guard (every palette file
 must be selected by a manifest entry).
 
+## Verification notes
+
+The Phase 2/3 acceptance run recorded four evidence limits. They describe the
+automation environment, not known product defects:
+
+- The boot loading indicator was too short-lived to capture a frame in the
+  packaged WebView run. Its 25% selection token and the static cascade are
+  covered by `theme-preview.spec.ts`; there is no runtime screenshot.
+- PDF export has no Tauri `printToPDF`. It was validated structurally (page
+  count, file type) and through the WebView print DOM rendered in Chrome. The
+  local toolchain has no PDF rasteriser, so no per-page screenshots exist.
+- One real native HTML save was verified byte-for-byte against the application's
+  export function. The other styles reuse that same application export function
+  because native save-dialog automation is environment-dependent.
+- Light themes intentionally use CodeMirror's `cm-s-default` source-mode skin
+  (only the dark theme lists select `one-dark`/`railscasts`). Source-mode tests
+  cover text, cursor, selection and the return to WYSIWYG, not a per-theme
+  source palette.
+
 ## Out of scope
 
 - Themes that change layout, spacing or the writing column. Those are
