@@ -101,6 +101,12 @@ export function lexBlock(
     src: string,
     options: ILexOption = DEFAULT_OPTIONS,
 ): TLexedToken[] {
+    // The desktop normalises file contents before handing them to the engine,
+    // but direct consumers (new Muya + setContent, tests) can pass CRLF. Marked
+    // only treats LF as a block newline, so a table would otherwise lex as a
+    // plain paragraph. Collapse CRLF and lone CR the same way read_markdown_file
+    // does on disk.
+    src = src.replace(/\r\n?/g, '\n');
     options = Object.assign({}, DEFAULT_OPTIONS, options);
     const { texMathDollars, texMathGfm, texMathSingleBackslash, texMathDoubleBackslash, frontMatter, footnote, multilineBlockquote, fancyLists } = options;
     let tokens: (Token | IFrontmatterToken)[] = [];
