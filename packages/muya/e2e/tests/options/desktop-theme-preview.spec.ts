@@ -8,6 +8,13 @@ const read = (path: string) => readFileSync(new URL(path, renderer), 'utf8');
 // content, breakpoints or zoom are part of the measurement.
 const sample = read('util/themePreview.ts').match(/PREVIEW_SAMPLE = `([\s\S]*?)`/)?.[1];
 const settingsCss = read('prefComponents/theme/index.vue').match(/<style>([\s\S]*?)<\/style>/)?.[1];
+const manifest = JSON.parse(read('assets/themes/manifest.json')) as Array<{ id: string; prism: string }>;
+const prismFor = (id: string): string => {
+    const prism = manifest.find(theme => theme.id === id)?.prism;
+    if (!prism)
+        throw new Error(`The manifest has no prism for ${id}`);
+    return read(`assets/themes/prismjs/${prism}.theme.css`);
+};
 if (!sample || !settingsCss)
     throw new Error('The theme preview fixture could not load the settings sample or its CSS');
 
@@ -15,9 +22,10 @@ const VIEWPORTS = [
     { width: 950, height: 650, label: 'default settings viewport' },
     { width: 950, height: 761, label: 'settings viewport just above the breakpoint' }
 ];
+const THEMES = ['github-light', 'typora-gitbook', 'bear', 'ia-writer-light', 'paper-sepia'];
 
 for (const { width, height, label } of VIEWPORTS) {
-    for (const theme of ['github-light', 'typora-gitbook']) {
+    for (const theme of THEMES) {
         test(`${theme} shows the entire code sample in the ${label}`, async ({ page, browserName }) => {
             test.skip(browserName !== 'chromium', 'Measures the settings layout in Chromium');
             await page.setViewportSize({ width, height });
@@ -26,7 +34,7 @@ for (const { width, height, label } of VIEWPORTS) {
                 ...['base.css', `ui/${theme}.css`, `md/${theme}.css`].map(path =>
                     read(`assets/themes/${path}`).replace(/:root\b/g, ':host'),
                 ),
-                read(`assets/themes/prismjs/${theme}.theme.css`),
+                prismFor(theme),
                 read('prefComponents/theme/preview.css'),
             ].join('\n');
             const bounds = await page.locator('#preview').evaluate((host, { css, sample }) => {

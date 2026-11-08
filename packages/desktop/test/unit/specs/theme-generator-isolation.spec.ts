@@ -129,4 +129,27 @@ describe('theme generator axis isolation', () => {
     // Only the fixture directory may have changed.
     expect(treeHashes(THEMES)).toEqual(repoThemesBefore)
   }, 30_000)
+
+  it('accepts a scoped public override in a UI tail without feeding the manifest', () => {
+    expect(readFileSync(INDEX_CSS, 'utf8')).toContain('--editorAreaWidth:')
+
+    writeFixture()
+    const fixtureUi = fixtureCss('ui/fixture.css')
+    writeFileSync(
+      join(fixtureThemes, 'ui/fixture.css'),
+      `${fixtureUi}\n\n.side-bar {\n  --themeColor: #aabbcc;\n}\n`
+    )
+    const repoThemesBefore = treeHashes(THEMES)
+
+    runGenerator()
+
+    expect(fixtureCss('ui/fixture.css')).toContain('--themeColor: #aabbcc;')
+    const manifest = JSON.parse(fixtureCss('manifest.json')) as Array<{
+      id: string
+      swatches: { ui: { themeColor: string } }
+    }>
+    // The card still describes the root palette, not the sidebar override.
+    expect(manifest.find(theme => theme.id === 'fixture')?.swatches.ui.themeColor).toBe('#112233')
+    expect(treeHashes(THEMES)).toEqual(repoThemesBefore)
+  }, 30_000)
 })
