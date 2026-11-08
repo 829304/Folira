@@ -257,6 +257,30 @@
   border-bottom-width: 2px;
 }
 
+/* The shared `--codeBlockBgColor` also paints front matter, HTML/math/diagram
+ * source panes and the inline footnote pill. Their engine colour is the dark
+ * editor ink, so on the navy surface they measured 1.35:1 (footnote 1.10:1).
+ * Keep the navy for the fenced block and give every other consumer the normal
+ * panel/ink pair. */
+.editor-wrapper .mu-frontmatter,
+.editor-wrapper .mu-html-container,
+.editor-wrapper .mu-math-container,
+.editor-wrapper .mu-diagram-container {
+  color: var(--editorColor);
+
+  background: var(--editorColor04);
+}
+
+.editor-wrapper .mu-inline-footnote-identifier {
+  color: var(--editorColor80);
+
+  background: var(--editorColor04);
+}
+
+.editor-wrapper .mu-inline-footnote-identifier a {
+  color: var(--editorColor);
+}
+
 /* Inline code: GitBook's square pale pill, with the body ink inherited. The
  * fill comes from `--codeBgColor`, the UI-axis token base.css publishes inside
  * `.editor-wrapper`, so a custom stylesheet can recolour the pill without
