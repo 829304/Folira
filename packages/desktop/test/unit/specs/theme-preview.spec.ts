@@ -5,7 +5,7 @@
 // preview that commits a theme whose stylesheets did not all arrive, so the
 // sample keeps the old palette under the new name.
 
-import { readFileSync } from 'fs'
+import { readdirSync, readFileSync } from 'fs'
 import { resolve } from 'path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -228,12 +228,64 @@ describe('github-light markdown rules', () => {
   })
 })
 
+// Claude Style is the other hand-written body. Activating its warm interface
+// half made two promises a theme card cannot show: h2 closes by size and weight
+// alone (so it keeps neither a rule nor the padding that reserved room for one),
+// and the inline pill reads `--codeBgColor` instead of a baked-in accent, so a
+// custom sheet can recolour it. Its syntax palette is GitHub Light's, which the
+// zero-weight Prism guard further down already covers.
+describe('claude-style markdown rules', () => {
+  const css = readTheme('md', 'claude-style')
+  const rule = (selector: string): string => {
+    const start = css.indexOf(`${selector} {`)
+    if (start < 0) throw new Error(`claude-style.css has no rule for ${selector}`)
+    return css.slice(start, css.indexOf('}', start) + 1)
+  }
+
+  it('closes h1 with a hairline and gives h2 no rule or the padding for one', () => {
+    const h1 = rule('.editor-wrapper h1')
+    expect(h1).toContain('padding-bottom: 0.3em')
+    expect(h1).toContain('border-bottom: 1px solid')
+
+    const h2 = rule('.editor-wrapper h2')
+    expect(h2).not.toContain('border')
+    expect(h2).not.toContain('padding')
+  })
+
+  it('reuses the GitHub Light syntax palette', () => {
+    const manifest = JSON.parse(
+      readFileSync(resolve(themesDir, 'manifest.json'), 'utf8')
+    ) as { id: string; prism: string | null }[]
+
+    expect(manifest.find((theme) => theme.id === 'claude-style')?.prism).toBe('github-light')
+  })
+
+  it('fills inline code from --codeBgColor so custom CSS can recolour it', () => {
+    expect(rule('.editor-wrapper :where(:not(pre)) > code')).toContain(
+      'background: var(--codeBgColor)'
+    )
+    // The public name resolves against the UI axis, so the fill has to be
+    // declared there for the editor and the settings preview to agree.
+    expect(readTheme('ui', 'claude-style')).toMatch(/--fui-codeBgColor:\s*\S+/)
+    // `:not(pre)` contributes a type's specificity unless wrapped in `:where`;
+    // a second, plain one would outrank user CSS again, so this theme gets the
+    // same exclusivity guard the GitHub Light file has.
+    expect(
+      selectorsIn(readTheme('md', 'claude-style')).filter((selector) => selector.includes(':not(pre)'))
+    ).toEqual(['.editor-wrapper :where(:not(pre)) > code'])
+  })
+
+  it("keeps the code block on the theme's warm grey", () => {
+    expect(css).toContain('--fmd-codeBlockBgColor: #f3efe6')
+  })
+})
+
 // The custom-CSS slot is injected after the theme sheets, so a user rule wins
 // on source order only while the theme keeps its own weight. These checks pin
 // the zero-weight shapes GitHub Light promises — the Prism palette and the
 // inline-code selector — because those are where a class-shaped scope, or a
 // plain `:not(pre)`, would silently outrank `.token.keyword` and
-// `.editor-wrapper code` again. The other 32 upstream palettes are global
+// `.editor-wrapper code` again. The other 28 upstream palettes are global
 // (`prismjs/<id>.theme.css` with plain `.token.*` selectors) and stay out of
 // scope here.
 
@@ -380,5 +432,439 @@ describe('preview cropping at the short breakpoints', () => {
     // pair would make the header reserve space for the wrong frame.
     expect(pageVue).toMatch(/@media \(max-height: 760px\) \{\s*--theme-preview-height: 176px;/)
     expect(pageVue).toMatch(/@media \(max-height: 640px\) \{\s*--theme-preview-height: 140px;/)
+  })
+})
+
+// The stage-3 light bodies are hand-written too, so they inherit the same
+// promises as the two above: a syntax palette that is either the theme's own
+// scoped file or the scoped GitHub Light one, an inline pill whose selector
+// stays at zero weight, and a heading hierarchy that draws its rules from the
+// reference design rather than from Muya's engine sheet. These pin those
+// promises for both themes without touching the 29 upstream themes.
+describe('typora-gitbook and notion markdown rules', () => {
+  const ruleIn = (id: string, selector: string): string => {
+    const css = readTheme('md', id)
+    const start = css.indexOf(`${selector} {`)
+    if (start < 0) throw new Error(`md/${id}.css has no rule for ${selector}`)
+    return css.slice(start, css.indexOf('}', start) + 1)
+  }
+
+  it('uses the GitBook palette and leaves Notion on GitHub Light', () => {
+    const manifest = JSON.parse(
+      readFileSync(resolve(themesDir, 'manifest.json'), 'utf8')
+    ) as { id: string; prism: string | null }[]
+
+    expect(manifest.find((theme) => theme.id === 'typora-gitbook')?.prism).toBe(
+      'typora-gitbook'
+    )
+    expect(manifest.find((theme) => theme.id === 'notion')?.prism).toBe('github-light')
+  })
+
+  it('keeps the inline pill zero-weight and driven by --codeBgColor', () => {
+    for (const id of ['typora-gitbook', 'notion']) {
+      expect(ruleIn(id, '.editor-wrapper :where(:not(pre)) > code')).toContain(
+        'background: var(--codeBgColor)'
+      )
+      expect(
+        selectorsIn(readTheme('md', id)).filter((selector) => selector.includes(':not(pre)'))
+      ).toEqual(['.editor-wrapper :where(:not(pre)) > code'])
+    }
+  })
+
+  it('draws the heading hierarchy the reference designs use', () => {
+    // GitBook closes h1 with a hairline and leaves h2 unruled; Notion rules no
+    // heading at all. The shared heading group must not add a border to either.
+    expect(ruleIn('typora-gitbook', '.editor-wrapper h1')).toContain('border-bottom: 1px solid')
+    expect(ruleIn('typora-gitbook', '.editor-wrapper h2')).not.toContain('border')
+    expect(ruleIn('notion', '.editor-wrapper h1')).not.toContain('border')
+    expect(ruleIn('notion', '.editor-wrapper h2')).not.toContain('border')
+  })
+
+  it("keeps the fenced block on the theme's own surface", () => {
+    // GitBook restores Azure's navy code surface and paints it with its own
+    // scoped palette; Notion keeps the warm panel and the GitHub Light tokens.
+    expect(readTheme('md', 'typora-gitbook')).toContain('--fmd-codeBlockBgColor: #183055')
+    expect(readTheme('md', 'notion')).toContain('--fmd-codeBlockBgColor: #f7f6f3')
+  })
+
+  it('scopes the GitBook palette to the code surface at zero weight', () => {
+    const css = stripComments(
+      readFileSync(resolve(themesDir, 'prismjs/typora-gitbook.theme.css'), 'utf8')
+    )
+    // The scoped palette nests a comma inside `:where(pre, .mu-code-block)`, so
+    // this checks whole rule blocks rather than splitting selectors on commas.
+    const blocks = css
+      .split('}')
+      .filter((block) => block.includes('{'))
+      .map((block) => block.slice(0, block.indexOf('{')).trim())
+
+    expect(blocks.length).toBeGreaterThan(10)
+    for (const block of blocks) {
+      // The `:where()` wrappers add no specificity, so the later custom-CSS
+      // slot can still beat any token colour with a plain `.token.*` rule.
+      expect(
+        block.startsWith(':where(.editor-wrapper) :where(pre, .mu-code-block) ')
+      ).toBe(true)
+      expect(block).toContain('.token.')
+    }
+    expect(css).not.toMatch(/!important/)
+  })
+})
+
+// Phase 2 tightens the parts of the hand-written light bodies that a colour
+// sample cannot show: a link has to be underlined in both DOM shapes Muya
+// renders, the navy code surface has to keep every control inside it legible,
+// and a palette file is only worth shipping while the manifest still names it.
+// Each test names the production change that would break it.
+/** Palette names the manifest promises; a theme may ship none (`prism: null`). */
+const shippedPalettes = (manifest: { prism: string | null }[]): string[] =>
+  [
+    ...new Set(
+      manifest.map((theme) => theme.prism).filter((prism): prism is string => prism !== null)
+    )
+  ].sort()
+
+describe('light-theme phase 2 contracts', () => {
+  const ruleIn = (css: string, selector: string): string => {
+    const start = css.indexOf(`${selector} {`)
+    if (start < 0) throw new Error(`no rule for ${selector}`)
+    return css.slice(start, css.indexOf('}', start) + 1)
+  }
+  const gitbookMd = readTheme('md', 'typora-gitbook')
+  const gitbookUi = readTheme('ui', 'typora-gitbook')
+
+  it('underlines GitBook links in the editor and the preview DOM', () => {
+    const selectors = selectorsIn(gitbookMd)
+    // Muya colours the editor link through `span.mu-inline-rule.mu-link`
+    // (0,2,1); a `.mu-link`-only rule loses that comparison, so the theme keeps
+    // both classes on the selector. `a` is the settings-preview shape.
+    expect(selectors).toContain('.editor-wrapper .mu-inline-rule.mu-link')
+    expect(selectors).toContain('.editor-wrapper a')
+
+    const base = ruleIn(gitbookMd, '.editor-wrapper .mu-inline-rule.mu-link')
+    expect(base).toContain('color: var(--linkColor)')
+    expect(base).toContain('text-decoration: underline')
+    expect(base).toContain('text-decoration-thickness: 1px')
+    expect(base).toContain('text-underline-offset: 0.15em')
+
+    const hover = ruleIn(gitbookMd, '.editor-wrapper .mu-inline-rule.mu-link:hover')
+    expect(hover).toContain('color: #00307c')
+    expect(hover).toContain('text-decoration: underline')
+  })
+
+  it('keeps the GitBook code surface light-on-navy in both code paths', () => {
+    expect(ruleIn(gitbookMd, '.editor-wrapper .mu-code-block')).toContain('color: #f8f8f2')
+    expect(ruleIn(gitbookMd, '.editor-wrapper > pre')).toContain('color: #f8f8f2')
+  })
+
+  it('leaves the shared heading group without a border', () => {
+    for (const id of ['typora-gitbook', 'notion']) {
+      const css = readTheme('md', id)
+      const start = css.indexOf('.editor-wrapper h1,')
+      expect(start).toBeGreaterThan(-1)
+      const group = css.slice(start, css.indexOf('}', start) + 1)
+      expect(group, `${id}: the h1..h6 group draws a border`).not.toContain('border')
+    }
+  })
+
+  it('keeps every shipped palette reachable from the manifest', () => {
+    const manifest = JSON.parse(
+      readFileSync(resolve(themesDir, 'manifest.json'), 'utf8')
+    ) as { prism: string | null }[]
+    const files = readdirSync(resolve(themesDir, 'prismjs'))
+      .filter((file) => file.endsWith('.theme.css'))
+      .map((file) => file.replace(/\.theme\.css$/, ''))
+
+    expect([...files].sort()).toEqual(shippedPalettes(manifest))
+  })
+
+  it('ignores a theme that promises no syntax palette when listing shipped files', () => {
+    expect(
+      shippedPalettes([{ prism: 'dark' }, { prism: null }, { prism: 'light' }])
+    ).toEqual(['dark', 'light'])
+  })
+
+  it('keeps the GitBook palette readable on the navy surface', () => {
+    // Comments may name the old colour as rationale; only real declarations
+    // count for the palette's contrast.
+    const palette = stripComments(
+      readFileSync(resolve(themesDir, 'prismjs/typora-gitbook.theme.css'), 'utf8')
+    )
+    // #f92672 was 3.48:1 on #183055; the pink in use is 4.68:1.
+    expect(palette).toContain('color: #ff6299')
+    expect(palette).not.toContain('#f92672')
+    // The comment colour is the theme's muted slate, not the palette default.
+    expect(palette).toContain('color: #9daab6')
+  })
+
+  it('gives the GitBook code-copy button legible idle, hover and focus states', () => {
+    // `CodeBlock.create` moves the button out of `code.mu-code` and appends it
+    // to the `<pre>` (the line-number gutter moves the same way), so the
+    // engine's old `code.mu-active` descendant shape never matches and the
+    // button stays at opacity 0 until the block-level child rule lifts it.
+    expect(
+      ruleIn(gitbookMd, '.editor-wrapper .mu-code-block.mu-active > .mu-code-copy')
+    ).toContain('opacity: 1')
+    // The real DOM reparents the button, so no `code.mu-active` descendant
+    // selector may come back (comments are stripped by `selectorsIn`).
+    expect(
+      selectorsIn(gitbookMd).filter((selector) => selector.includes('.mu-code.mu-active'))
+    ).toEqual([])
+
+    expect(
+      ruleIn(gitbookMd, '.editor-wrapper .mu-code-block .mu-code-copy:hover')
+    ).toContain('background-color: rgba(255, 255, 255, 0.14)')
+
+    const focus = ruleIn(gitbookMd, '.editor-wrapper .mu-code-block .mu-code-copy:focus-visible')
+    expect(focus).toContain('background-color: rgba(255, 255, 255, 0.14)')
+    expect(focus).toContain('outline: 2px solid #9daab6')
+  })
+
+  it('keeps the 12px title-bar labels above 4.5:1', () => {
+    // The tab strip paints inactive labels in --editorColor50 at 12px, so the
+    // chrome step has to be readable text, not an icon grey.
+    const titleBar = readFileSync(
+      resolve(__dirname, '../../../src/renderer/src/components/titleBar/index.vue'),
+      'utf8'
+    )
+    expect(titleBar).toContain('color: var(--editorColor50)')
+    expect(gitbookUi).toContain('--fui-editorColor50: #55616c')
+    // Icon roles stay on the warm grey: they only need the 3:1 graphical step.
+    expect(gitbookUi).toContain('--fui-editorColor40: #74818d')
+    expect(gitbookUi).toContain('--fui-iconColor: #74818d')
+  })
+
+  it('keeps the explicit primary-button hover and the a11y text colours', () => {
+    // The generator restores `var()` references when a literal matches the
+    // default resolved in the same axis; a body colour must not decide that for
+    // the chrome, or the hover below collapses back to the base accent.
+    expect(ruleIn(gitbookUi, ':root')).toContain('--fui-buttonPrimaryBgColorHover: #0f5fd8')
+    expect(gitbookUi).toContain('--fui-sideBarTextColor: #55616c')
+    expect(gitbookUi).toContain('--fui-floatFontColor: #55616c')
+    // 0.08 over white keeps the #1968e6 link at 4.52:1 on the selection wash.
+    expect(gitbookUi).toContain('--fui-selectionColor: rgba(25, 104, 230, 0.25)')
+    expect(gitbookMd).toContain('--fmd-selectionColor: rgba(25, 104, 230, 0.08)')
+  })
+})
+
+// Phase 2B fulfils the same contract for Notion. The review found the preview
+// `<a>` path styled while the editor's `span.mu-inline-rule.mu-link` was left
+// bare, and the header band following the code-block token. The action blue is
+// Light Classic's; the warm neutrals stay, with the secondary text stepped down
+// to clear 4.5:1 on the panel.
+describe('light-theme phase 2 contracts (Notion)', () => {
+  const ruleIn = (css: string, selector: string): string => {
+    const start = css.indexOf(`${selector} {`)
+    if (start < 0) throw new Error(`no rule for ${selector}`)
+    return css.slice(start, css.indexOf('}', start) + 1)
+  }
+  const notionMd = readTheme('md', 'notion')
+  const notionUi = readTheme('ui', 'notion')
+
+  it('underlines Notion links in the editor and the preview DOM', () => {
+    const selectors = selectorsIn(notionMd)
+    // `span.mu-inline-rule.mu-link` is (0,2,1) in the engine; the theme keeps
+    // both classes so its ink colour and underline reach the editor link too.
+    expect(selectors).toContain('.editor-wrapper .mu-inline-rule.mu-link')
+    expect(selectors).toContain('.editor-wrapper a')
+
+    const base = ruleIn(notionMd, '.editor-wrapper .mu-inline-rule.mu-link')
+    expect(base).toContain('color: var(--linkColor)')
+    expect(base).toContain('text-decoration: underline')
+    expect(base).toContain('text-decoration-thickness: 1px')
+    expect(base).toContain('text-underline-offset: 0.2rem')
+
+    const hover = ruleIn(notionMd, '.editor-wrapper .mu-inline-rule.mu-link:hover')
+    expect(hover).toContain('text-decoration: underline')
+  })
+
+  it('keeps the table header band on the page token, not the code token', () => {
+    const start = notionMd.indexOf('.editor-wrapper .mu-table-inner tr:first-child td,')
+    expect(start).toBeGreaterThan(-1)
+    const band = notionMd.slice(start, notionMd.indexOf('}', start) + 1)
+    expect(band).toContain('background: var(--editorColor04)')
+    expect(band).not.toContain('var(--codeBlockBgColor)')
+    // The same rule covers the preview's real `<thead>`.
+    expect(band).toContain('.editor-wrapper thead th')
+  })
+
+  it('adopts the Light Classic action blue and the warm UI tokens', () => {
+    const root = ruleIn(notionUi, ':root')
+    expect(root).toContain('--fui-themeColor: #0b6bcb')
+    expect(root).toContain('--fui-codeBgColor: #f7f6f3')
+    expect(root).toContain('--fui-buttonPrimaryBgColorHover: #0a5db8')
+    expect(root).toContain('--fui-buttonPrimaryBgColorActive: #084f9e')
+    expect(root).toContain(
+      '--fui-buttonPrimaryFocusShadow: 0 0 0 2px #ffffff, 0 0 0 4px #0b6bcb'
+    )
+    // #73726e on #f7f6f3 is 4.46:1; secondary text steps to #6b6a66 (5.01:1).
+    // Icons keep the warm grey, which clears the 3:1 graphical threshold.
+    expect(root).toContain('--fui-sideBarTextColor: #6b6a66')
+    expect(root).toContain('--fui-floatFontColor: #6b6a66')
+    expect(root).toContain('--fui-highlightThemeColor: var(--editorColor)')
+    expect(root).toContain('--fui-selectionColor: #c0e5f4')
+    // The 12px title-bar/tab labels paint with `--editorColor50`, which is
+    // legible on the white chrome (4.82:1) but not on the #f7f6f3 panel
+    // (4.46:1); panel text is the darker #6b6a66 asserted above.
+    expect(root).toContain('--fui-editorColor50: #73726e')
+    // The editor body paints its selection from the Markdown axis, so the
+    // Classic wash has to be declared there as well, not only on the chrome.
+    expect(notionMd).toContain('--fmd-selectionColor: #c0e5f4')
+  })
+})
+
+// Final-review fixes: the navy code block needs its own selection colours (the
+// engine's global `*:not(.mu-hide)::selection` forces the body ink on every
+// element), the inserted/deleted Prism tokens must stay legible on that
+// surface, and the palette registry guard must ignore themes that promise no
+// palette.
+describe('final review fixes', () => {
+  const ruleIn = (css: string, selector: string): string => {
+    const start = css.indexOf(`${selector} {`)
+    if (start < 0) throw new Error(`no rule for ${selector}`)
+    return css.slice(start, css.indexOf('}', start) + 1)
+  }
+  const gitbookMd = readTheme('md', 'typora-gitbook')
+
+  it('paints the GitBook code-block selection with the light code ink', () => {
+    const selectionSelectors = selectorsIn(gitbookMd).filter((selector) =>
+      selector.includes('::selection')
+    )
+    // Only the scoped code-block rule may exist: a global `::selection` would
+    // repaint the white page's 8% accent wash as well.
+    expect(selectionSelectors).toEqual(['.editor-wrapper .mu-code-block ::selection'])
+
+    const rule = ruleIn(gitbookMd, '.editor-wrapper .mu-code-block ::selection')
+    expect(rule).toContain('color: #f8f8f2')
+    expect(rule).toContain('background: rgba(157, 170, 182, 0.35)')
+    // The white-page selection token stays the 4.52:1 accent wash.
+    expect(gitbookMd).toContain('--fmd-selectionColor: rgba(25, 104, 230, 0.08)')
+  })
+
+  it('keeps inserted and deleted tokens legible on the navy surface', () => {
+    const palette = stripComments(
+      readFileSync(resolve(themesDir, 'prismjs/typora-gitbook.theme.css'), 'utf8')
+    )
+    // 8.58:1 and 6.78:1 on #183055. The light chip backgrounds Prism ships
+    // (#f0fff4 / #ffeef0) would break the dark surface.
+    expect(palette).toContain('color: #7ee787')
+    expect(palette).toContain('color: #ffa198')
+    expect(palette).not.toContain('#f0fff4')
+    expect(palette).not.toContain('#ffeef0')
+    expect(palette).not.toContain('#22863a')
+    expect(palette).not.toContain('#b31d28')
+    expect(palette).toContain('background: transparent')
+  })
+})
+
+// Phase 3 calibration: the fenced code surface takes Azure's syntax colours and
+// gets its own horizontal scrollbar, and the chrome selection deepens while the
+// editor body's wash stays at the value the link contrast was measured with.
+describe('phase 3 GitBook code surface and chrome', () => {
+  const gitbookMd = readTheme('md', 'typora-gitbook')
+  const gitbookUi = readTheme('ui', 'typora-gitbook')
+  const palette = stripComments(
+    readFileSync(resolve(themesDir, 'prismjs/typora-gitbook.theme.css'), 'utf8')
+  )
+
+  const ruleIn = (css: string, selector: string): string => {
+    const start = css.indexOf(`${selector} {`)
+    if (start < 0) throw new Error(`no rule for ${selector}`)
+    return css.slice(start, css.indexOf('}', start) + 1)
+  }
+  const paletteRule = (needle: string): string => {
+    const start = palette.indexOf(needle)
+    if (start < 0) throw new Error(`palette has no rule for ${needle}`)
+    const open = palette.indexOf('{', start)
+    return palette.slice(start, palette.indexOf('}', open) + 1)
+  }
+  /** WCAG relative-luminance contrast for two hex colours. */
+  const contrast = (foreground: string, background: string): number => {
+    const luminance = (hex: string): number => {
+      const digits = hex.replace('#', '')
+      const [r, g, b] = [0, 2, 4].map((index) => {
+        const value = parseInt(digits.slice(index, index + 2), 16) / 255
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+      })
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const [lighter, darker] = [luminance(foreground), luminance(background)].sort(
+      (a, b) => b - a
+    )
+    return (lighter + 0.05) / (darker + 0.05)
+  }
+
+  it('takes Azure syntax colours on the navy surface', () => {
+    expect(paletteRule('.token.keyword')).toContain('color: #61e3a5')
+    const string = paletteRule('.token.string')
+    expect(string).toContain('color: #71a7ff')
+    expect(string).toContain('.token.char')
+
+    // attr-name/builtin keep the Azure green rather than following the strings.
+    const green = paletteRule('.token.selector')
+    expect(green).toContain('#a6e22e')
+    expect(green).toContain('.token.attr-name')
+    expect(green).toContain('.token.builtin')
+    expect(green).not.toContain('.token.string')
+
+    // Every token the JS/HTML/JSON grammars emit clears 4.5:1 on #183055.
+    const azureTokens: Record<string, string> = {
+      keyword: '#61e3a5',
+      string: '#71a7ff',
+      'attr-name/builtin': '#a6e22e',
+      punctuation: '#f8f8f2',
+      comment: '#9daab6',
+      operator: '#e67e65',
+      number: '#ae81ff',
+      'tag/property': '#ff6299',
+      'attr-value/function': '#e6db74',
+      regex: '#fd971f',
+      inserted: '#7ee787',
+      deleted: '#ffa198'
+    }
+    for (const [name, color] of Object.entries(azureTokens)) {
+      expect(contrast(color, '#183055'), `${name} on the navy surface`).toBeGreaterThanOrEqual(
+        4.5
+      )
+    }
+  })
+
+  it('keeps the horizontal code scroller legible on the navy block', () => {
+    const scrollbar = (suffix: string): string => {
+      const selector = `.editor-wrapper .mu-code-block .mu-code::-webkit-scrollbar${suffix}`
+      expect(selectorsIn(gitbookMd)).toContain(selector)
+      return ruleIn(gitbookMd, selector)
+    }
+
+    expect(scrollbar('')).toContain('height: 8px')
+    expect(scrollbar('-track')).toContain('background: #10233c')
+    const thumb = scrollbar('-thumb')
+    expect(thumb).toContain('background: #5d748e')
+    expect(thumb).toContain('border-radius')
+    expect(scrollbar('-thumb:hover')).toContain('background: #7f97b3')
+
+    // The rules stay scoped to the code scroller; no global scrollbar restyle.
+    for (const selector of selectorsIn(gitbookMd).filter((entry) =>
+      entry.includes('::-webkit-scrollbar')
+    )) {
+      expect(
+        selector.startsWith('.editor-wrapper .mu-code-block .mu-code::-webkit-scrollbar')
+      ).toBe(true)
+    }
+  })
+
+  it('deepens the chrome selection while the editor body keeps its wash', () => {
+    const value = (css: string, name: string): string | undefined =>
+      new RegExp(`${name}:\\s*([^;]+);`).exec(css)?.[1].trim()
+
+    expect(value(gitbookUi, '--fui-selectionColor')).toBe('rgba(25, 104, 230, 0.25)')
+    expect(value(gitbookMd, '--fmd-selectionColor')).toBe('rgba(25, 104, 230, 0.08)')
+    expect(value(gitbookUi, '--fui-selectionColor')).not.toBe(
+      value(gitbookMd, '--fmd-selectionColor')
+    )
+    // Chrome ink on the 25% wash over white (#c6d9f9) is 6.84:1; the editor
+    // body's 8% wash keeps the #1968e6 link at 4.52:1.
+    expect(contrast('#3b454e', '#c6d9f9')).toBeGreaterThanOrEqual(4.5)
+    expect(contrast('#1968e6', '#edf3fd')).toBeGreaterThanOrEqual(4.5)
   })
 })
