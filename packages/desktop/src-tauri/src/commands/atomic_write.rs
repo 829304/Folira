@@ -209,7 +209,10 @@ mod tests {
         write_atomic(&file, b"new").unwrap();
 
         let mode = fs::metadata(&file).unwrap().permissions().mode() & 0o777;
-        assert_eq!(mode, 0o640, "a save must not widen or narrow the file's mode");
+        assert_eq!(
+            mode, 0o640,
+            "a save must not widen or narrow the file's mode"
+        );
     }
 
     #[cfg(unix)]
@@ -228,8 +231,45 @@ mod tests {
 
         assert_eq!(fs::read(&real).unwrap(), b"new");
         assert!(
-            fs::symlink_metadata(&link).unwrap().file_type().is_symlink(),
+            fs::symlink_metadata(&link)
+                .unwrap()
+                .file_type()
+                .is_symlink(),
             "the link itself must survive the save"
         );
+    }
+
+    #[test]
+    fn failed_rename_keeps_the_existing_directory_and_removes_the_staging_file() {
+        let dir = scratch("rename-failure");
+        let destination = dir.join("notes.md");
+        fs::create_dir(&destination).unwrap();
+        fs::write(destination.join("keep.txt"), b"original").unwrap();
+
+        assert!(write_atomic(&destination, b"replacement").is_err());
+        assert_eq!(fs::read(destination.join("keep.txt")).unwrap(), b"original");
+        assert_eq!(entries(&dir), vec!["notes.md".to_string()]);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn failed_save_to_a_locked_file_preserves_bytes_and_allows_a_retry() {
+        use std::os::windows::fs::OpenOptionsExt;
+
+        let dir = scratch("locked-file");
+        let destination = dir.join("notes.md");
+        fs::write(&destination, b"previous document").unwrap();
+        let locked = OpenOptions::new()
+            .read(true)
+            .share_mode(0)
+            .open(&destination)
+            .unwrap();
+        assert!(write_atomic(&destination, b"new document").is_err());
+        drop(locked);
+
+        assert_eq!(fs::read(&destination).unwrap(), b"previous document");
+        assert_eq!(entries(&dir), vec!["notes.md".to_string()]);
+        write_atomic(&destination, b"new document").unwrap();
+        assert_eq!(fs::read(&destination).unwrap(), b"new document");
     }
 }

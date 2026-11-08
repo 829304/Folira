@@ -151,4 +151,44 @@ mod tests {
         assert!(!is_skipped_dir(".github"));
         assert!(!is_skipped_dir(".vitepress"));
     }
+
+    #[test]
+    fn scanning_a_real_tree_preserves_parent_order_and_excludes_ignored_subtrees() {
+        let root = std::env::temp_dir().join(format!("folira-project-tree-{}", std::process::id()));
+        for folder in ["notes", "node_modules", ".git", "drafts", ".github"] {
+            let path = root.join(folder);
+            std::fs::create_dir_all(&path).unwrap();
+            std::fs::write(path.join("中文.MD"), b"# document").unwrap();
+        }
+        std::fs::write(root.join("notes").join("picture.png"), b"image").unwrap();
+
+        let result = scan_project(
+            root.to_string_lossy().into_owned(),
+            vec!["drafts".to_string()],
+        );
+        let _ = std::fs::remove_dir_all(&root);
+        let entries = result.unwrap();
+        assert_eq!(entries.len(), 4);
+        assert_eq!(entries.iter().filter(|entry| entry.is_directory).count(), 2);
+        for (index, entry) in entries
+            .iter()
+            .enumerate()
+            .filter(|(_, entry)| entry.is_directory)
+        {
+            assert!(matches!(entry.name.as_str(), "notes" | ".github"));
+            assert!(!entry.is_markdown);
+            let child = &entries[index + 1];
+            assert_eq!(child.name, "中文.MD");
+            assert!(child.is_file && child.is_markdown);
+            assert!(Path::new(&child.pathname).starts_with(&entry.pathname));
+        }
+    }
+
+    #[test]
+    fn missing_project_root_is_reported_to_the_caller() {
+        let root =
+            std::env::temp_dir().join(format!("folira-project-missing-{}", std::process::id()));
+        let error = scan_project(root.to_string_lossy().into_owned(), Vec::new());
+        assert!(matches!(error, Err(message) if message.contains("Not a directory")));
+    }
 }
