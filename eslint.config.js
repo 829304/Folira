@@ -30,7 +30,19 @@ export default [
       'packages/desktop/src/renderer/src/assets/symbolIcon/index.js',
       '**/*.min.json',
       'test-results/**',
-      'playwright-report/**'
+      'playwright-report/**',
+      // Local agent scratch, the local tool cache and build output are not
+      // source. Without these the flat config walks generated files under
+      // .tmp/.tools and turns a normal lint run into millions of false errors.
+      '.tmp/**',
+      '.tools/**',
+      '.dsh/**',
+      '**/.pnpm-store/**',
+      '**/out-tauri/**',
+      // Tauri generates ACL/schema JSON and the Rust build tree; neither is
+      // hand-written source and the JSON is not in this repo's prettier style.
+      'packages/desktop/src-tauri/gen/**',
+      '**/src-tauri/target/**'
     ]
   },
 
