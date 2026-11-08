@@ -82,6 +82,54 @@ test('GitBook keeps shared code surfaces on the readable panel', async ({ page, 
     });
 });
 
+test('GitBook keeps the dark syntax palette out of the HTML source pane', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'Checks the desktop theme cascade in Chromium');
+    const themeCss = [
+        ...['base.css', 'ui/typora-gitbook.css', 'md/typora-gitbook.css'].map(path =>
+            read(`assets/themes/${path}`)
+        ),
+        read('assets/themes/prismjs/typora-gitbook.theme.css')
+    ].join('\n');
+    await page.setContent(`<!doctype html><style>${themeCss}</style><div class="editor-wrapper">
+<div class="mu-html-container"><pre><code><span class="token punctuation">&lt;</span><span class="token tag">div</span></code></pre></div>
+<pre class="mu-code-block"><code class="mu-code"><span class="token punctuation">const</span></code></pre>
+<pre class="preview"><code><span class="token punctuation">const</span></code></pre>
+</div>`);
+    const color = (selector: string) =>
+        page.locator(selector).evaluate(el => getComputedStyle(el).color);
+
+    // The light HTML source pane must not receive the dark palette's near-white
+    // punctuation; the fenced block and the settings-preview `<pre>` still do.
+    expect(await color('.mu-html-container .token.punctuation')).toBe('rgb(59, 69, 78)');
+    expect(await color('.mu-html-container .token.tag')).toBe('rgb(59, 69, 78)');
+    expect(await color('.mu-code-block .token.punctuation')).toBe('rgb(248, 248, 242)');
+    expect(await color('.editor-wrapper > pre.preview .token.punctuation')).toBe('rgb(248, 248, 242)');
+});
+
+test('GitBook keeps find matches legible in the navy block', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'Checks the desktop theme cascade in Chromium');
+    const themeCss = ['base.css', 'ui/typora-gitbook.css', 'md/typora-gitbook.css']
+        .map(path => read(`assets/themes/${path}`))
+        .join('\n');
+    await page.setContent(`<!doctype html><style>${themeCss}</style><div class="editor-wrapper">
+<pre class="mu-code-block"><code class="mu-code"><span class="mu-highlight">needle</span><span class="mu-selection">needle</span></code></pre>
+</div>`);
+    const style = (selector: string) =>
+        page.locator(selector).evaluate(el => {
+            const computed = getComputedStyle(el);
+            return { color: computed.color, background: computed.backgroundColor };
+        });
+
+    expect(await style('.mu-highlight')).toEqual({
+        color: 'rgb(248, 248, 242)',
+        background: 'rgba(56, 132, 255, 0.55)'
+    });
+    expect(await style('.mu-selection')).toEqual({
+        color: 'rgb(248, 248, 242)',
+        background: 'rgba(157, 170, 182, 0.35)'
+    });
+});
+
 test('GitBook deepens the default link on hover and keeps a custom --link-color', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'Checks the desktop theme cascade in Chromium');
     const themeCss = ['base.css', 'ui/typora-gitbook.css', 'md/typora-gitbook.css']

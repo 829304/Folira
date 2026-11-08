@@ -503,7 +503,9 @@ describe('typora-gitbook and notion markdown rules', () => {
       // The `:where()` wrappers add no specificity, so the later custom-CSS
       // slot can still beat any token colour with a plain `.token.*` rule.
       expect(
-        block.startsWith(':where(.editor-wrapper) :where(pre, .mu-code-block) ')
+        block.startsWith(
+          ':where(.editor-wrapper) :where(.mu-code-block, .editor-wrapper > pre) '
+        )
       ).toBe(true)
       expect(block).toContain('.token.')
     }
@@ -674,6 +676,18 @@ describe('light-theme phase 2 contracts', () => {
     const focus = ruleIn(gitbookMd, '.editor-wrapper .mu-code-block .mu-code-copy:focus-visible')
     expect(focus).toContain('background-color: rgba(255, 255, 255, 0.14)')
     expect(focus).toContain('outline: 2px solid #9daab6')
+  })
+
+  it('keeps find matches legible inside the navy block', () => {
+    // Search uses spans, not ::selection: the active match and the remaining
+    // matches must both switch to the light code ink on their own backgrounds.
+    const active = ruleIn(gitbookMd, '.editor-wrapper .mu-code-block .mu-highlight')
+    expect(active).toContain('color: #f8f8f2')
+    expect(active).toContain('background: rgba(56, 132, 255, 0.55)')
+
+    const others = ruleIn(gitbookMd, '.editor-wrapper .mu-code-block .mu-selection')
+    expect(others).toContain('color: #f8f8f2')
+    expect(others).toContain('background: rgba(157, 170, 182, 0.35)')
   })
 
   it('keeps the 12px title-bar labels above 4.5:1', () => {
